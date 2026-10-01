@@ -47,7 +47,7 @@ export function WorkbenchNav({ useWorkbench, activate, t }: Props) {
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
               <path d={paths[destination]} />
             </svg>
-            <span>{label}</span>
+            <span>{label}{destination === 'agents' && (state.agentCount ?? 0) > 0 && <small data-workbench-count>{state.agentCount}</small>}</span>
           </button>
         )
       })}

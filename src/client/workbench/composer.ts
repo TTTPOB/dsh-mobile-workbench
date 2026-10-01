@@ -12,6 +12,19 @@ export function composerHeightBudget(available: number, chrome: number): { input
   return { input: Math.max(44, Math.min(160, available * 0.3, card - chrome)), card, context }
 }
 
+// Only shorten recognized names; unknown permission states remain verbatim.
+export function composerPermissionLabel(name: string): string | null {
+  const state = name.replace(/^访问模式[，,:：]\s*当前[：:]\s*/, '').trim()
+  if (/^(只读|仅可查看|Read[- ]only)$/i.test(state)) return '只读'
+  if (/^(工作区内修改|工作区|Workspace(?: write)?)$/i.test(state)) return '工作区'
+  if (/^(完全权限|Full access)$/i.test(state)) return '完全权限'
+  return null
+}
+
+export function composerModelLabel(name: string): string {
+  return name.trim().replace(/^(?:openai|anthropic|deepseek)\//i, '').replace(/^claude-/i, 'Claude ').replace(/^gpt-/i, 'GPT-')
+}
+
 const CARD = '[data-composer-card]'
 const INPUT = '[data-composer-input]'
 const SCROLL = '[data-input-scroll]'
@@ -28,6 +41,16 @@ export function installWorkbenchComposer(ctx: ClientContext): void {
     const oldProperties = properties.map(key => [key, root.style.getPropertyValue(key), root.style.getPropertyPriority(key)] as const)
     let card: HTMLElement | null = null
     let button: HTMLButtonElement | null = null
+    let header: HTMLElement | null = null
+    const decorations = new Map<HTMLElement, Map<string, string | null>>()
+    const decorate = (element: HTMLElement, key: string, value: string | null): void => {
+      if (element.getAttribute(key) === value) return
+      let previous = decorations.get(element)
+      if (!previous) decorations.set(element, previous = new Map())
+      if (!previous.has(key)) previous.set(key, element.getAttribute(key))
+      if (value === null) element.removeAttribute(key)
+      else element.setAttribute(key, value)
+    }
     let restoreCard: (() => void) | undefined
     let removeButtonListeners: (() => void) | undefined
     let expanded = false
@@ -53,7 +76,8 @@ export function installWorkbenchComposer(ctx: ClientContext): void {
         else card.removeAttribute(EXPANDED)
       }
       if (button) {
-        button.textContent = value ? '收起编辑' : '展开编辑'
+        button.setAttribute('aria-label', value ? '收起编辑' : '展开编辑')
+        button.title = value ? '收起编辑' : '展开编辑'
         button.setAttribute('aria-expanded', String(value))
       }
       schedule()
@@ -64,6 +88,15 @@ export function installWorkbenchComposer(ctx: ClientContext): void {
       removeButtonListeners = undefined
       button?.remove()
       button = null
+      header?.remove()
+      header = null
+      for (const [element, attributes] of decorations) {
+        for (const [key, value] of attributes) {
+          if (value === null) element.removeAttribute(key)
+          else element.setAttribute(key, value)
+        }
+      }
+      decorations.clear()
       restoreCard?.()
       restoreCard = undefined
       card = null
@@ -89,7 +122,26 @@ export function installWorkbenchComposer(ctx: ClientContext): void {
       button.type = 'button'
       button.setAttribute('data-mobile-compose-toggle', '')
       button.setAttribute('aria-expanded', 'false')
-      button.textContent = '展开编辑'
+      button.setAttribute('aria-label', '展开编辑')
+      button.title = '展开编辑'
+      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
+      svg.setAttribute('viewBox', '0 0 24 24')
+      svg.setAttribute('aria-hidden', 'true')
+      svg.setAttribute('focusable', 'false')
+      const path = document.createElementNS('http://www.w3.org/2000/svg', 'path')
+      path.setAttribute('d', 'M8 3H3v5m13-5h5v5M3 16v5h5m13-5v5h-5M3 3l6 6m12-6-6 6M3 21l6-6m12 6-6-6')
+      svg.append(path)
+      button.append(svg)
+      header = document.createElement('div')
+      header.setAttribute('data-mobile-compose-header', '')
+      const heading = document.createElement('strong')
+      heading.textContent = '编辑草稿'
+      const done = document.createElement('button')
+      done.type = 'button'
+      done.textContent = '完成'
+      done.setAttribute('aria-label', '收起编辑')
+      done.title = '收起编辑'
+      header.append(heading, done)
       // Keep the native selection, including an active IME composition, intact.
       const keepSelection = (event: Event): void => event.preventDefault()
       const toggle = (event: Event): void => {
@@ -100,15 +152,43 @@ export function installWorkbenchComposer(ctx: ClientContext): void {
       ownedButton.addEventListener('pointerdown', keepSelection)
       ownedButton.addEventListener('mousedown', keepSelection)
       ownedButton.addEventListener('click', toggle)
+      done.addEventListener('pointerdown', keepSelection)
+      done.addEventListener('mousedown', keepSelection)
+      done.addEventListener('click', toggle)
       removeButtonListeners = () => {
         ownedButton.removeEventListener('pointerdown', keepSelection)
         ownedButton.removeEventListener('mousedown', keepSelection)
         ownedButton.removeEventListener('click', toggle)
+        done.removeEventListener('pointerdown', keepSelection)
+        done.removeEventListener('mousedown', keepSelection)
+        done.removeEventListener('click', toggle)
       }
-      next.append(button)
+      next.append(header)
       resizeObserver?.observe(next)
       const seat = next.closest<HTMLElement>('[data-composer-seat]')
       if (seat) resizeObserver?.observe(seat)
+    }
+    const ensureControls = (): void => {
+      if (!card || !button || !header) return
+      const row = card.querySelector<HTMLElement>(':scope > [class*="_row"]:has([class*="_trailing"])')
+      if (row) {
+        decorate(row, 'data-mobile-compose-bar', 'true')
+        // Reattach only plugin-owned children after a React lane replacement.
+        if (button.parentElement !== row) row.append(button)
+      } else button.remove()
+      if (header.parentElement !== card) card.append(header)
+      const permission = card.querySelector<HTMLElement>('[data-slot="conversation.input.permission"] button')
+      const permissionText = permission?.querySelector<HTMLElement>('[class*="_triggerLabel"]')
+      if (permission && permissionText) {
+        decorate(permissionText, 'data-mobile-compose-label', composerPermissionLabel(permission.getAttribute('aria-label') ?? permissionText.textContent ?? ''))
+      }
+      const model = card.querySelector<HTMLElement>('[data-slot="conversation.input.model"] button[aria-haspopup="menu"]')
+      const modelText = model?.querySelector<HTMLElement>('[class*="_triggerLabel"]')
+      if (modelText) {
+        const full = modelText.textContent ?? ''
+        const short = composerModelLabel(full)
+        decorate(modelText, 'data-mobile-compose-label', short !== full.trim() ? short : null)
+      }
     }
     const update = (): void => {
       frame = 0
@@ -117,6 +197,7 @@ export function installWorkbenchComposer(ctx: ClientContext): void {
         if (next) attach(next)
         else release()
       }
+      ensureControls()
       const height = viewport?.height ?? window.innerHeight
       const currentWidth = viewport?.width ?? window.innerWidth
       const scale = viewport?.scale ?? 1
@@ -162,7 +243,7 @@ export function installWorkbenchComposer(ctx: ClientContext): void {
     probeNode.setAttribute('aria-hidden', 'true')
     probeNode.style.cssText = 'position:absolute;visibility:hidden;pointer-events:none;width:0'
     root.append(probeNode)
-    observer.observe(document.body, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ['style', 'data-phase'] })
+    observer.observe(document.body, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ['style', 'data-phase', 'aria-label', 'class'] })
     window.addEventListener('resize', schedule)
     viewport?.addEventListener('resize', schedule)
     viewport?.addEventListener('scroll', schedule)

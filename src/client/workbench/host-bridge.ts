@@ -30,6 +30,7 @@ export function createHostBridge(viewIds: () => readonly string[]) {
       agentsOpen: trigger?.getAttribute('aria-expanded') === 'true',
       hasChat: viewIndex(ids, 'chat', buttons.length) >= 0,
       hasTrajectory: viewIndex(ids, 'trajectory', buttons.length) >= 0,
+      agentCount: Number(trigger?.getAttribute('aria-label')?.match(/^(\d+)\s+(?:个子智能体|subagents?)/i)?.[1] ?? 0),
       hasAgents: trigger !== null,
       hasFiles: document.querySelector(`${HOST_FILES_OPENER}, ${HOST_FILES_CLOSER}, [data-aionui-explorer-col]`) !== null,
     }

@@ -57,16 +57,34 @@ export const REPLY = [
   '**MOBILE_AUDIT_COMPLETE** — 已到达回复末尾。再次发送“开始手机界面审计”，会在新的正常 turn 中再次读取同一文件并生成同样的回复。',
 ].join('\n')
 
+/** Compact synthetic advice for everyday mobile reading screenshots. */
+export const DAILY_REPLY = [
+  '建议先解决登录过程中的阻碍，再调整视觉细节：',
+  '',
+  '1. **P0 · 让操作更明确**：把“登录”设为唯一主按钮，忘记密码与注册作为次级入口，避免用户反复寻找下一步。',
+  '2. **P1 · 减少输入负担**：账号与密码保留清晰标签，支持密码显示切换；错误提示放在对应输入框旁，并保留已填内容。',
+  '3. **P1 · 照顾单手与键盘状态**：让按钮有足够的触摸区域，键盘弹出时仍能看到当前输入框和登录入口，减少不必要的滚动。',
+  '',
+  '**下一步**：先确认现有登录流程与错误状态，再画一版低保真方案，重点检查小屏和键盘弹出后的操作路径。以上是建议，不是已完成的改动或测试。',
+  '',
+  '_本地演示：建议与统计为合成测试内容，未修改业务文件。_',
+].join('\n')
+
 /** Stateless progression derives only from the current request history. */
 export class MobileAuditAdapter extends LlmAdapter {
   constructor(private readonly config: Config) { super() }
   override providerInfo(provider: string) { return { id: provider, name: 'Mobile Audit (local fixture)' } }
   override async listModels(provider: string) {
-    return [{ provider, id: 'mobile-audit', name: 'Mobile Audit', description: 'Deterministic local Chinese reply + read tool' }]
+    return [
+      { provider, id: 'mobile-audit', name: 'Mobile Audit', description: 'Deterministic local Chinese reply + read tool' },
+      { provider, id: 'mobile-audit-extended-preview', name: 'Mobile Audit — Extended Reasoning Preview',
+        description: 'Local synthetic menu stress fixture; no external model, network or credentials' },
+    ]
   }
   override async resolveModel(provider: string, model: string) {
-    if (model !== 'mobile-audit') throw new Error('Mobile Audit only supports model mobile-audit')
-    return { provider, id: model, name: 'Mobile Audit', context: { contextWindow: 131072 } }
+    const entry = (await this.listModels(provider)).find(candidate => candidate.id === model)
+    if (entry === undefined) throw new Error('Mobile Audit does not support model ' + model)
+    return { ...entry, context: { contextWindow: 131072 } }
   }
   override async *stream(options: GenerateOptions): AsyncIterable<StreamChunk> {
     options.signal?.throwIfAborted()
@@ -83,7 +101,8 @@ export class MobileAuditAdapter extends LlmAdapter {
     const scenario = childTask ? 'child-read'
       : prompt.includes('演示子智能体') ? 'subagent'
       : prompt.includes('演示提问') ? 'question'
-      : prompt.includes('演示审批') ? 'approval' : 'read'
+      : prompt.includes('演示审批') ? 'approval'
+      : prompt.includes('整理移动端登录页的改进清单') ? 'daily-read' : 'read'
     const callId = ToolCallId('mobile-audit-' + scenario + '-' + String(Math.max(0, lastUser)))
     const result = options.messages.slice(lastUser + 1).find(message =>
       message.role === 'tool' && message.source?.kind === 'tool' && message.source.callId === callId)
@@ -116,6 +135,7 @@ export class MobileAuditAdapter extends LlmAdapter {
         }, callId, options)
       } else {
         yield* this.tool(childTask ? '子智能体开始只读检查固定测试资料。'
+          : scenario === 'daily-read' ? '先读取本地参考资料，再整理一份简短的改进建议。'
           : '先只读检查本地测试资料，然后提供用于手机布局对比的长回复。', 'read', {
           file_path: this.config.fixtureFile, offset: 1, limit: 40,
         }, callId, options)
@@ -138,6 +158,8 @@ export class MobileAuditAdapter extends LlmAdapter {
       yield* this.text(completed
         ? '已批准并执行固定 printf 命令，没有读取或修改文件。MOBILE_AUDIT_APPROVAL_COMPLETE'
         : '审批演示未成功执行，不会自动重试。MOBILE_AUDIT_APPROVAL_NOT_RUN\n' + resultText, options)
+    } else if (scenario === 'daily-read') {
+      yield* this.text(DAILY_REPLY, options)
     } else {
       yield* this.text(REPLY, options)
     }

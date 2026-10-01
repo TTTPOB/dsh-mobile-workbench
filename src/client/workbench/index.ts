@@ -3,6 +3,9 @@ import type {} from '@deepseek-ai/dsh-client-ui-layout/client'
 import type {} from '@deepseek-ai/dsh-client-locale/client'
 import { MOBILE_QUERY } from '../effects/phone-chrome.ts'
 import { WORKBENCH_CSS } from '../styles/workbench.css.ts'
+import { WORKBENCH_HEADER_CSS } from '../styles/workbench-header.css.ts'
+import { WORKBENCH_TRAJECTORY_CSS } from '../styles/workbench-trajectory.css.ts'
+import { createWorkbenchPresentation } from './presentation.ts'
 import { createHostBridge } from './host-bridge.ts'
 import { WorkbenchNav, type WorkbenchSnapshot } from './WorkbenchNav.tsx'
 import { WORKBENCH_NS, en, zh } from './locales.ts'
@@ -13,15 +16,17 @@ export function installWorkbench(ctx: ClientContext): void {
   ctx.effect(() => {
     const tag = document.createElement('style')
     tag.dataset.pluginCss = 'dsh-web-mobile/workbench.css'
-    tag.textContent = WORKBENCH_CSS
+    tag.textContent = WORKBENCH_CSS + WORKBENCH_HEADER_CSS + WORKBENCH_TRAJECTORY_CSS
     document.head.appendChild(tag)
     return () => { tag.remove() }
   }, 'mobile-workbench: styles')
 
   const mq = window.matchMedia(MOBILE_QUERY)
-  const bridge = createHostBridge(() => ctx.slots.entriesOfSlot('conversation.view')
+  const viewIds = (): string[] => ctx.slots.entriesOfSlot('conversation.view')
     .filter(entry => entry.options.label !== undefined)
-    .map(entry => entry.options.id ?? ''))
+    .map(entry => entry.options.id ?? '')
+  const bridge = createHostBridge(viewIds)
+  const presentation = createWorkbenchPresentation()
   let snapshot: WorkbenchSnapshot = { ...bridge.evidence(), mobile: mq.matches }
   const listeners = new Set<() => void>()
   const source = {
@@ -35,6 +40,8 @@ export function installWorkbench(ctx: ClientContext): void {
     let raf: number | undefined
     const refresh = (): void => {
       raf = undefined
+      if (mq.matches) presentation.update(viewIds())
+      else presentation.clear()
       const next = mq.matches
         ? { ...bridge.evidence(), mobile: true }
         : { ...snapshot, mobile: false }
@@ -68,6 +75,7 @@ export function installWorkbench(ctx: ClientContext): void {
       mq.removeEventListener('change', schedule)
       if (raf !== undefined) window.cancelAnimationFrame(raf)
       document.documentElement.removeAttribute('data-mobile-workbench-active')
+      presentation.clear()
       listeners.clear()
     }
   }, 'mobile-workbench: host navigation evidence')

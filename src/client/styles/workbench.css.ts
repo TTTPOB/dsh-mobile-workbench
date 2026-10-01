@@ -44,6 +44,19 @@ export const WORKBENCH_CSS = /* css */ `
     touch-action: manipulation;
   }
   [data-mobile-workbench="navigation"] svg { width: 21px; height: 21px; }
+  [data-workbench-count] {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 15px;
+    height: 15px;
+    margin-left: 4px;
+    padding: 0 3px;
+    border-radius: 8px;
+    background: var(--dsw-alias-interactive-bg-hover);
+    font-size: 10px;
+    line-height: 1;
+  }
   [data-mobile-workbench="navigation"] button[aria-current="page"] {
     color: var(--dsw-static-deepseek-500);
     background: var(--dsw-alias-interactive-bg-hover);

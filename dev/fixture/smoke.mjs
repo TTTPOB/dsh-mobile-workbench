@@ -1,8 +1,20 @@
 import assert from 'node:assert/strict'
 import { pathToFileURL, fileURLToPath } from 'node:url'
 import { hostRequire } from './runtime.mjs'
-import * as fixture from './dist/index.js'
+import { readFileSync } from 'node:fs'
+import { stripTypeScriptTypes } from 'node:module'
 const require = hostRequire()
+// Source mode checks scoped changes without writing dist, overlay, or the main plugin build.
+let fixture
+if (process.argv.includes('--source')) {
+  let source = stripTypeScriptTypes(readFileSync(new URL('./src/index.ts', import.meta.url), 'utf8'), { mode: 'transform' })
+  for (const name of ['@deepseek-ai/dsh-llm', '@deepseek-ai/schemastery']) {
+    source = source.replaceAll("'" + name + "'", JSON.stringify(pathToFileURL(require.resolve(name)).href))
+  }
+  fixture = await import('data:text/javascript;base64,' + Buffer.from(source).toString('base64'))
+} else {
+  fixture = await import('./dist/index.js')
+}
 const { Context } = await import(pathToFileURL(require.resolve('@deepseek-ai/cordis')).href)
 const { default: LlmRuntime } = await import(pathToFileURL(require.resolve('@deepseek-ai/dsh-llm')).href)
 const fixtureFile = fileURLToPath(new URL('./workspace/mobile-audit.md', import.meta.url))
@@ -38,6 +50,30 @@ try {
   await assert.rejects(cancelled)
   const scenarioRequest = text => ({ ...options, messages: [{ role: 'user', content: [{ type: 'text', text }] }] })
   const toolCall = chunks => chunks.find(chunk => chunk.type === 'block-end' && chunk.block.type === 'tool-call').block
+  const dailyRequest = scenarioRequest('整理移动端登录页的改进清单')
+  const dailyCall = toolCall(await collect(adapter.stream(dailyRequest)))
+  assert.equal(dailyCall.name, 'read')
+  assert.equal(JSON.parse(dailyCall.arguments).file_path, fixtureFile)
+  const dailyResponse = await collect(adapter.stream({ ...dailyRequest, messages: [...dailyRequest.messages,
+    { role: 'tool', source: { kind: 'tool', callId: dailyCall.id }, isError: false,
+      content: [{ type: 'text', text: 'MOBILE_AUDIT_READ_OK' }] }] }))
+  const dailyText = dailyResponse.filter(chunk => chunk.type === 'text-delta').map(chunk => chunk.text).join('')
+  assert.equal(dailyText, fixture.DAILY_REPLY)
+  assert.equal(dailyResponse.at(-1).reason.kind, 'stop')
+  assert.ok(dailyText.length < 500)
+  assert.equal((dailyText.match(/^\d\. /gm) ?? []).length, 3)
+  assert.ok(dailyText.includes('下一步'))
+  assert.ok(dailyText.includes('未修改业务文件'))
+  assert.ok(dailyText.includes('统计为合成测试内容'))
+  assert.ok(!dailyText.includes('手机界面对比：确定性测试回复'))
+  assert.ok(!dailyText.includes('阅读段落'))
+  const longName = 'Mobile Audit — Extended Reasoning Preview'
+  const extended = (await ctx.llm.listModels('mobile-audit')).find(item => item.id === 'mobile-audit-extended-preview')
+  assert.equal(extended.name, longName)
+  assert.equal((await adapter.resolveModel('mobile-audit', extended.id)).name, longName)
+  assert.ok(extended.description.includes('synthetic'))
+  const extendedReply = await collect(adapter.stream({ ...options, model: extended.id }))
+  assert.equal(toolCall(extendedReply).name, 'read')
   const delegated = toolCall(await collect(adapter.stream(scenarioRequest('演示子智能体'))))
   assert.equal(delegated.name, 'subagent')
   assert.equal(JSON.parse(delegated.arguments).run_in_background, false)
@@ -99,7 +135,7 @@ try {
   }
   await fiber.dispose()
   assert.deepEqual(ctx.llm.listProviders(), [])
-  console.log(JSON.stringify({ registered: true, dispose: true, twoSessionIsolation: true, cancellation: true, replyCharacters: fixture.REPLY.length, tool: call.name, childRecursionGuard: true, officialQuestionTool: true, questionConfirmation: true, approvalArguments: true, approvalResultBranches: true }))
+  console.log(JSON.stringify({ registered: true, dispose: true, twoSessionIsolation: true, cancellation: true, replyCharacters: fixture.REPLY.length, tool: call.name, childRecursionGuard: true, officialQuestionTool: true, questionConfirmation: true, approvalArguments: true, approvalResultBranches: true, dailyReading: true, extendedModelName: true, syntheticStatistics: true }))
 } finally {
   await ctx.fiber.dispose()
 }
