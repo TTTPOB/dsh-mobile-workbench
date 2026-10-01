@@ -75,9 +75,27 @@ export const WORKBENCH_CSS = /* css */ `
   html[data-mobile-workbench-active="true"] [data-conversation-scroll] {
     scroll-padding-bottom: 24px;
   }
+  /* Secondary metrics are summaries; tapping opens the unchanged native details. */
+  html[data-mobile-workbench-active="true"] [data-composer-stats],
+  html[data-mobile-workbench-active="true"] [data-composer-stats] button {
+    min-height: 28px !important;
+    height: 28px !important;
+    align-items: center;
+  }
+  html[data-mobile-workbench-active="true"] [data-composer-stats] [data-workbench-stat-label] {
+    font-size: 0 !important;
+    white-space: nowrap !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
+  }
+  [data-workbench-stat-label] > span { display: none; }
+  [data-workbench-stat-label]::after {
+    content: attr(data-workbench-stat-label);
+    font-size: 11px;
+    line-height: 16px;
+  }
   /* Modal and drawer chrome retain precedence over this navigation. */
-  html:has([aria-modal="true"]),
-  html:has([data-mobile-nav="backdrop"]),
+  /* Overlays hide navigation without shifting the conversation underneath. */
   html[data-mobile-workbench-keyboard="true"],
   html[data-mobile-compose-expanded="true"] {
     --mobile-workbench-nav-height: 0px !important;

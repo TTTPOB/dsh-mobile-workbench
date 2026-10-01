@@ -1,5 +1,9 @@
 export const WORKBENCH_TRAJECTORY_CSS = `@media (max-width: 1023px) and (pointer: coarse) {
   /* Keep virtual ledger row geometry intact. Make the native inspector readable. */
+  html[data-mobile-workbench-active="true"] [data-workbench-trajectory]:has(aside[class*="_details"]) {
+    z-index: 70 !important;
+    isolation: auto !important;
+  }
   html[data-mobile-workbench-active="true"] [data-workbench-trajectory] aside[class*="_details"] {
     position: fixed !important;
     inset: 0 0 var(--mobile-workbench-nav-height) !important;

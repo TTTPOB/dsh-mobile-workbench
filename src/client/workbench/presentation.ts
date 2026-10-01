@@ -1,3 +1,11 @@
+/** Condense secondary metrics; the native button still opens every detail. */
+export function workbenchStatLabel(label: string): string | null {
+  const turn = label.match(/^(\d+)\s*轮\s*(\d+)\s*步/)
+  if (turn) return turn[1] + ' 轮 · ' + turn[2] + ' 步'
+  const tokens = label.match(/^([\d.,]+[KMB]?)\s+tok(?:\s|$)/i)
+  return tokens ? tokens[1] + ' tok' : null
+}
+
 /** Mark presentation boundaries without moving React-owned elements. */
 export function createWorkbenchPresentation(): { update: (viewIds: readonly string[]) => void; clear: () => void } {
   let marked = new Map<Element, Set<string>>()
@@ -85,6 +93,14 @@ export function createWorkbenchPresentation(): { update: (viewIds: readonly stri
     }
     const trajectory = document.querySelector('[data-trajectory-scroll]')
     mark(trajectory?.parentElement?.parentElement ?? null, 'data-workbench-trajectory')
+    for (const button of document.querySelectorAll('[data-composer-stats] button[aria-label]')) {
+      const summary = workbenchStatLabel(button.getAttribute('aria-label') ?? '')
+      const label = button.querySelector('[class*="_label"]')
+      if (summary && label) {
+        mark(label, 'data-workbench-stat-label')
+        if (label.getAttribute('data-workbench-stat-label') !== summary) label.setAttribute('data-workbench-stat-label', summary)
+      }
+    }
     const count = header?.querySelector('[data-slot="conversation.session.header.actions"] button[aria-haspopup="tree"]')
     mark(count?.parentElement ?? null, 'data-workbench-agent-count')
     for (const tree of document.querySelectorAll('[role="tree"][class*="_menuBody"]')) {

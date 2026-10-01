@@ -54,9 +54,8 @@ export function createHostBridge(viewIds: () => readonly string[]) {
     closeFiles()
     if (destination === 'agents') {
       const trigger = agentTrigger()
-      if (trigger?.getAttribute('aria-expanded') !== 'true') {
-        trigger?.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }))
-      }
+      if (trigger?.getAttribute('aria-expanded') === 'true') closeAgents()
+      else trigger?.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }))
       return
     }
     closeAgents()

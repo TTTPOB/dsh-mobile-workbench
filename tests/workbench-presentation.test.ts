@@ -1,12 +1,13 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
-import { createWorkbenchPresentation } from '../src/client/workbench/presentation.ts'
+import { createWorkbenchPresentation, workbenchStatLabel } from '../src/client/workbench/presentation.ts'
 
 class Node {
   attributes = new Map<string, string>()
   parentElement: Node | null = null
   selected: Node | null = null
   children: Node[] = []
+  getAttribute(key: string) { return this.attributes.get(key) ?? null }
   hasAttribute(key: string) { return this.attributes.has(key) }
   setAttribute(key: string, value: string) { this.attributes.set(key, value) }
   removeAttribute(key: string) { this.attributes.delete(key) }
@@ -38,6 +39,12 @@ function fixture(t: { after: (fn: () => void) => void }) {
   })
   return { header, root, countRoot, setMenus: (value: Node[]) => { menus = value } }
 }
+
+test('metric summaries preserve native values and leave unknown formats alone', () => {
+  assert.equal(workbenchStatLabel('2 轮 4 步 · 1913 tok/s'), '2 轮 · 4 步')
+  assert.equal(workbenchStatLabel('1.7K tok · 缓存命中 30%'), '1.7K tok')
+  assert.equal(workbenchStatLabel('unknown format'), null)
+})
 
 test('remove duplicate native tabs only when the workbench represents every view', t => {
   const { header } = fixture(t)

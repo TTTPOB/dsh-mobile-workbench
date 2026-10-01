@@ -63,8 +63,8 @@ export function installWorkbench(ctx: ClientContext): void {
         || record.target.closest('[data-mobile-workbench="navigation"]') === null)) schedule()
     })
     observer.observe(document.documentElement, {
-      childList: true, subtree: true, attributes: true,
-      attributeFilter: ['aria-selected', 'aria-expanded', 'data-aionui-explorer-open', 'data-aionui-preview-open', 'data-rightbar-collapsed', 'data-sidebar-right-open'],
+      childList: true, subtree: true, characterData: true, attributes: true,
+      attributeFilter: ['aria-label', 'aria-selected', 'aria-expanded', 'data-aionui-explorer-open', 'data-aionui-preview-open', 'data-rightbar-collapsed', 'data-sidebar-right-open'],
     })
     const stopViews = ctx.slots.subscribe('conversation.view', schedule)
     mq.addEventListener('change', schedule)
