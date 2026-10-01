@@ -12,10 +12,8 @@ export function createHostBridge(viewIds: () => readonly string[]) {
     return buttons.at(-1) ?? null
   }
   const officialFilesOpen = (): boolean => {
-    const frame = getFrame()
-    if (frame?.hasAttribute('data-rightbar-collapsed')
-      && frame.getAttribute('data-rightbar-collapsed') !== 'false') return false
-    // The official sidebar stays mounted while collapsed, including its closer.
+    // Fullscreen panels keep the grid track collapsed even while visibly open.
+    // The panel's own open marker is authoritative; its closer stays mounted.
     return document.querySelector('[data-sidebar-right-panel][data-sidebar-right-open]:not([data-sidebar-right-open="false"])') !== null
   }
   const filesOpen = (): boolean => officialFilesOpen()

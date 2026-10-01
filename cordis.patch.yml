@@ -1,6 +1,5 @@
-# dsh-web-mobile bundle patch: one client-only plugin row.
-# The browser half is discovered through the package.json dsh.client declaration;
-# the host half is an empty apply so the row exists in the host Loader.
+# One row loads the mobile workbench and its install metadata routes.
+# The browser entry is discovered through package.json dsh.client.
 - insert:
     - id: dsh-web-mobile
       name: 'dsh-web-mobile'
