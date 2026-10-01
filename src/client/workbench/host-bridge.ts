@@ -45,7 +45,7 @@ export function createHostBridge(viewIds: () => readonly string[]) {
     // Official catalog Escape handling owns close and focus restoration.
     document.querySelector('[role="tree"][class*="_menuBody"]')?.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))
   }
-  const activate = (destination: WorkbenchDestination): void => {
+  const activate = (destination: WorkbenchDestination, pointerStartedOpen = false): void => {
     if (destination === 'files') {
       closeAgents()
       if (!filesOpen()) openFilesPanel()
@@ -54,7 +54,7 @@ export function createHostBridge(viewIds: () => readonly string[]) {
     closeFiles()
     if (destination === 'agents') {
       const trigger = agentTrigger()
-      if (trigger?.getAttribute('aria-expanded') === 'true') closeAgents()
+      if (pointerStartedOpen || trigger?.getAttribute('aria-expanded') === 'true') closeAgents()
       else trigger?.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }))
       return
     }

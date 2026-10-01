@@ -309,6 +309,11 @@ export const WORKBENCH_COMPOSER_CSS = `@media (max-width: 1023px) and (pointer: 
   html [data-mobile-nav="frame"] [data-phase] [data-composer-card][data-mobile-workbench-composer="true"] > [data-mobile-compose-header] {
     display: none;
   }
+  /* Chat navigation is unrelated to the full-screen draft editor. */
+  html[data-mobile-compose-expanded="true"] [data-mobile-nav="frame"] [class*="_toBottomSlot"] {
+    visibility: hidden !important;
+    pointer-events: none !important;
+  }
   /* Reposition the same card; never move the Lexical node or mirror its draft. */
   html [data-mobile-nav="frame"] [data-phase] [data-composer-card][data-mobile-workbench-composer="true"][data-mobile-compose-expanded="true"] {
     position: fixed !important;
@@ -352,6 +357,9 @@ export const WORKBENCH_COMPOSER_CSS = `@media (max-width: 1023px) and (pointer: 
     color: inherit;
     touch-action: manipulation;
     cursor: pointer;
+  }
+  html [data-mobile-nav="frame"] [data-phase] [data-composer-card][data-mobile-workbench-composer="true"][data-mobile-compose-expanded="true"] > [data-mobile-compose-bar] > [data-mobile-compose-toggle] {
+    display: none !important;
   }
   html [data-mobile-nav="frame"] [data-phase] [data-composer-card][data-mobile-workbench-composer="true"][data-mobile-compose-expanded="true"] > [data-input-scroll] {
     flex: 1 1 auto !important;

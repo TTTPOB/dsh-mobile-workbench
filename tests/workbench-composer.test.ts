@@ -258,6 +258,8 @@ test('CSS gates every layout rule to coarse mobile and preserves scroll document
   assert.doesNotMatch(WORKBENCH_COMPOSER_CSS, /\[data-slot="(?:conversation\.input\.left|input\.right)"\] \{\s+display: none/)
   assert.match(WORKBENCH_COMPOSER_CSS, /width: 18px;\s+height: 18px/)
   assert.match(WORKBENCH_COMPOSER_CSS, /\[data-mobile-compose-header\]/)
+  assert.match(WORKBENCH_COMPOSER_CSS, /html\[data-mobile-compose-expanded="true"\][^{]*_toBottomSlot[^}]*visibility: hidden !important/s)
+  assert.match(WORKBENCH_COMPOSER_CSS, /\[data-mobile-compose-expanded="true"\] > \[data-mobile-compose-bar\] > \[data-mobile-compose-toggle\] \{\s+display: none !important/)
 })
 
 test('shared bar neutralizes the native primary offset and gives menus visible affordances', () => {

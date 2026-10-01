@@ -1,3 +1,4 @@
+import { useRef } from 'react'
 import type { InjectFace, PropsLocale, PropsRuntime } from '@deepseek-ai/dsh-client-ui-slots'
 import { destinationAvailable, resolveDestination, type NavigationEvidence, type WorkbenchDestination } from './navigation.ts'
 
@@ -11,7 +12,7 @@ export interface WorkbenchInjected {
       subscribe: (listener: () => void) => () => void
     }
   }
-  activate: (destination: WorkbenchDestination) => void
+  activate: (destination: WorkbenchDestination, pointerStartedOpen?: boolean) => void
 }
 type Props = PropsRuntime<'shell.overlay'> & InjectFace<WorkbenchInjected> & PropsLocale<'mobileWorkbench'>
 const destinations: readonly WorkbenchDestination[] = ['chat', 'trajectory', 'agents', 'files']
@@ -25,6 +26,7 @@ const paths: Record<WorkbenchDestination, string> = {
 /** Render only plugin-owned navigation; host content and lineage remain untouched. */
 export function WorkbenchNav({ useWorkbench, activate, t }: Props) {
   const state = useWorkbench(value => value)
+  const pointerStartedOpen = useRef(false)
   if (!state.mobile) return null
   const selected = resolveDestination(state)
   return (
@@ -42,7 +44,13 @@ export function WorkbenchNav({ useWorkbench, activate, t }: Props) {
             aria-label={available ? label : `${label} · ${detail}`}
             title={available ? label : detail}
             disabled={!available}
-            onClick={() => { activate(destination) }}
+            onPointerDownCapture={() => { pointerStartedOpen.current = destination === 'agents' && state.agentsOpen }}
+            onPointerCancel={() => { pointerStartedOpen.current = false }}
+            onClick={event => {
+              // The native outside-pointer handler may close the sheet before click.
+              activate(destination, event.detail > 0 && pointerStartedOpen.current)
+              pointerStartedOpen.current = false
+            }}
           >
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
               <path d={paths[destination]} />

@@ -10,7 +10,7 @@ export interface WorkbenchInjected {
             subscribe: (listener: () => void) => () => void;
         };
     };
-    activate: (destination: WorkbenchDestination) => void;
+    activate: (destination: WorkbenchDestination, pointerStartedOpen?: boolean) => void;
 }
 type Props = PropsRuntime<'shell.overlay'> & InjectFace<WorkbenchInjected> & PropsLocale<'mobileWorkbench'>;
 /** Render only plugin-owned navigation; host content and lineage remain untouched. */

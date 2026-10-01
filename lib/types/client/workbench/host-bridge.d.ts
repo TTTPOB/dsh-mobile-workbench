@@ -2,6 +2,6 @@ import { type NavigationEvidence, type WorkbenchDestination } from './navigation
 /** All rc.2 DOM access stays here; host nodes remain in their React-owned parents. */
 export declare function createHostBridge(viewIds: () => readonly string[]): {
     evidence: () => NavigationEvidence;
-    activate: (destination: WorkbenchDestination) => void;
+    activate: (destination: WorkbenchDestination, pointerStartedOpen?: boolean) => void;
 };
 //# sourceMappingURL=host-bridge.d.ts.map
