@@ -4,11 +4,12 @@ import { MobileDrawerFooter } from './components/MobileDrawerFooter.tsx'
 import { ComposerFileButton } from './components/ComposerFileButton.tsx'
 import { openFilesPanel } from './components/open-files-panel.ts'
 import { MOBILE_CSS } from './styles/index.ts'
+import { installWorkbench } from './workbench/index.ts'
+import { installWorkbenchComposer } from './workbench/composer.ts'
 
 import { installFrameController, installOverlayInteractions, installPhoneChrome, installReconciler, registerReconcileTasks, MOBILE_QUERY } from './effects/phone-chrome.ts'
 import { installSidebarSwipe } from './effects/sidebar-swipe.ts'
 import { installSubagentChipTouch } from './effects/subagent-chip-touch.ts'
-import { installSessionMenuDelete } from './effects/session-menu.ts'
 import { installComposerKeyboardGuard } from './effects/composer-keyboard-guard.ts'
 import { installComposerPlusToggle } from './effects/composer-plus-toggle.ts'
 import { installWorkspaceChipToggle } from './effects/workspace-chip-toggle.ts'
@@ -205,9 +206,7 @@ export function apply(ctx: ClientContext): void {
   // same action).
   installPanelRowExit(ctx, panelExit.exit)
 
-  // Session deletion, injected into each session row's ⋯ menu (beside
-  // rename / fork / archive) with a confirm dialog. Mobile-only.
-  installSessionMenuDelete(ctx)
+  // Session lifecycle stays with the host; this fork adds no deletion endpoint.
 
   // Sidebar swipe gestures: edge swipe-in opens the drawer, content swipe-out
   // closes it (release-classified, zero inline transforms — A 档). Since
@@ -251,6 +250,8 @@ export function apply(ctx: ClientContext): void {
   installPhoneChrome(ctx)
 
   installAionuiCompat(ctx)
+  installWorkbench(ctx)
+  installWorkbenchComposer(ctx)
 
   // Debug badge (?mobile-nav-debug=1): live state overlay for phone-side
   // repros. No-op without the query param (docs: README, AGENTS.md).

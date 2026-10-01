@@ -1,0 +1,18 @@
+export declare const WORKBENCH_NS = "mobileWorkbench";
+export declare const zh: {
+    navigation: string;
+    chat: string;
+    trajectory: string;
+    agents: string;
+    files: string;
+    emptyAgents: string;
+    unavailable: string;
+};
+export type WorkbenchKey = keyof typeof zh;
+export declare const en: Record<WorkbenchKey, string>;
+declare module '@deepseek-ai/dsh-client-ui-slots' {
+    interface LocaleNamespaceMap {
+        mobileWorkbench: WorkbenchKey;
+    }
+}
+//# sourceMappingURL=locales.d.ts.map

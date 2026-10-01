@@ -1,7 +1,7 @@
 {
   "name": "dsh-web-mobile",
-  "version": "3.0.3",
-  "description": "尽可能的使dsh适配竖屏等移动端设备",
+  "version": "3.0.3-fork1",
+  "description": "DSH Mobile Workbench — mobile-first shell retaining native trajectory and subagents",
   "license": "MIT",
   "author": "mexiaosh",
   "repository": {
@@ -40,6 +40,7 @@
     "assets",
     "cordis.patch.yml",
     "README.md",
+    "WORKBENCH.md",
     "LICENSE"
   ],
   "scripts": {
