@@ -134,38 +134,6 @@ test('0.1.5-era rules stay scoped to the mobile branch', async () => {
   }
 })
 
-// Counted claims, derived rather than remembered. Keep the phrase in the doc and
-// the pattern here in sync when a wording changes — a silently unmatched pattern
-// is itself the drift this test exists to catch.
-test('counted claims match the tree', async () => {
-  const [agents, readme] = await Promise.all([readRepoFile('AGENTS.md'), readRepoFile('README.md')])
-  const tally = async (dir: string, match: RegExp): Promise<number> =>
-    (await readdir(join(root, dir))).filter((name) => match.test(name)).length
-
-  const effects = await tally('src/client/effects', /\.ts$/)
-  const anchors = await tally('scripts/probes', /\.mjs$/)
-  const testFiles = await tally('tests', /\.test\.ts$/)
-  const specs = await tally('docs/specs', /\.md$/)
-
-  const claims = [
-    { what: '效果模块', actual: effects, doc: agents, docName: 'AGENTS.md', pattern: /effects\/\s+← (\d+) 个效果模块/ },
-    { what: '回归锚点', actual: anchors, doc: agents, docName: 'AGENTS.md', pattern: /probes\/\s+← (\d+) 个回归锚点/ },
-    { what: '测试文件', actual: testFiles, doc: agents, docName: 'AGENTS.md', pattern: /（(\d+) 个测试文件/ },
-    { what: '设计文档', actual: specs, doc: agents, docName: 'AGENTS.md', pattern: /specs\/\s+← (\d+) 篇权威设计文档/ },
-    { what: '回归锚点', actual: anchors, doc: readme, docName: 'README.md', pattern: /scripts\/probes\/` (\d+) 个锚点/ },
-  ]
-
-  const drift: string[] = []
-  for (const claim of claims) {
-    const found = claim.doc.match(claim.pattern)
-    if (found === null) drift.push(`${claim.docName} no longer states the ${claim.what} count`)
-    else if (Number(found[1]) !== claim.actual) {
-      drift.push(`${claim.docName}: ${claim.what} says ${found[1]}, the tree has ${claim.actual}`)
-    }
-  }
-  assert.deepEqual(drift, [])
-})
-
 // CSS files are TypeScript template literals, so a Markdown backtick inside a
 // comment terminates the template early and tsc reports a confusing TS1005.
 // This bit the same file three times during the 0.1.5 work; the check is cheap

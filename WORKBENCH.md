@@ -69,7 +69,7 @@ node --test tests/workbench-navigation.test.ts tests/workbench-composer.test.ts 
 - `src/index.ts`：manifest 与图标路由。
 - `dev/fixture/`：本地演示模型与交互场景。
 
-界面复用官方会话、轨迹、子代理与工具渲染器；宿主侧只提供安装元数据，不启用上游插件附带的删除会话端点和 HTTP 压缩补丁。DOM 桥接集中在 workbench 目录，方便针对宿主版本适配。
+界面复用官方会话、轨迹、子代理与工具渲染器；宿主侧只提供安装元数据与静态图标路由，已移除上游旧版删除会话端点与 HTTP 压缩补丁。DOM 桥接集中在 workbench 目录，方便针对宿主版本适配。
 
 ## 设计来源与许可证
 
