@@ -1,5 +1,7 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
+import { createHostBridge } from '../src/client/workbench/host-bridge.ts'
+import { toggleDrawer } from '../src/client/effects/phone-chrome.ts'
 import { subagentCounts } from '../src/client/workbench/agent-counts.ts'
 import { destinationAvailable, resolveDestination, viewIndex, type NavigationEvidence } from '../src/client/workbench/navigation.ts'
 
@@ -20,14 +22,14 @@ test('mounted Files controls do not select a collapsed file panel', () => {
   assert.equal(resolveDestination({ ...base, selectedView: 'trajectory', filesOpen: false }), 'trajectory')
 })
 
-test('visible official panels take selection precedence', () => {
-  assert.equal(resolveDestination({ ...base, agentsOpen: true }), 'agents')
+test('file pages take precedence while agent overlays preserve the underlying page', () => {
+  assert.equal(resolveDestination({ ...base, agentsOpen: true }), 'chat')
   assert.equal(resolveDestination({ ...base, selectedView: 'trajectory', filesOpen: true }), 'files')
   assert.equal(resolveDestination({ ...base, agentsOpen: true, filesOpen: true }), 'files')
 })
 
-test('returning from the official child catalog restores the host view selection', () => {
-  assert.equal(resolveDestination({ ...base, agentsOpen: true }), 'agents')
+test('opening and closing the official child catalog never selects a different page', () => {
+  assert.equal(resolveDestination({ ...base, agentsOpen: true }), 'chat')
   assert.equal(resolveDestination({ ...base, agentsOpen: false, selectedView: 'trajectory' }), 'trajectory')
 })
 
@@ -84,4 +86,91 @@ test('missing catalog stays unknown while a loaded empty root catalog reports ze
   assert.deepEqual(subagentCounts({ current: 'root', byId: {},
     projectionsBySession: { root: { values: { subagentCatalog: [] } } } }),
   { agentActiveCount: 0, agentTotalCount: 0 })
+})
+
+test('sessions page follows native sidebar state before other page evidence', () => {
+  assert.equal(resolveDestination({ ...base, sessionsOpen: true, filesOpen: true }), 'sessions')
+  assert.equal(resolveDestination({ ...base, sessionsOpen: false, selectedView: 'trajectory', agentsOpen: true }), 'trajectory')
+  assert.equal(destinationAvailable('sessions', { ...base, hasSessions: true }), true)
+  assert.equal(destinationAvailable('sessions', { ...base, hasSessions: false }), false)
+})
+
+test('page activation reuses native sidebar state and closes sessions before switching view', t => {
+  const original = Object.getOwnPropertyDescriptor(globalThis, 'document')
+  t.after(() => {
+    if (original) Object.defineProperty(globalThis, 'document', original)
+    else Reflect.deleteProperty(globalThis, 'document')
+  })
+  const events: string[] = []
+  const attributes = new Set(['data-sidebar-collapsed'])
+  const tabs = ['chat', 'trajectory'].map(id => ({
+    getAttribute: () => id === 'chat' ? 'true' : 'false',
+    click: () => { events.push(id) },
+  }))
+  const header = { querySelectorAll: (selector: string) => selector.includes('role="tablist"') ? tabs : [] }
+  const frame = {
+    hasAttribute: (key: string) => attributes.has(key),
+    removeAttribute: (key: string) => { attributes.delete(key) },
+    querySelector: () => header,
+  }
+  Object.defineProperty(globalThis, 'document', { configurable: true, value: {
+    querySelector: (selector: string) => selector === '[data-mobile-nav="frame"]' ? frame : null,
+    documentElement: { getAttribute: (key: string) => key === 'data-mobile-workbench-active' ? 'true' : null },
+  } })
+  const bridge = createHostBridge(() => ['chat', 'trajectory'], () => ({}),
+    () => { attributes.add('data-sidebar-collapsed'); events.push('close') },
+    () => { attributes.delete('data-sidebar-collapsed'); events.push('sessions') })
+  bridge.activate('sessions')
+  assert.equal(resolveDestination(bridge.evidence()), 'sessions')
+  bridge.activate('trajectory')
+  assert.equal(bridge.evidence().sessionsOpen, false)
+  assert.deepEqual(events, ['sessions', 'close', 'trajectory'])
+  let toggles = 0
+  toggleDrawer({ layout: { toggleSidebar: () => { toggles++ } } } as Parameters<typeof toggleDrawer>[0])
+  assert.equal(toggles, 1, 'workbench uses native immediate toggle rather than drawer-close animation')
+})
+
+test('global panels return through the public Conversation selection before native tabs remount', t => {
+  const originalDocument = Object.getOwnPropertyDescriptor(globalThis, 'document')
+  const originalWindow = Object.getOwnPropertyDescriptor(globalThis, 'window')
+  t.after(() => {
+    if (originalDocument) Object.defineProperty(globalThis, 'document', originalDocument)
+    else Reflect.deleteProperty(globalThis, 'document')
+    if (originalWindow) Object.defineProperty(globalThis, 'window', originalWindow)
+    else Reflect.deleteProperty(globalThis, 'window')
+  })
+  const calls: string[] = []
+  let hasSession = true
+  let headerMounted = false
+  let afterMount: (() => void) | undefined
+  const header = { querySelectorAll: (selector: string) => selector.includes('role="tablist"')
+    ? ['chat', 'trajectory'].map(id => ({ getAttribute: () => id === 'chat' ? 'true' : 'false', click: () => { calls.push(id) } })) : [] }
+  const frame = { hasAttribute: () => true, removeAttribute: () => {}, querySelector: () => headerMounted ? header : null }
+  Object.defineProperty(globalThis, 'document', { configurable: true, value: {
+    querySelector: (selector: string) => selector === '[data-mobile-nav="frame"]' ? frame : null,
+  } })
+  Object.defineProperty(globalThis, 'window', { configurable: true, value: {
+    requestAnimationFrame: (callback: () => void) => { afterMount = callback; return 1 },
+    cancelAnimationFrame: () => { afterMount = undefined },
+  } })
+  const bridge = createHostBridge(() => ['chat', 'trajectory'], () => ({}), () => {}, () => {}, {
+    show: () => { calls.push('selectPanel(null)') }, hasSession: () => hasSession,
+  })
+  assert.equal(bridge.evidence().hasChat, true, 'plugin panel must not disable Chat')
+  assert.equal(bridge.evidence().hasTrajectory, true, 'existing session retains Trace capability')
+  bridge.activate('trajectory')
+  assert.deepEqual(calls, ['selectPanel(null)'])
+  headerMounted = true
+  afterMount?.()
+  assert.deepEqual(calls, ['selectPanel(null)', 'trajectory'])
+  headerMounted = false
+  hasSession = false
+  assert.equal(bridge.evidence().hasChat, true)
+  assert.equal(bridge.evidence().hasTrajectory, false)
+  bridge.activate('chat')
+  assert.equal(calls.at(-1), 'selectPanel(null)', 'hero returns without a session tab strip')
+  hasSession = true
+  bridge.activate('trajectory')
+  bridge.clear()
+  assert.equal(afterMount, undefined, 'dispose cancels the single remount callback')
 })

@@ -105,17 +105,49 @@ export const WORKBENCH_CSS = /* css */ `
     font-size: 11px;
     line-height: 16px;
   }
-  /* Modal and drawer chrome retain precedence over this navigation. */
-  /* A covered navigation must release its frame reservation, including fade-out. */
-  html[data-mobile-workbench-active="true"]:has([data-mobile-nav="frame"]:not([data-sidebar-collapsed])),
-  html[data-mobile-workbench-active="true"]:has([data-mobile-nav="backdrop"]),
+  /* The native sidebar is the sessions page, not an overlay drawer. */
+  html[data-mobile-workbench-active="true"] [data-mobile-nav="frame"] > :first-child {
+    bottom: var(--mobile-workbench-nav-height) !important;
+    height: auto !important;
+    width: 100% !important;
+    transform: none !important;
+    transition: none !important;
+  }
+  html[data-mobile-workbench-active="true"] [data-mobile-nav="frame"][data-sidebar-collapsed] > :first-child { display: none !important; }
+  html[data-mobile-workbench-active="true"] [data-mobile-nav="backdrop"],
+  html[data-mobile-workbench-active="true"] [data-mobile-nav="fab"] { display: none !important; }
+  html[data-mobile-workbench-active="true"] [data-mobile-nav="frame"] > :first-child [class*="_root"]:has(> [class*="_regionArea"]) {
+    display: grid !important;
+    position: relative;
+    width: 100% !important;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-rows: auto auto minmax(0, 1fr) auto;
+  }
+  html[data-mobile-workbench-active="true"] [data-mobile-nav="frame"] > :first-child [class*="_logoRow"] { grid-column: 1 / -1; grid-row: 1; }
+  html[data-mobile-workbench-active="true"] [data-mobile-nav="frame"] > :first-child [class*="_newSession"] { grid-column: 1 / -1; grid-row: 2; }
+  html[data-mobile-workbench-active="true"] [data-mobile-nav="frame"] > :first-child [class*="_regionArea"] { grid-column: 1 / -1; grid-row: 3; min-height: 0; }
+  html[data-mobile-workbench-active="true"] [data-mobile-nav="frame"] > :first-child [class*="_panelList"] { grid-column: 1; grid-row: 4; align-self: end; margin: 0 !important; }
+  html[data-mobile-workbench-active="true"] [data-mobile-nav="frame"] > :first-child [class*="_footArea"] { grid-column: 2; grid-row: 4; align-self: end; margin: 0 !important; }
+  /* Bottom tools share the same row height, without Settings' native 4px margins. */
+  html[data-mobile-workbench-active="true"] [data-mobile-nav="frame"] > :first-child [class*="_settingsArea"] [class*="_triggerRow"] { margin: 0 !important; width: 100% !important; }
+  html[data-mobile-workbench-active="true"] [data-mobile-nav="frame"] > :first-child [class*="_panelList"] button[class*="_panelRow"],
+  html[data-mobile-workbench-active="true"] [data-mobile-nav="frame"] > :first-child [class*="_settingsArea"] [class*="_triggerRow"] button[class*="_trigger"] {
+    height: 44px !important;
+    min-height: 44px !important;
+    margin: 0 !important;
+    padding: 0 8px !important;
+    align-items: center;
+    box-sizing: border-box;
+  }
+  html[data-mobile-workbench-active="true"] [data-mobile-nav="frame"] > :first-child [class*="_wide"] { animation: none !important; }
+  /* All page entries switch without the Files-only lateral slide. */
+  html[data-mobile-workbench-active="true"] [data-sidebar-right-panel] :is([data-dockkit-host="dock"], [data-dockkit-empty], [data-dockkit-divider]) { transition: none !important; }
+  /* Keyboard, expanded editing and genuine modals retain their existing behavior. */
   html[data-mobile-workbench-keyboard="true"],
   html[data-mobile-compose-expanded="true"] {
     --mobile-workbench-nav-height: 0px !important;
   }
-  html:has([data-mobile-nav="frame"]:not([data-sidebar-collapsed])) [data-mobile-workbench="navigation"],
   html:has([aria-modal="true"]) [data-mobile-workbench="navigation"],
-  html:has([data-mobile-nav="backdrop"]) [data-mobile-workbench="navigation"],
   html[data-mobile-workbench-keyboard="true"] [data-mobile-workbench="navigation"],
   html[data-mobile-compose-expanded="true"] [data-mobile-workbench="navigation"] {
     display: none !important;

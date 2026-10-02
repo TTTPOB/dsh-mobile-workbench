@@ -1,1 +1,1 @@
-{"version":3,"file":"index.d.ts","sourceRoot":"","sources":["../../../../src/client/workbench/index.ts"],"names":[],"mappings":"AAAA,OAAO,KAAK,EAAE,aAAa,EAAE,MAAM,wCAAwC,CAAA;AAc3E,kFAAkF;AAClF,wBAAgB,gBAAgB,CAAC,GAAG,EAAE,aAAa,GAAG,IAAI,CAoFzD"}
+{"version":3,"file":"index.d.ts","sourceRoot":"","sources":["../../../../src/client/workbench/index.ts"],"names":[],"mappings":"AAAA,OAAO,KAAK,EAAE,aAAa,EAAE,MAAM,wCAAwC,CAAA;AAgB3E,kFAAkF;AAClF,wBAAgB,gBAAgB,CAAC,GAAG,EAAE,aAAa,GAAG,IAAI,CAyGzD"}

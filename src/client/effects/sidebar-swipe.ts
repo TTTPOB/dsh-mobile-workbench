@@ -585,6 +585,7 @@ function modalOpen(): boolean {
  *  2026-09-06-conversation-overlay-takeover-design.md §4.2). */
 function takeoverActive(): boolean {
   return (
+    document.documentElement.getAttribute('data-mobile-workbench-active') === 'true' ||
     document.documentElement.hasAttribute('data-dsh-taskboard-active') ||
     document.documentElement.hasAttribute('data-dsh-ssh-active') ||
     document.querySelector('[data-conversation-composer-overlay]') !== null

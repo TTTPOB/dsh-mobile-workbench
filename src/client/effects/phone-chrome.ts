@@ -494,6 +494,10 @@ export const TAP_CLOSE_NAV_SELECTOR =
  * the band to cover it.
  */
 export function toggleDrawer(ctx: ClientContext): void {
+  if (document.documentElement.getAttribute('data-mobile-workbench-active') === 'true') {
+    ctx.layout.toggleSidebar()
+    return
+  }
   if (!closeDrawerAnimated(ctx)) ctx.layout.toggleSidebar()
 }
 

@@ -67,7 +67,8 @@ export function installWorkbenchSessionMenu(ctx: ClientContext): void {
       svg.setAttribute('height', '16')
       svg.setAttribute('fill', 'none')
       const path = document.createElementNS('http://www.w3.org/2000/svg', 'path')
-      path.setAttribute('d', 'M5.5 5.5h8v8h-8zM10.5 5.5v-3h-8v8h3')
+      const copyPath = 'M5.5 5.5h8v8h-8zM10.5 5.5v-3h-8v8h3'
+      path.setAttribute('d', copyPath)
       path.setAttribute('stroke', 'currentColor')
       path.setAttribute('stroke-width', '1.25')
       path.setAttribute('stroke-linejoin', 'round')
@@ -91,8 +92,10 @@ export function installWorkbenchSessionMenu(ctx: ClientContext): void {
         pending = false
         if (disposed || menu !== next || !row?.contains(button)) return
         button.disabled = false
-        status.textContent = t(copied ? 'copySessionIdSuccess' : 'copySessionIdFailure')
-        status.hidden = false
+        path.setAttribute('d', copied ? 'M3 8l3 3 7-7' : copyPath)
+        button.setAttribute('aria-label', t(copied ? 'copySessionIdSuccess' : 'copySessionId'))
+        status.textContent = copied ? '' : t('copySessionIdFailure')
+        status.hidden = copied
       }
       button.addEventListener('click', onClick)
       removeClick = () => button.removeEventListener('click', onClick)

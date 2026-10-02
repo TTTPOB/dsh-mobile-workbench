@@ -1,6 +1,5 @@
 import type { ClientContext } from '@deepseek-ai/dsh-client-runtime/client'
 import { MobileNavToggle } from './components/MobileNavToggle.tsx'
-import { MobileDrawerFooter } from './components/MobileDrawerFooter.tsx'
 import { ComposerFileButton } from './components/ComposerFileButton.tsx'
 import { openFilesPanel } from './components/open-files-panel.ts'
 import { MOBILE_CSS } from './styles/index.ts'
@@ -33,14 +32,6 @@ declare module '@deepseek-ai/dsh-client-ui-slots' {
 
 /** Required services (cordis fiber inject — the loader passes all module exports as an object plugin). */
 export const inject = ['slots', 'layout', 'locale', 'sessionLogDownload', 'sessions', 'workspaces']
-
-/**
- * Session-id shape the installed host's sessionLogDownload.download expects.
- * Derived, never imported, so one program type-checks against every host
- * generation: 0.1.1 types the parameter as plain string, 0.1.2-alpha.1 brands
- * it Branded<'SessionId'>. The runtime value is always the host's own id.
- */
-type DownloadSessionId = Parameters<ClientContext['sessionLogDownload']['download']>[0]
 
 /**
  * Mobile-adaptive shell, browser half: injects the mobile stylesheet, then
@@ -267,31 +258,6 @@ export function apply(ctx: ClientContext): void {
     }),
   }, MobileNavToggle))
 
-
-  // Session log download, relocated from the session header to the drawer
-  // footer on mobile (the header capsule is hidden by CSS). The footer's
-  // Files action was removed on 2026-09-17 — see
-  // docs/specs/2026-09-17-sidebar-files-coexistence-design.md.
-  //
-  // Footer stacking relies on the list-slot sort by (priority, order):
-  // dsh-remote-web-ui leaves it unset (default 0, its two icon buttons stay
-  // on top) and dsh-usage-stats uses 10. Order 5 keeps the session-log pill
-  // directly under the icon row with the usage/balance badge below it —
-  // instead of a tie at 10 where registration order could wedge the badge
-  // between the icons and the pill.
-  ctx.slots.inject('sidebar.footer.action', () => ctx.slots.register({
-    name: 'sidebar.footer.action',
-    id: 'mobile-nav-session-log',
-    order: 5,
-    locale: NS,
-    inject: () => ({
-      // The component's internal id is a plain string (slot runtime typing);
-      // the host-generation brand boundary lives here and only here, hence
-      // the double assertion (string and Branded<'SessionId'> do not overlap).
-      downloadSessionLog: (sessionId: string) =>
-        ctx.sessionLogDownload.download(sessionId as unknown as DownloadSessionId),
-    }),
-  }, MobileDrawerFooter))
 
   // Composer file entry (0.1.6 host): the host deleted the paperclip attach
   // button, leaving the 「文件」row inside the "+" listbox as the only file

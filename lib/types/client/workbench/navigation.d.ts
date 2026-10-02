@@ -1,6 +1,8 @@
-export type WorkbenchDestination = 'chat' | 'trajectory' | 'agents' | 'files';
+export type WorkbenchDestination = 'sessions' | 'chat' | 'trajectory' | 'agents' | 'files';
 export interface NavigationEvidence {
     selectedView: string | undefined;
+    sessionsOpen?: boolean;
+    hasSessions?: boolean;
     filesOpen: boolean;
     agentsOpen: boolean;
     hasChat: boolean;

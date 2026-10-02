@@ -18,6 +18,12 @@ class Node {
   getBoundingClientRect() { return this.rect }
   children: Node[] = []
   textContent: string | null = null
+  listeners = new Map<string, (event: Event) => void>()
+  shown = false
+  addEventListener(key: string, listener: (event: Event) => void) { this.listeners.set(key, listener) }
+  removeEventListener(key: string) { this.listeners.delete(key) }
+  showModal() { this.shown = true }
+  append(...children: Node[]) { for (const child of children) { child.parentElement = this; this.children.push(child) } }
   prepend(child: Node) { child.parentElement = this; this.children.unshift(child) }
   remove() {
     if (this.parentElement) this.parentElement.children = this.parentElement.children.filter(child => child !== this)
@@ -44,17 +50,19 @@ function fixture(t: { after: (fn: () => void) => void }) {
   count.parentElement = countRoot
   header.selected = count
   let menus: Node[] = []
+  const body = new Node()
   const original = Object.getOwnPropertyDescriptor(globalThis, 'document')
   Object.defineProperty(globalThis, 'document', { configurable: true, value: {
     querySelector: (selector: string) => selector.startsWith('header') ? header : scroll,
     querySelectorAll: () => menus,
     createElement: () => new Node(),
+    body,
   } })
   t.after(() => {
     if (original) Object.defineProperty(globalThis, 'document', original)
     else Reflect.deleteProperty(globalThis, 'document')
   })
-  return { header, root, scroll, split, countRoot, setMenus: (value: Node[]) => { menus = value } }
+  return { header, root, scroll, split, body, count, countRoot, setMenus: (value: Node[]) => { menus = value } }
 }
 
 test('metric summaries preserve native values and leave unknown formats alone', () => {
@@ -116,9 +124,12 @@ test('native catalog and inspector markers are reversible without changing host 
   assert.equal(countRoot.attributes.size, 0)
 })
 
-test('drawer visibility and reservation share open and fading-backdrop gates', () => {
-  assert.match(WORKBENCH_CSS, /:has\(\[data-mobile-nav="frame"\]:not\(\[data-sidebar-collapsed\]\)\)/)
-  assert.match(WORKBENCH_CSS, /:has\(\[data-mobile-nav="backdrop"\]\)[\s\S]*?--mobile-workbench-nav-height: 0px !important/)
+test('sessions page leaves navigation visible with constant clearance and no drawer animation', () => {
+  assert.doesNotMatch(WORKBENCH_CSS, /html:has\(\[data-mobile-nav="(frame|backdrop)"/)
+  assert.match(WORKBENCH_CSS, /bottom: var\(--mobile-workbench-nav-height\) !important/)
+  assert.match(WORKBENCH_CSS, /\[data-sidebar-collapsed\] > :first-child \{ display: none !important/)
+  assert.match(WORKBENCH_CSS, /\[data-mobile-nav="backdrop"\],[\s\S]*?display: none !important/)
+  assert.match(WORKBENCH_CSS, /html:has\(\[aria-modal="true"\]\) \[data-mobile-workbench="navigation"\]/)
 })
 
 test('inspector remains in the native split and reserves composer clearance once', () => {
@@ -137,9 +148,10 @@ test('catalog title owns a nonshrinking row outside the scrolling native tree', 
 test('jobs and more have separate touch targets and matching title reservations', () => {
   assert.match(WORKBENCH_HEADER_CSS, /--mobile-workbench-header-utilities-width: 44px/)
   assert.match(WORKBENCH_HEADER_CSS, /:not\(\[aria-haspopup\]\) > \[class\*="_count"\][\s\S]*?--mobile-workbench-header-utilities-width: 96px/)
-  assert.match(WORKBENCH_HEADER_CSS, /padding: 0 var\(--mobile-workbench-header-utilities-width\) 0 44px !important/)
+  assert.match(WORKBENCH_HEADER_CSS, /padding: 0 var\(--mobile-workbench-header-utilities-width\) 0 0 !important/)
   assert.match(WORKBENCH_HEADER_CSS, /right: 60px !important;[\s\S]*?width: 44px !important/)
   assert.doesNotMatch(WORKBENCH_HEADER_CSS, /QsffPG/)
+  assert.match(WORKBENCH_HEADER_CSS, /button\[data-mobile-workbench="agents"\]\[aria-expanded\][\s\S]*?min-height: 44px !important/)
 })
 
 test('opening or changing inspector selection reveals once inside the native vertical scrollport', t => {
@@ -186,4 +198,63 @@ test('native fullscreen file panels subtract navigation height once from the vie
   assert.match(panel, /max-height: none !important/)
   assert.match(panel, /box-sizing: border-box/)
   assert.doesNotMatch(panel, /padding-top/)
+})
+
+test('title and group open one native catalog with session title and mode summary', t => {
+  const { header, count, setMenus } = fixture(t)
+  const title = new Node()
+  title.textContent = 'Current session title'
+  title.parentElement = header
+  count.textContent = 'Standard mode'
+  header.queries.set('span[class*="_crumbCurrent"], [class*="_crumbSeg"]:last-child span[class*="_switcherTitle"]', title)
+  const menu = new Node()
+  const tree = new Node()
+  tree.parentElement = menu
+  setMenus([tree])
+  let opens = 0
+  const presentation = createWorkbenchPresentation(() => { opens++; return true })
+  presentation.update(['chat', 'trajectory'])
+  presentation.openInfo()
+  title.listeners.get('click')?.(new Event('click'))
+  assert.equal(opens, 2)
+  assert.equal(menu.children[0].children[0].textContent, 'Current session title')
+  assert.equal(menu.children[0].children[1].textContent, 'Standard mode')
+  assert.equal(tree.parentElement, menu)
+  presentation.clear()
+  assert.equal(title.listeners.size, 0)
+})
+
+test('without a native catalog the shared information entry keeps the original title dialog', t => {
+  const { header, body } = fixture(t)
+  const title = new Node()
+  title.textContent = 'Session without children'
+  title.parentElement = header
+  header.queries.set('span[class*="_crumbCurrent"], [class*="_crumbSeg"]:last-child span[class*="_switcherTitle"]', title)
+  const presentation = createWorkbenchPresentation()
+  presentation.update(['chat', 'trajectory'])
+  presentation.openInfo()
+  assert.equal(body.children.length, 1)
+  assert.equal(body.children[0].shown, true)
+  assert.equal(body.children[0].children[1].textContent, title.textContent)
+  presentation.clear()
+  assert.equal(body.children.length, 0)
+})
+
+test('bottom Plugins and Settings controls have one 44px baseline without trigger-row margins', () => {
+  assert.match(WORKBENCH_CSS, /\[class\*="_settingsArea"\] \[class\*="_triggerRow"\] \{ margin: 0 !important; width: 100% !important/)
+  assert.match(WORKBENCH_CSS, /button\[class\*="_panelRow"\],[\s\S]*?button\[class\*="_trigger"\] \{[\s\S]*?height: 44px !important;[\s\S]*?padding: 0 8px !important/)
+})
+
+test('root directory stays hidden while group follows mode and parent return remains available', () => {
+  assert.match(WORKBENCH_HEADER_CSS, /\[data-mobile-nav="toggle"\],[\s\S]*?display: none !important/)
+  assert.doesNotMatch(WORKBENCH_HEADER_CSS, /button\[data-mobile-nav="toggle"\],\s*[^{}]*button\[data-workbench-parent\] \{[^}]*display: flex !important/)
+  assert.match(WORKBENCH_HEADER_CSS, /button\[data-mobile-workbench="agents"\]\[aria-expanded\][\s\S]*?order: 1;/)
+  assert.match(WORKBENCH_HEADER_CSS, /\[data-workbench-child\] \[class\*="_titleRow"\] \{ padding-left: 44px !important/)
+})
+
+test('Jobs pressed and expanded feedback is scoped to its native trigger, not the popup', () => {
+  assert.match(WORKBENCH_HEADER_CSS, /> button\[aria-expanded="true"\] \{[^}]*background: var\(--dsw-alias-interactive-bg-hover\)/)
+  assert.match(WORKBENCH_HEADER_CSS, /> button:active \{[^}]*background: var\(--dsw-alias-interactive-bg-active\)/)
+  assert.doesNotMatch(WORKBENCH_CSS, /\[class\*="_triggerRow"\] > button\[class\*="_trigger"\]/)
+  assert.match(WORKBENCH_CSS, /\[class\*="_triggerRow"\] button\[class\*="_trigger"\] \{[^}]*height: 44px !important/)
 })

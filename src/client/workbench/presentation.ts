@@ -7,9 +7,10 @@ export function workbenchStatLabel(label: string): string | null {
 }
 
 /** Mark presentation boundaries without moving React-owned elements. */
-export function createWorkbenchPresentation(): { update: (viewIds: readonly string[]) => void; clear: () => void } {
+export function createWorkbenchPresentation(openCatalog: (pointerStartedOpen: boolean) => boolean = () => false): { update: (viewIds: readonly string[]) => void; clear: () => void; openInfo: (pointerStartedOpen?: boolean) => void } {
+  let openInfo: (pointerStartedOpen?: boolean) => void = () => {}
   let marked = new Map<Element, Set<string>>()
-  const menuHeadings = new Map<Element, HTMLElement>()
+  const menuHeadings = new Map<Element, { element: HTMLElement; name: HTMLElement; mode: HTMLElement }>()
   let selectedPane: HTMLElement | null = null
   let selectedRowKey: string | null = null
   let title: HTMLElement | null = null
@@ -19,6 +20,7 @@ export function createWorkbenchPresentation(): { update: (viewIds: readonly stri
     releaseTitle?.()
     title = next
     releaseTitle = undefined
+    openInfo = () => {}
     if (!next) return
     const original = ['role', 'tabindex', 'aria-label'].map(key => [key, next.getAttribute(key)] as const)
     next.setAttribute('role', 'button')
@@ -26,7 +28,8 @@ export function createWorkbenchPresentation(): { update: (viewIds: readonly stri
     next.setAttribute('aria-label', '查看会话信息')
     let dialog: HTMLDialogElement | null = null
     const close = (): void => { dialog?.remove(); dialog = null }
-    const open = (): void => {
+    const open = (pointerStartedOpen = false): void => {
+      if (openCatalog(pointerStartedOpen)) return
       close()
       dialog = document.createElement('dialog')
       dialog.setAttribute('data-workbench-title-dialog', '')
@@ -52,11 +55,13 @@ export function createWorkbenchPresentation(): { update: (viewIds: readonly stri
     const keydown = (event: KeyboardEvent): void => {
       if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); open() }
     }
-    next.addEventListener('click', open)
+    openInfo = open
+    const click = (event: Event): void => { event.stopPropagation(); open() }
+    next.addEventListener('click', click)
     next.addEventListener('keydown', keydown)
     releaseTitle = () => {
       close()
-      next.removeEventListener('click', open)
+      next.removeEventListener('click', click)
       next.removeEventListener('keydown', keydown)
       for (const [key, value] of original) {
         if (value === null) next.removeAttribute(key)
@@ -69,7 +74,7 @@ export function createWorkbenchPresentation(): { update: (viewIds: readonly stri
       for (const attribute of attributes) element.removeAttribute(attribute)
     }
     marked.clear()
-    for (const heading of menuHeadings.values()) heading.remove()
+    for (const heading of menuHeadings.values()) heading.element.remove()
     menuHeadings.clear()
     selectedPane = null
     selectedRowKey = null
@@ -86,7 +91,7 @@ export function createWorkbenchPresentation(): { update: (viewIds: readonly stri
     }
     const header = document.querySelector('header:has([data-conversation-tabs])')
     mark(header, 'data-mobile-workbench-header')
-    bindTitle(header?.querySelector<HTMLElement>('span[class*="_crumbCurrent"]') ?? null)
+    bindTitle(header?.querySelector<HTMLElement>('span[class*="_crumbCurrent"], [class*="_crumbSeg"]:last-child span[class*="_switcherTitle"]') ?? null)
     // Extra third-party views keep their native tab strip available.
     if (viewIds.length === 2 && viewIds.includes('chat') && viewIds.includes('trajectory')) {
       mark(header, 'data-workbench-tabs-owned')
@@ -129,7 +134,7 @@ export function createWorkbenchPresentation(): { update: (viewIds: readonly stri
         if (label.getAttribute('data-workbench-stat-label') !== summary) label.setAttribute('data-workbench-stat-label', summary)
       }
     }
-    const count = header?.querySelector('[data-slot="conversation.session.header.actions"] button[aria-haspopup="tree"]')
+    const count = header?.querySelector('[data-slot="conversation.session.header.actions"] button[aria-haspopup="tree"]:not([data-mobile-workbench="agents"])')
     mark(count?.parentElement ?? null, 'data-workbench-agent-count')
     const menus = new Set<Element>()
     for (const tree of document.querySelectorAll('[role="tree"][class*="_menuBody"]')) {
@@ -138,15 +143,22 @@ export function createWorkbenchPresentation(): { update: (viewIds: readonly stri
       menus.add(menu)
       mark(menu, 'data-workbench-agent-menu')
       if (!menuHeadings.has(menu)) {
-        const heading = document.createElement('h2')
-        heading.setAttribute('data-workbench-agent-heading', '')
-        heading.textContent = tree.getAttribute('aria-label') ?? '子智能体'
-        menu.prepend(heading)
-        menuHeadings.set(menu, heading)
+        const element = document.createElement('div')
+        element.setAttribute('data-workbench-agent-heading', '')
+        const name = document.createElement('h2')
+        const mode = document.createElement('p')
+        element.append(name, mode)
+        menu.prepend(element)
+        menuHeadings.set(menu, { element, name, mode })
       }
+      const heading = menuHeadings.get(menu)!
+      const name = title?.textContent ?? ''
+      const mode = header?.querySelector('[data-slot="conversation.session.header.actions"] > span[title]')?.textContent ?? ''
+      if (heading.name.textContent !== name) heading.name.textContent = name
+      if (heading.mode.textContent !== mode) heading.mode.textContent = mode
     }
     for (const [menu, heading] of menuHeadings) {
-      if (!menus.has(menu)) { heading.remove(); menuHeadings.delete(menu) }
+      if (!menus.has(menu)) { heading.element.remove(); menuHeadings.delete(menu) }
     }
     for (const [element, attributes] of marked) {
       for (const attribute of attributes) {
@@ -155,5 +167,5 @@ export function createWorkbenchPresentation(): { update: (viewIds: readonly stri
     }
     marked = next
   }
-  return { update, clear }
+  return { update, clear, openInfo: pointerStartedOpen => { openInfo(pointerStartedOpen) } }
 }

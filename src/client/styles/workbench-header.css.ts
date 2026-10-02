@@ -1,4 +1,5 @@
 const H = 'html[data-mobile-workbench-active="true"] [data-mobile-nav="frame"] [data-phase] header[data-mobile-workbench-header]'
+const A = '[class*="_titleCluster"] [class*="_headerActions"] button[data-mobile-workbench="agents"][aria-expanded]'
 const J = '[class*="_headerActions"] [class*="_root"]:has(> button[class*="_trigger"][aria-expanded]:not([aria-haspopup]) > [class*="_count"])'
 
 export const WORKBENCH_HEADER_CSS = `@media (max-width: 1023px) and (pointer: coarse) {
@@ -13,21 +14,47 @@ export const WORKBENCH_HEADER_CSS = `@media (max-width: 1023px) and (pointer: co
     box-sizing: border-box !important;
     flex-shrink: 0;
   }
+  ${H} [data-mobile-nav="toggle"],
   ${H} [data-conversation-header-leading]:not(:has(button, a)),
   ${H} [data-conversation-header-corner],
   ${H}[data-workbench-tabs-owned] [data-conversation-tabs],
   ${H} [data-workbench-agent-count],
+  ${H} [data-slot="conversation.session.header.lineage"] [class*="_root"]:not([class*="_switcherRoot"]):has(> button[aria-haspopup="tree"]),
   ${H} [data-slot="conversation.session.header.utilities"] > :has([data-open-target]) {
     display: none !important;
   }
   ${H} [class*="_titleRow"] {
     display: block !important;
-    padding: 0 var(--mobile-workbench-header-utilities-width) 0 44px !important;
+    padding: 0 var(--mobile-workbench-header-utilities-width) 0 0 !important;
     min-height: 44px !important;
     width: 100% !important;
     min-width: 0 !important;
     box-sizing: border-box !important;
   }
+  ${H}[data-workbench-child] [class*="_titleRow"] { padding-left: 44px !important; }
+  ${H} ${A} {
+    position: static !important;
+    display: inline-flex !important;
+    align-items: center;
+    gap: 6px;
+    min-height: 44px !important;
+    min-width: 44px !important;
+    max-width: 100%;
+    padding: 0 8px !important;
+    border: 0;
+    border-radius: 12px;
+    background: var(--dsw-alias-interactive-bg-hover);
+    color: var(--dsw-alias-label-secondary);
+    font: inherit;
+    font-size: 13px;
+    white-space: nowrap;
+    flex: none;
+    order: 1;
+    touch-action: manipulation;
+  }
+  ${H} ${A} svg { width: 20px; height: 20px; flex: none; }
+  ${H} ${A} [data-workbench-count] { font-size: 11px; padding: 0 4px; height: 20px; }
+  ${H} ${A}[aria-expanded="true"] { color: var(--dsw-static-deepseek-500); }
   ${H} [class*="_titleCluster"] {
     display: flex !important;
     flex-direction: column !important;
@@ -150,15 +177,24 @@ export const WORKBENCH_HEADER_CSS = `@media (max-width: 1023px) and (pointer: co
     min-width: 44px !important;
     height: 44px !important;
     min-height: 44px !important;
-    padding: 0 2px !important;
+    padding: 0 !important;
     gap: 2px !important;
     justify-content: center !important;
     border-radius: 12px !important;
+    color: var(--dsw-alias-label-secondary) !important;
+  }
+  /* Match the native More Button ghost fills; only the trigger owns feedback. */
+  ${H} ${J} > button:hover,
+  ${H} ${J} > button[aria-expanded="true"] {
+    background: var(--dsw-alias-interactive-bg-hover) !important;
+  }
+  ${H} ${J} > button:active {
+    background: var(--dsw-alias-interactive-bg-active) !important;
   }
   ${H} ${J} > button [class*="_count"] {
     min-width: 0;
     margin: 0 !important;
-    font-size: 10px !important;
+    font-size: 13px !important;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -175,7 +211,6 @@ export const WORKBENCH_HEADER_CSS = `@media (max-width: 1023px) and (pointer: co
     margin: 0 !important;
   }
   ${H} [class*="_headerUtilities"] button[aria-haspopup="menu"],
-  ${H} [class*="_titleCluster"] button[data-mobile-nav="toggle"],
   ${H} [class*="_titleCluster"] button[data-workbench-parent] {
     width: 44px !important;
     height: 44px !important;
@@ -244,7 +279,12 @@ export const WORKBENCH_HEADER_CSS = `@media (max-width: 1023px) and (pointer: co
     font-size: 14px;
     font-weight: 600;
     line-height: 22px;
+    max-height: 25dvh;
+    overflow-y: auto;
+    overflow-wrap: anywhere;
   }
+  [data-workbench-agent-heading] h2 { font-size: 16px; line-height: 22px; margin: 0; }
+  [data-workbench-agent-heading] p { font-size: 12px; line-height: 18px; margin: 4px 0 0; color: var(--dsw-alias-label-secondary); }
   [data-workbench-agent-menu] > [role="tree"] {
     flex: 1 1 auto !important;
     min-height: 0 !important;

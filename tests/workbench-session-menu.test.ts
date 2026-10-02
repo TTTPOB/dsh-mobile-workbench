@@ -97,12 +97,20 @@ test('native wrapper attachment reads latest ID, shows outcome, reinjects once a
   current = 'child'
   await button.listeners.get('click')!()
   assert.deepEqual(copied, ['child'])
-  assert.equal(status.textContent, 'copySessionIdSuccess')
-  assert.equal(status.hidden, false)
+  const path = button.children[0].children[0].children[0]
+  const copyPath = 'M5.5 5.5h8v8h-8zM10.5 5.5v-3h-8v8h3'
+  assert.equal(path.attrs.get('d'), 'M3 8l3 3 7-7')
+  assert.equal(button.children[1].textContent, 'copySessionId')
+  assert.equal(button.attrs.get('aria-label'), 'copySessionIdSuccess')
+  assert.equal(status.textContent, '')
+  assert.equal(status.hidden, true)
   assert.equal(native.parentElement, nativeWrap)
   rejected = true
   await button.listeners.get('click')!()
   assert.equal(status.textContent, 'copySessionIdFailure')
+  assert.equal(status.hidden, false)
+  assert.equal(path.attrs.get('d'), copyPath, 'a failed retry never keeps the success check')
+  assert.equal(button.attrs.get('aria-label'), 'copySessionId')
   assert.equal(button.disabled, false)
   mutate(); flush()
   assert.equal(viewport.children.length, 2, 'same menu has exactly one added row')
@@ -113,6 +121,9 @@ test('native wrapper attachment reads latest ID, shows outcome, reinjects once a
   visibleTrigger = true
   mutate(); flush()
   assert.equal(viewport.children.length, 2)
+  const reopened = viewport.children[1].children[0]
+  assert.equal(reopened.children[0].children[0].children[0].attrs.get('d'), copyPath)
+  assert.equal(viewport.children[1].children[1].hidden, true)
   dispose()
   assert.equal(disposed, true)
   assert.equal(viewport.children.length, 1)

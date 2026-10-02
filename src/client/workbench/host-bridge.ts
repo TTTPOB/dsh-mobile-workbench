@@ -6,11 +6,19 @@ import { viewIndex, type NavigationEvidence, type WorkbenchDestination } from '.
 export function createHostBridge(
   viewIds: () => readonly string[],
   agentCounts: () => Pick<NavigationEvidence, 'agentActiveCount' | 'agentTotalCount'> = () => ({}),
+  closeDrawer: () => void = () => {},
+  openSessions: () => void = () => {},
+  conversation: { show: () => void; hasSession: () => boolean } = { show: () => {}, hasSession: () => true },
 ) {
+  let pendingFrame: number | undefined
+  const clear = (): void => {
+    if (pendingFrame !== undefined) window.cancelAnimationFrame(pendingFrame)
+    pendingFrame = undefined
+  }
   const header = (): HTMLElement | null => getFrame()?.querySelector('header:has([role="tablist"]), header:has(button[aria-haspopup="tree"])') ?? null
   const tabs = (): HTMLButtonElement[] => Array.from(header()?.querySelectorAll<HTMLButtonElement>('[role="tablist"] > button[role="tab"]') ?? [])
   const agentTrigger = (): HTMLButtonElement | null => {
-    const buttons = Array.from(header()?.querySelectorAll<HTMLButtonElement>('button[aria-haspopup="tree"]') ?? [])
+    const buttons = Array.from(header()?.querySelectorAll<HTMLButtonElement>('button[aria-haspopup="tree"]:not([data-mobile-workbench="agents"])') ?? [])
     // Prefer the current-session count/switcher over an ancestor's return title.
     return buttons.at(-1) ?? null
   }
@@ -28,11 +36,13 @@ export function createHostBridge(
     const selected = buttons.findIndex(button => button.getAttribute('aria-selected') === 'true')
     const trigger = agentTrigger()
     return {
+      sessionsOpen: getFrame() !== null && getFrame()?.hasAttribute('data-sidebar-collapsed') === false,
+      hasSessions: getFrame() !== null,
       selectedView: ids.length === buttons.length ? ids[selected] : undefined,
       filesOpen: filesOpen(),
       agentsOpen: trigger?.getAttribute('aria-expanded') === 'true',
-      hasChat: viewIndex(ids, 'chat', buttons.length) >= 0,
-      hasTrajectory: viewIndex(ids, 'trajectory', buttons.length) >= 0,
+      hasChat: ids.includes('chat') || !conversation.hasSession(),
+      hasTrajectory: conversation.hasSession() && ids.includes('trajectory'),
       ...agentCounts(),
       hasAgents: trigger !== null,
       hasFiles: document.querySelector(`${HOST_FILES_OPENER}, ${HOST_FILES_CLOSER}, [data-aionui-explorer-col]`) !== null,
@@ -49,21 +59,35 @@ export function createHostBridge(
     document.querySelector('[role="tree"][class*="_menuBody"]')?.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))
   }
   const activate = (destination: WorkbenchDestination, pointerStartedOpen = false): void => {
-    if (destination === 'files') {
+    clear()
+    if (destination === 'sessions') {
       closeAgents()
-      if (!filesOpen()) openFilesPanel()
+      closeFiles()
+      openSessions()
       return
     }
-    closeFiles()
+    closeDrawer()
     if (destination === 'agents') {
       const trigger = agentTrigger()
       if (pointerStartedOpen || trigger?.getAttribute('aria-expanded') === 'true') closeAgents()
       else trigger?.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }))
       return
     }
-    closeAgents()
-    const buttons = tabs()
-    buttons[viewIndex(viewIds(), destination, buttons.length)]?.click()
+    conversation.show()
+    const enter = (): void => {
+      if (destination === 'files') {
+        closeAgents()
+        if (!filesOpen()) openFilesPanel()
+        return
+      }
+      closeFiles()
+      closeAgents()
+      const buttons = tabs()
+      buttons[viewIndex(viewIds(), destination, buttons.length)]?.click()
+    }
+    // A global panel unmounts the header; let the native Conversation remount once.
+    if (header() || (destination === 'chat' && !conversation.hasSession())) enter()
+    else pendingFrame = window.requestAnimationFrame(() => { pendingFrame = undefined; enter() })
   }
-  return { evidence, activate }
+  return { evidence, activate, clear }
 }

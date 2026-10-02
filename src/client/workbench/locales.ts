@@ -1,6 +1,8 @@
 export const WORKBENCH_NS = 'mobileWorkbench'
 export const zh = {
   navigation: '工作台导航',
+  sessions: '会话列表',
+  sessionInfo: '会话信息',
   chat: '对话',
   trajectory: '轨迹',
   agents: '智能体',
@@ -14,6 +16,8 @@ export const zh = {
 export type WorkbenchKey = keyof typeof zh
 export const en: Record<WorkbenchKey, string> = {
   navigation: 'Workbench navigation',
+  sessions: 'Sessions',
+  sessionInfo: 'Session information',
   chat: 'Chat',
   trajectory: 'Trace',
   agents: 'Agents',
