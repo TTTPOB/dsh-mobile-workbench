@@ -7,6 +7,9 @@ export declare const zh: {
     files: string;
     emptyAgents: string;
     unavailable: string;
+    copySessionId: string;
+    copySessionIdSuccess: string;
+    copySessionIdFailure: string;
 };
 export type WorkbenchKey = keyof typeof zh;
 export declare const en: Record<WorkbenchKey, string>;

@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
+import { subagentCounts } from '../src/client/workbench/agent-counts.ts'
 import { destinationAvailable, resolveDestination, viewIndex, type NavigationEvidence } from '../src/client/workbench/navigation.ts'
 
 const base: NavigationEvidence = {
@@ -50,4 +51,37 @@ test('stable official view ids map onto the ordered role tab strip', () => {
 test('ledger and DOM mismatch never clicks a different view', () => {
   assert.equal(viewIndex(['chat', 'trajectory'], 'chat', 1), -1)
   assert.equal(viewIndex([], 'chat', 0), -1)
+})
+
+test('catalog counts retain the total while live running status changes', () => {
+  const entries = Array.from({ length: 9 }, (_, i) => ({ id: 'child-' + i }))
+  const snapshot = { current: 'root', byId: { 'child-0': { running: true } },
+    projectionsBySession: { root: { values: { subagentCatalog: entries } } } }
+  assert.deepEqual(subagentCounts(snapshot), { agentActiveCount: 1, agentTotalCount: 9 })
+  const statuses = new Map(entries.map(entry => [entry.id, { running: false }]))
+  assert.deepEqual(subagentCounts(snapshot, statuses), { agentActiveCount: 0, agentTotalCount: 9 })
+  for (const entry of entries.slice(0, 3)) statuses.set(entry.id, { running: true })
+  assert.deepEqual(subagentCounts(snapshot, statuses), { agentActiveCount: 3, agentTotalCount: 9 })
+})
+
+test('child header prefers its own populated catalog and otherwise its parent switcher', () => {
+  const snapshot = { byId: { child: { id: 'child', retainedBy: { mainView: 1 }, parentId: 'parent' } },
+    projectionsBySession: {
+      child: { state: 'ready', values: { subagentCatalog: [] as { id: string }[] } },
+      parent: { values: { subagentCatalog: [{ id: 'child' }, { id: 'sibling' }] } },
+    } }
+  assert.deepEqual(subagentCounts(snapshot), { agentActiveCount: 0, agentTotalCount: 2 })
+  snapshot.projectionsBySession.child.state = 'error'
+  assert.deepEqual(subagentCounts(snapshot), { agentActiveCount: 0, agentTotalCount: 0 })
+  snapshot.projectionsBySession.child.state = 'ready'
+  snapshot.projectionsBySession.child.values.subagentCatalog.push({ id: 'grandchild' })
+  assert.deepEqual(subagentCounts(snapshot), { agentActiveCount: 0, agentTotalCount: 1 })
+})
+
+test('missing catalog stays unknown while a loaded empty root catalog reports zero', () => {
+  assert.equal(subagentCounts({ current: 'root', byId: {} }), undefined)
+  assert.equal(subagentCounts({ byId: {} }), undefined)
+  assert.deepEqual(subagentCounts({ current: 'root', byId: {},
+    projectionsBySession: { root: { values: { subagentCatalog: [] } } } }),
+  { agentActiveCount: 0, agentTotalCount: 0 })
 })

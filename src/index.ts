@@ -12,7 +12,10 @@ interface Route {
 export interface HostContext {
   effect(install: () => (() => void), label?: string): void
   inject(services: readonly string[], apply: (scoped: HostContext & {
-    webServer: { register(route: Route): () => void }
+    webServer: {
+      register(route: Route): () => void
+      tapIndex(transform: (html: string) => string): () => void
+    }
   }) => void): void
 }
 
@@ -47,6 +50,14 @@ export function apply(ctx: HostContext): void {
         body: readFileSync(new URL(`../assets/workbench-${size}.png`, import.meta.url)),
       })),
     ]
+    // Relay authentication also protects the same-origin manifest fetch.
+    web.effect(() => web.webServer.tapIndex(html => html.replace(/<link\b[^>]*>/gi, link => {
+      if (!/\srel\s*=\s*(?:"manifest"|'manifest'|manifest(?=\s|\/?>))/i.test(link)) return link
+      const crossorigin = /\scrossorigin(?:\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+))?/i
+      return crossorigin.test(link)
+        ? link.replace(crossorigin, ' crossorigin="use-credentials"')
+        : link.replace(/\/?>$/, ' crossorigin="use-credentials"$&')
+    })), 'mobile-workbench: manifest credentials')
     for (const asset of assets) {
       web.effect(() => web.webServer.register({
         kind: 'exact',

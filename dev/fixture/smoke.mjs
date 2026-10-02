@@ -77,6 +77,8 @@ try {
   const delegated = toolCall(await collect(adapter.stream(scenarioRequest('演示子智能体'))))
   assert.equal(delegated.name, 'subagent')
   assert.equal(JSON.parse(delegated.arguments).run_in_background, false)
+  const namedChild = toolCall(await collect(adapter.stream(scenarioRequest('演示子智能体：检查手机菜单滚动与长标题排版'))))
+  assert.equal(JSON.parse(namedChild.arguments).description, '检查手机菜单滚动与长标题排版')
   const childRequest = scenarioRequest(JSON.parse(delegated.arguments).prompt)
   const childCall = toolCall(await collect(adapter.stream(childRequest)))
   assert.equal(childCall.name, 'read')
@@ -108,6 +110,28 @@ try {
   assert.ok(confirmationText.includes('检查子智能体'))
   assert.ok(confirmationText.includes('MOBILE_AUDIT_QUESTION_COMPLETE'))
   removeAnswerer()
+  // Inspect generated calls and supplied result branches only; do not launch a process.
+  const backgroundRequest = scenarioRequest('演示后台任务')
+  const backgroundCall = toolCall(await collect(adapter.stream(backgroundRequest)))
+  assert.equal(backgroundCall.name, 'bash')
+  assert.deepEqual(JSON.parse(backgroundCall.arguments), {
+    command: 'node -e "setTimeout(() => console.log(\'MOBILE_AUDIT_BACKGROUND_DONE\'), 20000)"',
+    description: '演示本地后台任务固定标记',
+    workdir: fileURLToPath(new URL('./workspace', import.meta.url)),
+    run_in_background: true,
+  })
+  for (const [text, isError, expected] of [
+    ['started background job fixture-job-1', false, '本地后台测试已提交，尚未完成'],
+    ['background jobs unavailable', true, '后台测试未确认提交'],
+  ]) {
+    const response = await collect(adapter.stream({ ...backgroundRequest, messages: [...backgroundRequest.messages,
+      { role: 'tool', source: { kind: 'tool', callId: backgroundCall.id }, isError, content: [{ type: 'text', text }] }] }))
+    const reply = response.filter(chunk => chunk.type === 'text-delta').map(chunk => chunk.text).join('')
+    assert.ok(reply.includes(expected))
+    assert.ok(!reply.includes('已完成'))
+    assert.ok(!response.some(chunk => chunk.type === 'tool-call-delta'))
+    assert.equal(response.at(-1).reason.kind, 'stop')
+  }
   const approvalRequest = scenarioRequest('演示审批')
   const approvalCall = toolCall(await collect(adapter.stream(approvalRequest)))
   assert.equal(approvalCall.name, 'bash')
@@ -135,7 +159,7 @@ try {
   }
   await fiber.dispose()
   assert.deepEqual(ctx.llm.listProviders(), [])
-  console.log(JSON.stringify({ registered: true, dispose: true, twoSessionIsolation: true, cancellation: true, replyCharacters: fixture.REPLY.length, tool: call.name, childRecursionGuard: true, officialQuestionTool: true, questionConfirmation: true, approvalArguments: true, approvalResultBranches: true, dailyReading: true, extendedModelName: true, syntheticStatistics: true }))
+  console.log(JSON.stringify({ registered: true, dispose: true, twoSessionIsolation: true, cancellation: true, replyCharacters: fixture.REPLY.length, tool: call.name, childRecursionGuard: true, officialQuestionTool: true, questionConfirmation: true, approvalArguments: true, approvalResultBranches: true, dailyReading: true, extendedModelName: true, syntheticStatistics: true, backgroundArguments: true, backgroundReplyBranches: true }))
 } finally {
   await ctx.fiber.dispose()
 }

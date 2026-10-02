@@ -7,12 +7,15 @@ import { WORKBENCH_HEADER_CSS } from '../styles/workbench-header.css.ts'
 import { WORKBENCH_TRAJECTORY_CSS } from '../styles/workbench-trajectory.css.ts'
 import { createWorkbenchPresentation } from './presentation.ts'
 import { createHostBridge } from './host-bridge.ts'
+import { subagentCounts, type AgentStatusSource } from './agent-counts.ts'
 import { WorkbenchNav, type WorkbenchSnapshot } from './WorkbenchNav.tsx'
 import { WORKBENCH_NS, en, zh } from './locales.ts'
+import { installWorkbenchSessionMenu } from './session-menu.ts'
 
 /** Install reversible mobile navigation using the official shell overlay slot. */
 export function installWorkbench(ctx: ClientContext): void {
   ctx.effect(() => ctx.locale.register(WORKBENCH_NS, { zh, en }), 'mobile-workbench: dictionaries')
+  installWorkbenchSessionMenu(ctx)
   ctx.effect(() => {
     const tag = document.createElement('style')
     tag.dataset.pluginCss = 'dsh-web-mobile/workbench.css'
@@ -25,7 +28,11 @@ export function installWorkbench(ctx: ClientContext): void {
   const viewIds = (): string[] => ctx.slots.entriesOfSlot('conversation.view')
     .filter(entry => entry.options.label !== undefined)
     .map(entry => entry.options.id ?? '')
-  const bridge = createHostBridge(viewIds)
+  const statusSource = (): AgentStatusSource | undefined =>
+    (ctx.get('uiSession') as { sessionStatus?: AgentStatusSource } | undefined)?.sessionStatus
+  const bridge = createHostBridge(viewIds, () => subagentCounts(
+    ctx.sessions.list.getSnapshot(), statusSource()?.getSnapshot(),
+  ) ?? {})
   const presentation = createWorkbenchPresentation()
   let snapshot: WorkbenchSnapshot = { ...bridge.evidence(), mobile: mq.matches }
   const listeners = new Set<() => void>()
@@ -67,11 +74,15 @@ export function installWorkbench(ctx: ClientContext): void {
       attributeFilter: ['aria-label', 'aria-selected', 'aria-expanded', 'data-aionui-explorer-open', 'data-aionui-preview-open', 'data-rightbar-collapsed', 'data-sidebar-right-open'],
     })
     const stopViews = ctx.slots.subscribe('conversation.view', schedule)
+    const stopSessions = ctx.sessions.list.subscribe(schedule)
+    const stopStatus = statusSource()?.subscribe(schedule)
     mq.addEventListener('change', schedule)
     refresh()
     return () => {
       observer.disconnect()
       stopViews()
+      stopSessions()
+      stopStatus?.()
       mq.removeEventListener('change', schedule)
       if (raf !== undefined) window.cancelAnimationFrame(raf)
       document.documentElement.removeAttribute('data-mobile-workbench-active')

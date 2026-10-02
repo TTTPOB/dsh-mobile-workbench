@@ -4,7 +4,7 @@ export const WORKBENCH_COMPOSER_CSS = `@media (max-width: 1023px) and (pointer: 
   html [data-mobile-nav="frame"] [data-phase] [data-composer-card][data-mobile-workbench-composer="true"] {
     max-height: var(--mobile-compose-card-max, 320px) !important;
     gap: 6px !important;
-    padding-top: 8px !important;
+    padding: 8px 0 0 !important;
     position: relative;
     border-radius: 18px;
     box-shadow: 0 4px 18px rgb(0 0 0 / 5%);
@@ -36,23 +36,53 @@ export const WORKBENCH_COMPOSER_CSS = `@media (max-width: 1023px) and (pointer: 
     display: flex !important;
     align-items: center;
     flex-wrap: nowrap !important;
-    flex: 0 0 44px;
-    height: 44px;
-    min-height: 44px;
-    gap: 2px !important;
-    padding: 0 4px !important;
+    flex: 0 0 60px;
+    height: 60px;
+    min-height: 60px;
+    gap: 6px !important;
+    padding: 8px !important;
+    justify-content: flex-start !important;
     box-sizing: border-box;
     overflow: visible;
     --dsh-composer-model-text-display: block;
     --dsh-composer-model-icon-display: none;
+  }
+  /* Preserve the permission Menu measurement box: contents gives portal placement a zero rect. */
+  html [data-mobile-nav="frame"] [data-phase] [data-composer-card][data-mobile-workbench-composer="true"] > [data-mobile-compose-bar] [data-slot="conversation.input.permission"] > span {
+    display: inline-flex !important;
+    flex: 0 0 auto;
+    order: 10;
+    position: relative;
+  }
+  html [data-mobile-nav="frame"] [data-phase] [data-composer-card][data-mobile-workbench-composer="true"] > [data-mobile-compose-bar] > [class*="_tools"] > button[class*="_add"] {
+    border-radius: 10px !important;
+    background: color-mix(in srgb, currentColor 4%, transparent);
+    border: 1px solid color-mix(in srgb, currentColor 8%, transparent);
+  }
+  /* The host shell owns its runtime height clamp; only its listbox scrolls. */
+  html [data-composer-card][data-mobile-workbench-composer="true"] [data-trigger-menu] {
+    display: flex !important;
+    flex-direction: column;
+    overflow: hidden !important;
+    min-height: 0;
+  }
+  html [data-composer-card][data-mobile-workbench-composer="true"] [data-trigger-menu] > [role="listbox"] {
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    overflow-y: auto !important;
+    overscroll-behavior-y: contain;
+    touch-action: pan-y pinch-zoom;
+    -webkit-overflow-scrolling: touch;
+  }
+  html [data-composer-card][data-mobile-workbench-composer="true"] [data-trigger-menu] [role="option"] {
+    flex-shrink: 0 !important;
   }
   /* Flatten layout wrappers, not React ownership. No menus or plugin controls are removed. */
   html [data-mobile-nav="frame"] [data-phase] [data-composer-card][data-mobile-workbench-composer="true"] > [data-mobile-compose-bar] > [class*="_tools"],
   html [data-mobile-nav="frame"] [data-phase] [data-composer-card][data-mobile-workbench-composer="true"] > [data-mobile-compose-bar] > [class*="_tools"] > [class*="_modes"],
   html [data-mobile-nav="frame"] [data-phase] [data-composer-card][data-mobile-workbench-composer="true"] > [data-mobile-compose-bar] > [class*="_trailing"],
   html [data-mobile-nav="frame"] [data-phase] [data-composer-card][data-mobile-workbench-composer="true"] > [data-mobile-compose-bar] > [class*="_trailing"] > [class*="_standardControls"],
-  html [data-mobile-nav="frame"] [data-phase] [data-composer-card][data-mobile-workbench-composer="true"] > [data-mobile-compose-bar] [data-slot="conversation.input.permission"],
-  html [data-mobile-nav="frame"] [data-phase] [data-composer-card][data-mobile-workbench-composer="true"] > [data-mobile-compose-bar] [data-slot="conversation.input.permission"] > span {
+  html [data-mobile-nav="frame"] [data-phase] [data-composer-card][data-mobile-workbench-composer="true"] > [data-mobile-compose-bar] [data-slot="conversation.input.permission"] {
     display: contents !important;
   }
   html [data-mobile-nav="frame"] [data-phase] [data-composer-card][data-mobile-workbench-composer="true"] > [data-mobile-compose-bar] [data-mobile-nav="file-upload"],
@@ -117,7 +147,7 @@ export const WORKBENCH_COMPOSER_CSS = `@media (max-width: 1023px) and (pointer: 
     display: flex !important;
     align-items: center;
     flex: 1 1 0 !important;
-    min-width: 40px;
+    min-width: 24px;
     order: 30;
     overflow: visible;
   }
@@ -253,9 +283,10 @@ export const WORKBENCH_COMPOSER_CSS = `@media (max-width: 1023px) and (pointer: 
   html [data-mobile-nav="frame"] [data-phase] [data-composer-card][data-mobile-workbench-composer="true"] > [data-mobile-compose-bar] > [data-mobile-compose-toggle] {
     order: 40;
     appearance: none;
-    border: 0;
-    border-radius: 12px;
-    background: transparent;
+    border-radius: 10px !important;
+    margin-left: auto !important;
+    background: color-mix(in srgb, currentColor 4%, transparent);
+    border: 1px solid color-mix(in srgb, currentColor 8%, transparent);
     color: inherit;
     touch-action: manipulation;
     cursor: pointer;
@@ -272,7 +303,7 @@ export const WORKBENCH_COMPOSER_CSS = `@media (max-width: 1023px) and (pointer: 
   }
   html [data-mobile-nav="frame"] [data-phase] [data-composer-card][data-mobile-workbench-composer="true"] > [data-mobile-compose-bar] > [class*="_trailing"] > button[class*="_primary"] {
     order: 50;
-    border-radius: 14px;
+    border-radius: 10px !important;
     /* rc.2's desktop primary has translateY(-2px); the shared bar needs no offset. */
     transform: none !important;
   }

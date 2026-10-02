@@ -3,7 +3,10 @@ import { HOST_FILES_CLOSER, HOST_FILES_OPENER, openFilesPanel } from '../compone
 import { viewIndex, type NavigationEvidence, type WorkbenchDestination } from './navigation.ts'
 
 /** All rc.2 DOM access stays here; host nodes remain in their React-owned parents. */
-export function createHostBridge(viewIds: () => readonly string[]) {
+export function createHostBridge(
+  viewIds: () => readonly string[],
+  agentCounts: () => Pick<NavigationEvidence, 'agentActiveCount' | 'agentTotalCount'> = () => ({}),
+) {
   const header = (): HTMLElement | null => getFrame()?.querySelector('header:has([role="tablist"]), header:has(button[aria-haspopup="tree"])') ?? null
   const tabs = (): HTMLButtonElement[] => Array.from(header()?.querySelectorAll<HTMLButtonElement>('[role="tablist"] > button[role="tab"]') ?? [])
   const agentTrigger = (): HTMLButtonElement | null => {
@@ -30,7 +33,7 @@ export function createHostBridge(viewIds: () => readonly string[]) {
       agentsOpen: trigger?.getAttribute('aria-expanded') === 'true',
       hasChat: viewIndex(ids, 'chat', buttons.length) >= 0,
       hasTrajectory: viewIndex(ids, 'trajectory', buttons.length) >= 0,
-      agentCount: Number(trigger?.getAttribute('aria-label')?.match(/^(\d+)\s+(?:个子智能体|subagents?)/i)?.[1] ?? 0),
+      ...agentCounts(),
       hasAgents: trigger !== null,
       hasFiles: document.querySelector(`${HOST_FILES_OPENER}, ${HOST_FILES_CLOSER}, [data-aionui-explorer-col]`) !== null,
     }

@@ -267,7 +267,7 @@ test('shared bar neutralizes the native primary offset and gives menus visible a
   assert.match(WORKBENCH_COMPOSER_CSS, /svg:not\(\[class\*="_chevron"\]\)/)
   assert.match(WORKBENCH_COMPOSER_CSS, /\[class\*="_chevron"\] \{\s+display: block !important;[^}]*position: absolute;[^}]*top: 50%/s)
   assert.match(WORKBENCH_COMPOSER_CSS, /padding: 0 18px 0 6px !important/)
-  assert.equal((WORKBENCH_COMPOSER_CSS.match(/background: color-mix\(in srgb, currentColor 4%, transparent\)/g) ?? []).length, 2)
+  assert.equal((WORKBENCH_COMPOSER_CSS.match(/background: color-mix\(in srgb, currentColor 4%, transparent\)/g) ?? []).length, 4)
 })
 
 test('only model previews clamp to two lines, or name plus effort on separate lines', () => {
@@ -286,6 +286,16 @@ test('official model menu reveals full names at both levels without changing oth
   assert.match(menuRules, /-webkit-line-clamp: unset;\s+max-height: none/)
   for (const line of menuRules.split('\n').filter(line => line.includes('[role="menu"]'))) assert.ok(line.includes(scope), line)
   assert.doesNotMatch(source, /setAttribute\('(?:aria-label|title)',.*short/)
+})
+
+test('empty and loaded toolbar share edge padding, fixed hitboxes and a right-pinned tail', () => {
+  assert.match(WORKBENCH_COMPOSER_CSS, /height: 60px;[\s\S]*?gap: 6px !important;\s+padding: 8px !important;\s+justify-content: flex-start !important/)
+  assert.match(WORKBENCH_COMPOSER_CSS, /padding: 8px 0 0 !important/)
+  assert.match(WORKBENCH_COMPOSER_CSS, /\[data-mobile-compose-toggle\] \{[^}]*margin-left: auto !important/s)
+  assert.doesNotMatch(WORKBENCH_COMPOSER_CSS, /border-radius: (?:12|14|50)px/)
+  assert.match(WORKBENCH_COMPOSER_CSS, /conversation.input.permission"\] > span \{\s+display: inline-flex !important/)
+  assert.match(WORKBENCH_COMPOSER_CSS, /\[data-trigger-menu\] > \[role="listbox"\] \{[^}]*min-height: 0 !important;[^}]*overflow-y: auto !important;[^}]*overscroll-behavior-y: contain/s)
+  assert.doesNotMatch(source, /dispatchEvent|onPick|stopImmediatePropagation/)
 })
 
 test('footer reveals the existing host percentage without copying or fabricating values', () => {

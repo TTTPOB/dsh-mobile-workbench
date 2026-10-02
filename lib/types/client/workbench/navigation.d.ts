@@ -5,7 +5,8 @@ export interface NavigationEvidence {
     agentsOpen: boolean;
     hasChat: boolean;
     hasTrajectory: boolean;
-    agentCount?: number;
+    agentActiveCount?: number;
+    agentTotalCount?: number;
     hasAgents: boolean;
     hasFiles: boolean;
 }

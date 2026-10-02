@@ -11,6 +11,7 @@ export interface HostContext {
     inject(services: readonly string[], apply: (scoped: HostContext & {
         webServer: {
             register(route: Route): () => void;
+            tapIndex(transform: (html: string) => string): () => void;
         };
     }) => void): void;
 }

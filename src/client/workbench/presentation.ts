@@ -9,6 +9,7 @@ export function workbenchStatLabel(label: string): string | null {
 /** Mark presentation boundaries without moving React-owned elements. */
 export function createWorkbenchPresentation(): { update: (viewIds: readonly string[]) => void; clear: () => void } {
   let marked = new Map<Element, Set<string>>()
+  const menuHeadings = new Map<Element, HTMLElement>()
   let title: HTMLElement | null = null
   let releaseTitle: (() => void) | undefined
   const bindTitle = (next: HTMLElement | null): void => {
@@ -66,6 +67,8 @@ export function createWorkbenchPresentation(): { update: (viewIds: readonly stri
       for (const attribute of attributes) element.removeAttribute(attribute)
     }
     marked.clear()
+    for (const heading of menuHeadings.values()) heading.remove()
+    menuHeadings.clear()
     bindTitle(null)
   }
   const update = (viewIds: readonly string[]): void => {
@@ -103,8 +106,22 @@ export function createWorkbenchPresentation(): { update: (viewIds: readonly stri
     }
     const count = header?.querySelector('[data-slot="conversation.session.header.actions"] button[aria-haspopup="tree"]')
     mark(count?.parentElement ?? null, 'data-workbench-agent-count')
+    const menus = new Set<Element>()
     for (const tree of document.querySelectorAll('[role="tree"][class*="_menuBody"]')) {
-      mark(tree.parentElement, 'data-workbench-agent-menu')
+      const menu = tree.parentElement
+      if (!menu) continue
+      menus.add(menu)
+      mark(menu, 'data-workbench-agent-menu')
+      if (!menuHeadings.has(menu)) {
+        const heading = document.createElement('h2')
+        heading.setAttribute('data-workbench-agent-heading', '')
+        heading.textContent = tree.getAttribute('aria-label') ?? '子智能体'
+        menu.prepend(heading)
+        menuHeadings.set(menu, heading)
+      }
+    }
+    for (const [menu, heading] of menuHeadings) {
+      if (!menus.has(menu)) { heading.remove(); menuHeadings.delete(menu) }
     }
     for (const [element, attributes] of marked) {
       for (const attribute of attributes) {

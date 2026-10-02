@@ -1,8 +1,10 @@
 const H = 'html[data-mobile-workbench-active="true"] [data-mobile-nav="frame"] [data-phase] header[data-mobile-workbench-header]'
+const J = '[class*="_headerActions"] [class*="_root"]:has(> button[class*="_trigger"][aria-expanded]:not([aria-haspopup]) > [class*="_count"])'
 
 export const WORKBENCH_HEADER_CSS = `@media (max-width: 1023px) and (pointer: coarse) {
   /* One contextual app bar: navigation, readable title, native session menu. */
   ${H} {
+    --mobile-workbench-header-utilities-width: 44px;
     display: block !important;
     position: relative !important;
     min-height: 60px !important;
@@ -20,7 +22,7 @@ export const WORKBENCH_HEADER_CSS = `@media (max-width: 1023px) and (pointer: co
   }
   ${H} [class*="_titleRow"] {
     display: block !important;
-    padding: 0 44px !important;
+    padding: 0 var(--mobile-workbench-header-utilities-width) 0 44px !important;
     min-height: 44px !important;
     width: 100% !important;
     min-width: 0 !important;
@@ -126,6 +128,42 @@ export const WORKBENCH_HEADER_CSS = `@media (max-width: 1023px) and (pointer: co
   ${H} [data-slot="conversation.session.header.actions"] > span[title]:not(:has(button)) > svg {
     display: none !important;
   }
+  /* Jobs and more live in different native slots; reserve both touch targets. */
+  ${H}:has(${J}) {
+    --mobile-workbench-header-utilities-width: 96px;
+  }
+  ${H} ${J} {
+    position: absolute !important;
+    top: 8px !important;
+    right: 60px !important;
+    bottom: auto !important;
+    width: 44px !important;
+    min-width: 44px !important;
+    max-width: 44px !important;
+    height: 44px !important;
+    min-height: 44px !important;
+    margin: 0 !important;
+    z-index: auto !important;
+  }
+  ${H} ${J} > button {
+    width: 44px !important;
+    min-width: 44px !important;
+    height: 44px !important;
+    min-height: 44px !important;
+    padding: 0 2px !important;
+    gap: 2px !important;
+    justify-content: center !important;
+    border-radius: 12px !important;
+  }
+  ${H} ${J} > button [class*="_count"] {
+    min-width: 0;
+    margin: 0 !important;
+    font-size: 10px !important;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  ${H} ${J} > button > svg { width: 10px; flex: none; }
   ${H} [class*="_headerUtilities"] {
     display: flex !important;
     position: absolute !important;
@@ -198,15 +236,25 @@ export const WORKBENCH_HEADER_CSS = `@media (max-width: 1023px) and (pointer: co
     box-shadow: 0 10px 48px rgb(0 0 0 / 35%);
     box-sizing: border-box;
   }
-  [data-workbench-agent-menu]::before {
-    content: "子智能体";
-    display: block;
+  /* Keep the native absolute background pseudo-element out of the title layout. */
+  [data-workbench-agent-menu] > [data-workbench-agent-heading] {
+    flex: none;
+    margin: 0;
+    padding: 4px 6px 10px;
     font-size: 14px;
     font-weight: 600;
-    padding: 4px 6px 10px;
+    line-height: 22px;
   }
-  [data-workbench-agent-menu] [role="tree"] { max-height: 55dvh !important; }
-  [data-workbench-agent-menu] [role="treeitem"] { min-height: 72px; }
+  [data-workbench-agent-menu] > [role="tree"] {
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    overflow-y: auto !important;
+    padding: 4px 2px;
+    overscroll-behavior-y: contain;
+  }
+  [data-workbench-agent-menu] [class*="_content"] { min-width: 0 !important; }
+  [data-workbench-agent-menu] [class*="_metrics"] { flex: none !important; }
   [data-workbench-agent-menu] [class*="_label"],
   [data-workbench-agent-menu] [class*="_summary"] {
     white-space: normal !important;

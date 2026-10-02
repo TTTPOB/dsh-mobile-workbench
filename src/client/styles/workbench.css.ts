@@ -29,8 +29,9 @@ export const WORKBENCH_CSS = /* css */ `
     background: transparent;
     color: inherit;
     border-radius: 12px;
-    min-width: 44px;
+    min-width: 0;
     min-height: 44px;
+    padding: 0;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -50,13 +51,23 @@ export const WORKBENCH_CSS = /* css */ `
     justify-content: center;
     min-width: 15px;
     height: 15px;
-    margin-left: 4px;
-    padding: 0 3px;
+    margin-left: 2px;
+    padding: 0 2px;
     border-radius: 8px;
     background: var(--dsw-alias-interactive-bg-hover);
-    font-size: 10px;
+    font-size: 9px;
     line-height: 1;
   }
+  [data-workbench-count][data-workbench-running="true"]::before {
+    content: "";
+    width: 3px;
+    height: 3px;
+    margin-right: 2px;
+    border-radius: 50%;
+    background: var(--dsw-static-deepseek-500);
+    flex: none;
+  }
+  [data-mobile-workbench="navigation"] button > span { white-space: nowrap; font-size: 10px; }
   [data-mobile-workbench="navigation"] button[aria-current="page"] {
     color: var(--dsw-static-deepseek-500);
     background: var(--dsw-alias-interactive-bg-hover);
@@ -95,11 +106,14 @@ export const WORKBENCH_CSS = /* css */ `
     line-height: 16px;
   }
   /* Modal and drawer chrome retain precedence over this navigation. */
-  /* Overlays hide navigation without shifting the conversation underneath. */
+  /* A covered navigation must release its frame reservation, including fade-out. */
+  html[data-mobile-workbench-active="true"]:has([data-mobile-nav="frame"]:not([data-sidebar-collapsed])),
+  html[data-mobile-workbench-active="true"]:has([data-mobile-nav="backdrop"]),
   html[data-mobile-workbench-keyboard="true"],
   html[data-mobile-compose-expanded="true"] {
     --mobile-workbench-nav-height: 0px !important;
   }
+  html:has([data-mobile-nav="frame"]:not([data-sidebar-collapsed])) [data-mobile-workbench="navigation"],
   html:has([aria-modal="true"]) [data-mobile-workbench="navigation"],
   html:has([data-mobile-nav="backdrop"]) [data-mobile-workbench="navigation"],
   html[data-mobile-workbench-keyboard="true"] [data-mobile-workbench="navigation"],

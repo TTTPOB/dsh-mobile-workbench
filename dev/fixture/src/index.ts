@@ -99,6 +99,7 @@ export class MobileAuditAdapter extends LlmAdapter {
     // The child marker takes precedence and never enters a delegation branch.
     const childTask = prompt.startsWith('MOBILE_AUDIT_CHILD_TASK')
     const scenario = childTask ? 'child-read'
+      : prompt.includes('演示后台任务') ? 'background'
       : prompt.includes('演示子智能体') ? 'subagent'
       : prompt.includes('演示提问') ? 'question'
       : prompt.includes('演示审批') ? 'approval'
@@ -107,9 +108,16 @@ export class MobileAuditAdapter extends LlmAdapter {
     const result = options.messages.slice(lastUser + 1).find(message =>
       message.role === 'tool' && message.source?.kind === 'tool' && message.source.callId === callId)
     if (result === undefined) {
-      if (scenario === 'subagent') {
+      if (scenario === 'background') {
+        yield* this.tool('提交一个约20秒的本地后台测试任务，只输出固定标记。', 'bash', {
+          command: 'node -e "setTimeout(() => console.log(\'MOBILE_AUDIT_BACKGROUND_DONE\'), 20000)"',
+          description: '演示本地后台任务固定标记',
+          workdir: dirname(this.config.fixtureFile),
+          run_in_background: true,
+        }, callId, options)
+      } else if (scenario === 'subagent') {
         yield* this.tool('创建一个本地子智能体，只读测试资料并等待其简短回复。', 'subagent', {
-          description: '只读检查手机测试资料',
+          description: prompt.split('：').slice(1).join('：').trim() || '只读检查手机测试资料',
           prompt: 'MOBILE_AUDIT_CHILD_TASK\n只读取固定测试资料并给出简短中文确认；不要创建任何子代理。',
           // Omission uses the official provider's compatible parent-route inheritance.
           run_in_background: false,
@@ -143,7 +151,12 @@ export class MobileAuditAdapter extends LlmAdapter {
       return
     }
     const resultText = result.content.filter(block => block.type === 'text').map(block => block.text).join('\n')
-    if (scenario === 'child-read') {
+    if (scenario === 'background') {
+      const submitted = result.isError !== true && /^started background job \S+/.test(resultText.trim())
+      yield* this.text(submitted
+        ? '本地后台测试已提交，尚未完成。请查看右上角后台任务与更多菜单；任务结束以后以实际通知为准。'
+        : '后台测试未确认提交，不会自动重试。\n' + resultText, options)
+    } else if (scenario === 'child-read') {
       yield* this.text('子智能体已返回只读资料检查结果。MOBILE_AUDIT_CHILD_COMPLETE\n' +
         (resultText.includes('MOBILE_AUDIT_READ_OK') ? '已读到固定标记 MOBILE_AUDIT_READ_OK。' : resultText), options)
     } else if (scenario === 'subagent') {
