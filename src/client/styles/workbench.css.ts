@@ -120,8 +120,19 @@ export const WORKBENCH_CSS = /* css */ `
   html[data-mobile-compose-expanded="true"] [data-mobile-workbench="navigation"] {
     display: none !important;
   }
+  /* The native absolute panel already inherits the shortened rightbar column.
+     Anchor to the viewport so navigation clearance is subtracted only once. */
   html[data-mobile-workbench-active="true"] [data-sidebar-right-panel="fullscreen"] {
+    position: fixed !important;
+    /* Fixed positioning contains the dock children; keep their native overlay band. */
+    z-index: var(--dsh-dockkit-dock-layer) !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
     bottom: var(--mobile-workbench-nav-height) !important;
+    height: auto !important;
+    max-height: none !important;
+    box-sizing: border-box;
   }
 }
 @media (min-width: 1024px), (pointer: fine), (pointer: none) {

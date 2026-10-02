@@ -9,6 +9,13 @@ class Node {
   attributes = new Map<string, string>()
   parentElement: Node | null = null
   selected: Node | null = null
+  queries = new Map<string, Node>()
+  rect = { top: 0, bottom: 0, height: 0 }
+  clientTop = 0
+  clientHeight = 0
+  scrollTop = 0
+  scrollLeft = 12
+  getBoundingClientRect() { return this.rect }
   children: Node[] = []
   textContent: string | null = null
   prepend(child: Node) { child.parentElement = this; this.children.unshift(child) }
@@ -20,7 +27,7 @@ class Node {
   hasAttribute(key: string) { return this.attributes.has(key) }
   setAttribute(key: string, value: string) { this.attributes.set(key, value) }
   removeAttribute(key: string) { this.attributes.delete(key) }
-  querySelector(selector: string) { return selector.includes('session.header.actions') ? this.selected : null }
+  querySelector(selector: string) { return selector.includes('session.header.actions') ? this.selected : this.queries.get(selector) ?? null }
   querySelectorAll() { return this.children }
   closest() { return this.parentElement }
 }
@@ -47,7 +54,7 @@ function fixture(t: { after: (fn: () => void) => void }) {
     if (original) Object.defineProperty(globalThis, 'document', original)
     else Reflect.deleteProperty(globalThis, 'document')
   })
-  return { header, root, countRoot, setMenus: (value: Node[]) => { menus = value } }
+  return { header, root, scroll, split, countRoot, setMenus: (value: Node[]) => { menus = value } }
 }
 
 test('metric summaries preserve native values and leave unknown formats alone', () => {
@@ -133,4 +140,50 @@ test('jobs and more have separate touch targets and matching title reservations'
   assert.match(WORKBENCH_HEADER_CSS, /padding: 0 var\(--mobile-workbench-header-utilities-width\) 0 44px !important/)
   assert.match(WORKBENCH_HEADER_CSS, /right: 60px !important;[\s\S]*?width: 44px !important/)
   assert.doesNotMatch(WORKBENCH_HEADER_CSS, /QsffPG/)
+})
+
+test('opening or changing inspector selection reveals once inside the native vertical scrollport', t => {
+  const { scroll, split } = fixture(t)
+  const row = new Node()
+  row.setAttribute('data-trajectory-row-key', 'tool-a')
+  row.rect = { top: 324, bottom: 354, height: 30 }
+  const head = new Node()
+  head.rect.height = 30
+  scroll.rect = { top: 144, bottom: 308, height: 164 }
+  scroll.clientHeight = 164
+  scroll.queries.set('tr[data-selected="true"][data-trajectory-row-key]', row)
+  scroll.queries.set('thead', head)
+  split.queries.set('aside[class*="_details"]', new Node())
+  const presentation = createWorkbenchPresentation()
+  presentation.update(['chat', 'trajectory'])
+  assert.equal(scroll.scrollTop, 46)
+  assert.equal(scroll.scrollLeft, 12)
+  scroll.scrollTop = 7
+  presentation.update(['chat', 'trajectory'])
+  assert.equal(scroll.scrollTop, 7, 'stream updates do not undo manual scrolling')
+  row.setAttribute('data-trajectory-row-key', 'tool-b')
+  row.rect = { top: 154, bottom: 184, height: 30 }
+  scroll.scrollTop = 200
+  presentation.update(['chat', 'trajectory'])
+  assert.equal(scroll.scrollTop, 180, 'sticky table header remains clear')
+  split.queries.clear()
+  presentation.update(['chat', 'trajectory'])
+  split.queries.set('aside[class*="_details"]', new Node())
+  presentation.update(['chat', 'trajectory'])
+  assert.equal(scroll.scrollTop, 160, 'reopening the same selected event reveals again')
+  presentation.clear()
+})
+
+test('native fullscreen file panels subtract navigation height once from the viewport', () => {
+  const panel = WORKBENCH_CSS.match(/\[data-sidebar-right-panel="fullscreen"\] \{([^}]+)\}/)?.[1] ?? ''
+  assert.match(panel, /position: fixed !important/)
+  assert.match(panel, /z-index: var\(--dsh-dockkit-dock-layer\) !important/)
+  assert.match(panel, /top: 0 !important/)
+  assert.match(panel, /left: 0 !important/)
+  assert.match(panel, /right: 0 !important/)
+  assert.match(panel, /bottom: var\(--mobile-workbench-nav-height\) !important/)
+  assert.match(panel, /height: auto !important/)
+  assert.match(panel, /max-height: none !important/)
+  assert.match(panel, /box-sizing: border-box/)
+  assert.doesNotMatch(panel, /padding-top/)
 })

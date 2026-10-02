@@ -298,6 +298,15 @@ test('empty and loaded toolbar share edge padding, fixed hitboxes and a right-pi
   assert.doesNotMatch(source, /dispatchEvent|onPick|stopImmediatePropagation/)
 })
 
+test('only an unexpanded activity wrapper containing its single empty slot loses its gap', () => {
+  const rules = [...WORKBENCH_COMPOSER_CSS.matchAll(/([^{}]+)\{\s*display: none !important;\s*\}/g)]
+  const activity = rules.find(rule => rule[1].includes('conversation.input.activity'))
+  assert.ok(activity)
+  assert.ok(activity[1].includes('> [class*="_trailing"] > [class*="_activity"]'))
+  assert.ok(activity[1].includes(':not([class*="_activityExpanded"])'))
+  assert.ok(activity[1].includes(':has(> [data-slot="conversation.input.activity"]:only-child:empty)'))
+})
+
 test('footer reveals the existing host percentage without copying or fabricating values', () => {
   assert.match(WORKBENCH_COMPOSER_CSS, /\[data-mobile-nav="stats-ring"\] > button > span \{\s+display: inline !important;\s+font-size: 11px !important/)
   assert.match(WORKBENCH_COMPOSER_CSS, /\[data-mobile-nav="stats-ring"\] > button > svg \{\s+width: 14px !important;\s+height: 14px !important/)

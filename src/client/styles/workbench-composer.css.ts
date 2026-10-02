@@ -280,6 +280,10 @@ export const WORKBENCH_COMPOSER_CSS = `@media (max-width: 1023px) and (pointer: 
     order: 35;
     margin: 0 !important;
   }
+  /* An empty activity slot otherwise contributes two gaps after wrappers flatten. */
+  html [data-mobile-nav="frame"] [data-phase] [data-composer-card][data-mobile-workbench-composer="true"] > [data-mobile-compose-bar] > [class*="_trailing"] > [class*="_activity"]:not([class*="_activityExpanded"]):has(> [data-slot="conversation.input.activity"]:only-child:empty) {
+    display: none !important;
+  }
   html [data-mobile-nav="frame"] [data-phase] [data-composer-card][data-mobile-workbench-composer="true"] > [data-mobile-compose-bar] > [data-mobile-compose-toggle] {
     order: 40;
     appearance: none;

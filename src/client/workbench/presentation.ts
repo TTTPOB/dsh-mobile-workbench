@@ -10,6 +10,8 @@ export function workbenchStatLabel(label: string): string | null {
 export function createWorkbenchPresentation(): { update: (viewIds: readonly string[]) => void; clear: () => void } {
   let marked = new Map<Element, Set<string>>()
   const menuHeadings = new Map<Element, HTMLElement>()
+  let selectedPane: HTMLElement | null = null
+  let selectedRowKey: string | null = null
   let title: HTMLElement | null = null
   let releaseTitle: (() => void) | undefined
   const bindTitle = (next: HTMLElement | null): void => {
@@ -69,6 +71,8 @@ export function createWorkbenchPresentation(): { update: (viewIds: readonly stri
     marked.clear()
     for (const heading of menuHeadings.values()) heading.remove()
     menuHeadings.clear()
+    selectedPane = null
+    selectedRowKey = null
     bindTitle(null)
   }
   const update = (viewIds: readonly string[]): void => {
@@ -94,8 +98,29 @@ export function createWorkbenchPresentation(): { update: (viewIds: readonly stri
       mark(parent, 'data-workbench-parent')
       for (const ancestor of ancestors.slice(0, -1)) mark(ancestor.closest('[class*="_crumbSeg"]'), 'data-workbench-ancestor')
     }
-    const trajectory = document.querySelector('[data-trajectory-scroll]')
+    const trajectory = document.querySelector<HTMLElement>('[data-trajectory-scroll]')
     mark(trajectory?.parentElement?.parentElement ?? null, 'data-workbench-trajectory')
+    const inspecting = trajectory?.parentElement?.querySelector('aside[class*="_details"]')
+    if (!trajectory || !inspecting) {
+      selectedPane = null
+      selectedRowKey = null
+    } else {
+      const row = trajectory.querySelector<HTMLElement>('tr[data-selected="true"][data-trajectory-row-key]')
+      const key = row?.getAttribute('data-trajectory-row-key') ?? null
+      if (row && key !== null && (selectedPane !== trajectory || selectedRowKey !== key)) {
+        selectedPane = trajectory
+        selectedRowKey = key
+        // Only selection changes reveal the row; later stream updates and user scrolls win.
+        const paneRect = trajectory.getBoundingClientRect()
+        const rowRect = row.getBoundingClientRect()
+        const headHeight = trajectory.querySelector('thead')?.getBoundingClientRect().height ?? 0
+        const top = paneRect.top + trajectory.clientTop + headHeight
+        const bottom = paneRect.top + trajectory.clientTop + trajectory.clientHeight
+        const delta = rowRect.top < top ? rowRect.top - top
+          : rowRect.bottom > bottom ? rowRect.bottom - bottom : 0
+        if (delta !== 0) trajectory.scrollTop += delta
+      }
+    }
     for (const button of document.querySelectorAll('[data-composer-stats] button[aria-label]')) {
       const summary = workbenchStatLabel(button.getAttribute('aria-label') ?? '')
       const label = button.querySelector('[class*="_label"]')
