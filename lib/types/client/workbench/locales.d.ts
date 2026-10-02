@@ -2,6 +2,11 @@ export declare const WORKBENCH_NS = "mobileWorkbench";
 export declare const zh: {
     navigation: string;
     sessions: string;
+    session: string;
+    sessionView: string;
+    agentCatalog: string;
+    parentSession: string;
+    loading: string;
     sessionInfo: string;
     chat: string;
     trajectory: string;

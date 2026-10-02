@@ -7,6 +7,8 @@ import { getFrame, MOBILE_QUERY, toggleDrawer } from '../effects/phone-chrome.ts
 import { WORKBENCH_CSS } from '../styles/workbench.css.ts'
 import { WORKBENCH_HEADER_CSS } from '../styles/workbench-header.css.ts'
 import { WORKBENCH_TRAJECTORY_CSS } from '../styles/workbench-trajectory.css.ts'
+import { resolveDestination } from './navigation.ts'
+import { installAgentCatalogLoader } from './agent-catalog-loader.ts'
 import { createWorkbenchPresentation } from './presentation.ts'
 import { createHostBridge } from './host-bridge.ts'
 import { subagentCounts, type AgentStatusSource } from './agent-counts.ts'
@@ -32,6 +34,13 @@ export function installWorkbench(ctx: ClientContext): void {
   const viewIds = (): string[] => ctx.slots.entriesOfSlot('conversation.view')
     .filter(entry => entry.options.label !== undefined)
     .map(entry => entry.options.id ?? '')
+  const catalogs = ctx.sessions as typeof ctx.sessions & { refreshProjections?: (id: string) => Promise<void> }
+  ctx.effect(() => {
+    if (catalogs.refreshProjections === undefined) return () => {}
+    const loader = installAgentCatalogLoader(ctx.sessions.list, catalogs.refreshProjections.bind(catalogs), () => mq.matches)
+    mq.addEventListener('change', loader.update)
+    return () => { mq.removeEventListener('change', loader.update); loader.dispose() }
+  }, 'mobile-workbench: reachable catalog baselines')
   const statusSource = (): AgentStatusSource | undefined =>
     (ctx.get('uiSession') as { sessionStatus?: AgentStatusSource } | undefined)?.sessionStatus
   const bridge = createHostBridge(viewIds, () => subagentCounts(
@@ -46,11 +55,7 @@ export function installWorkbench(ctx: ClientContext): void {
     show: panelSelectorOf(ctx.layout) ?? (() => {}),
     hasSession: () => currentSessionIdOf(ctx.sessions.list.getSnapshot()) !== undefined,
   })
-  const presentation = createWorkbenchPresentation(pointerStartedOpen => {
-    if (!bridge.evidence().hasAgents) return false
-    bridge.activate('agents', pointerStartedOpen)
-    return true
-  })
+  const presentation = createWorkbenchPresentation()
   let snapshot: WorkbenchSnapshot = { ...bridge.evidence(), mobile: mq.matches }
   const listeners = new Set<() => void>()
   const source = {
@@ -75,8 +80,12 @@ export function installWorkbench(ctx: ClientContext): void {
       }
       if (mq.matches && document.querySelector('[data-mobile-workbench="navigation"]') !== null) {
         document.documentElement.setAttribute('data-mobile-workbench-active', 'true')
+        document.documentElement.setAttribute('data-mobile-workbench-page', resolveDestination(next))
       }
-      else document.documentElement.removeAttribute('data-mobile-workbench-active')
+      else {
+        document.documentElement.removeAttribute('data-mobile-workbench-active')
+        document.documentElement.removeAttribute('data-mobile-workbench-page')
+      }
     }
     const schedule = (): void => {
       if (raf === undefined) raf = window.requestAnimationFrame(refresh)
@@ -104,6 +113,7 @@ export function installWorkbench(ctx: ClientContext): void {
       mq.removeEventListener('change', schedule)
       if (raf !== undefined) window.cancelAnimationFrame(raf)
       document.documentElement.removeAttribute('data-mobile-workbench-active')
+      document.documentElement.removeAttribute('data-mobile-workbench-page')
       presentation.clear()
       listeners.clear()
     }
@@ -113,13 +123,13 @@ export function installWorkbench(ctx: ClientContext): void {
     id: 'mobile-workbench-agents',
     order: 5,
     locale: WORKBENCH_NS,
-    inject: () => ({ hooks: { workbench: source }, activate: bridge.activate, openInfo: presentation.openInfo }),
+    inject: () => ({ hooks: { workbench: source }, activate: bridge.activate, selectView: bridge.selectView, returnParent: bridge.returnParent }),
   }, WorkbenchAgents))
   ctx.slots.inject('shell.overlay', () => ctx.slots.register({
     name: 'shell.overlay',
     id: 'mobile-workbench-navigation',
     order: 20,
     locale: WORKBENCH_NS,
-    inject: () => ({ hooks: { workbench: source }, activate: bridge.activate, openInfo: presentation.openInfo }),
+    inject: () => ({ hooks: { workbench: source }, activate: bridge.activate, selectView: bridge.selectView, returnParent: bridge.returnParent }),
   }, WorkbenchNav))
 }

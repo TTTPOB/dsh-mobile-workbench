@@ -1,5 +1,6 @@
 const H = 'html[data-mobile-workbench-active="true"] [data-mobile-nav="frame"] [data-phase] header[data-mobile-workbench-header]'
 const A = '[class*="_titleCluster"] [class*="_headerActions"] button[data-mobile-workbench="agents"][aria-expanded]'
+const C = '[class*="_titleCluster"] [class*="_headerActions"] button[data-workbench-context-control][type="button"]'
 const J = '[class*="_headerActions"] [class*="_root"]:has(> button[class*="_trigger"][aria-expanded]:not([aria-haspopup]) > [class*="_count"])'
 
 export const WORKBENCH_HEADER_CSS = `@media (max-width: 1023px) and (pointer: coarse) {
@@ -31,7 +32,42 @@ export const WORKBENCH_HEADER_CSS = `@media (max-width: 1023px) and (pointer: co
     min-width: 0 !important;
     box-sizing: border-box !important;
   }
-  ${H}[data-workbench-child] [class*="_titleRow"] { padding-left: 44px !important; }
+  ${H} [data-workbench-title-info] > svg { display: none !important; }
+  ${H} [class*="_titleCluster"] button[data-workbench-title-info][aria-haspopup="dialog"][type="button"] {
+    position: static !important;
+    display: flex !important;
+    min-height: 44px !important;
+    height: auto !important;
+    max-height: none !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    padding: 0 !important;
+    overflow: visible !important;
+  }
+  ${H} ${C} {
+    position: static !important;
+    display: inline-flex !important;
+    min-height: 44px !important;
+    height: 44px !important;
+    min-width: 44px !important;
+    max-width: 100%;
+    align-items: center;
+    justify-content: center;
+    padding: 0 8px !important;
+    border: 0;
+    border-radius: 12px;
+    font: inherit;
+    font-size: 12px !important;
+    white-space: nowrap;
+    touch-action: manipulation;
+    background: var(--dsw-alias-interactive-bg-hover);
+    color: var(--dsw-alias-label-secondary);
+  }
+  ${H} ${C}:disabled { opacity: .42; }
+  ${H} ${C}[aria-pressed="true"] { color: var(--dsw-static-deepseek-500); background: var(--dsw-alias-interactive-bg-active); }
+  ${H} [data-mobile-workbench="views"] { display: inline-flex; flex: none; gap: 2px; order: 2; }
+  ${H} ${C}[data-mobile-workbench="parent"] { order: 3; }
+
   ${H} ${A} {
     position: static !important;
     display: inline-flex !important;
@@ -210,8 +246,7 @@ export const WORKBENCH_HEADER_CSS = `@media (max-width: 1023px) and (pointer: co
     padding: 0 !important;
     margin: 0 !important;
   }
-  ${H} [class*="_headerUtilities"] button[aria-haspopup="menu"],
-  ${H} [class*="_titleCluster"] button[data-workbench-parent] {
+  ${H} [class*="_headerUtilities"] button[aria-haspopup="menu"] {
     width: 44px !important;
     height: 44px !important;
     min-width: 44px !important;
@@ -222,25 +257,9 @@ export const WORKBENCH_HEADER_CSS = `@media (max-width: 1023px) and (pointer: co
     padding: 0 !important;
     border-radius: 12px !important;
   }
-  ${H} [class*="_titleCluster"] button[data-mobile-nav="toggle"],
-  ${H} [class*="_titleCluster"] button[data-workbench-parent] {
-    position: absolute !important;
-    top: 8px !important;
-    left: 8px !important;
-    right: auto !important;
-    bottom: auto !important;
-    transform: none !important;
-  }
-  ${H} [data-mobile-nav="toggle"] svg { width: 20px; height: 20px; }
-  ${H}[data-workbench-child] [class*="_titleCluster"] button[data-mobile-nav="toggle"],
+  ${H} [data-workbench-parent],
   ${H}[data-workbench-child] [class*="_crumbSep"],
   ${H} [data-workbench-ancestor] { display: none !important; }
-  ${H} [data-workbench-parent] { font-size: 0 !important; }
-  ${H} [data-workbench-parent]::before {
-    content: '‹';
-    font: 30px/1 system-ui;
-  }
-  ${H} [class*="_crumbSeg"]:has(> [data-workbench-parent]) { display: contents !important; }
   ${H} [data-slot="conversation.session.header.lineage"] > div,
   ${H} [data-slot="conversation.session.header.lineage"] button[aria-haspopup="tree"] {
     position: static !important;

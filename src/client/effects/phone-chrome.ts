@@ -9,6 +9,7 @@ import { createStatsLineTask } from './stats-line.ts'
 import { createPreviewFullscreenTask } from './preview-fullscreen.ts'
 import { createOverlayTask } from './overlay-backdrop-fab.ts'
 import { createFileViewerMarkerTask } from './file-viewer-compat.ts'
+import { openPluginsModal } from '../workbench/plugin-modal.ts'
 import type { PanelExit } from './panel-exit.ts'
 import { closeDrawerAnimated } from './sidebar-swipe.ts'
 
@@ -802,6 +803,8 @@ export function installOverlayInteractions(ctx: ClientContext): void {
         if (drawerOpen()) toggleSidebar()
         return
       }
+      // Modal-capable Plugins keeps the current page/sidebar; native fallback stays intact.
+      if (openPluginsModal(ctx, event)) return
       // A touch row-tap owns the close (pointerup or the navigation observer);
       // let the row's click reach React without toggling the drawer twice.
       if (performance.now() - lastTouchNavAt < 500) return

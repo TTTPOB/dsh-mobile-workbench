@@ -35,7 +35,8 @@ class Node {
   removeAttribute(key: string) { this.attributes.delete(key) }
   querySelector(selector: string) { return selector.includes('session.header.actions') ? this.selected : this.queries.get(selector) ?? null }
   querySelectorAll() { return this.children }
-  closest() { return this.parentElement }
+  nearest = new Map<string, Node>()
+  closest(selector = "") { return this.nearest.get(selector) ?? this.parentElement }
 }
 
 function fixture(t: { after: (fn: () => void) => void }) {
@@ -200,8 +201,8 @@ test('native fullscreen file panels subtract navigation height once from the vie
   assert.doesNotMatch(panel, /padding-top/)
 })
 
-test('title and group open one native catalog with session title and mode summary', t => {
-  const { header, count, setMenus } = fixture(t)
+test('title always opens information even when a native descendant catalog exists', t => {
+  const { header, count, body, setMenus } = fixture(t)
   const title = new Node()
   title.textContent = 'Current session title'
   title.parentElement = header
@@ -211,12 +212,12 @@ test('title and group open one native catalog with session title and mode summar
   const tree = new Node()
   tree.parentElement = menu
   setMenus([tree])
-  let opens = 0
-  const presentation = createWorkbenchPresentation(() => { opens++; return true })
+  const presentation = createWorkbenchPresentation()
   presentation.update(['chat', 'trajectory'])
   presentation.openInfo()
   title.listeners.get('click')?.(new Event('click'))
-  assert.equal(opens, 2)
+  assert.equal(body.children.length, 1)
+  assert.equal(body.children[0].shown, true)
   assert.equal(menu.children[0].children[0].textContent, 'Current session title')
   assert.equal(menu.children[0].children[1].textContent, 'Standard mode')
   assert.equal(tree.parentElement, menu)
@@ -224,7 +225,7 @@ test('title and group open one native catalog with session title and mode summar
   assert.equal(title.listeners.size, 0)
 })
 
-test('without a native catalog the shared information entry keeps the original title dialog', t => {
+test('a leaf title retains its information dialog independently of catalog availability', t => {
   const { header, body } = fixture(t)
   const title = new Node()
   title.textContent = 'Session without children'
@@ -249,7 +250,9 @@ test('root directory stays hidden while group follows mode and parent return rem
   assert.match(WORKBENCH_HEADER_CSS, /\[data-mobile-nav="toggle"\],[\s\S]*?display: none !important/)
   assert.doesNotMatch(WORKBENCH_HEADER_CSS, /button\[data-mobile-nav="toggle"\],\s*[^{}]*button\[data-workbench-parent\] \{[^}]*display: flex !important/)
   assert.match(WORKBENCH_HEADER_CSS, /button\[data-mobile-workbench="agents"\]\[aria-expanded\][\s\S]*?order: 1;/)
-  assert.match(WORKBENCH_HEADER_CSS, /\[data-workbench-child\] \[class\*="_titleRow"\] \{ padding-left: 44px !important/)
+  assert.doesNotMatch(WORKBENCH_HEADER_CSS, /padding-left: 44px/)
+  assert.match(WORKBENCH_HEADER_CSS, /\[data-mobile-workbench="views"\] \{[^}]*order: 2/)
+  assert.match(WORKBENCH_HEADER_CSS, /\[data-mobile-workbench="parent"\] \{[^}]*order: 3/)
 })
 
 test('Jobs pressed and expanded feedback is scoped to its native trigger, not the popup', () => {
@@ -257,4 +260,42 @@ test('Jobs pressed and expanded feedback is scoped to its native trigger, not th
   assert.match(WORKBENCH_HEADER_CSS, /> button:active \{[^}]*background: var\(--dsw-alias-interactive-bg-active\)/)
   assert.doesNotMatch(WORKBENCH_CSS, /\[class\*="_triggerRow"\] > button\[class\*="_trigger"\]/)
   assert.match(WORKBENCH_CSS, /\[class\*="_triggerRow"\] button\[class\*="_trigger"\] \{[^}]*height: 44px !important/)
+})
+
+test('current-title sibling switcher becomes information-only and restores native metadata/listeners', t => {
+  const { header, body } = fixture(t)
+  const title = new Node()
+  title.textContent = 'Child title'
+  const switcher = new Node()
+  switcher.setAttribute('class', 'native_switcherTrigger')
+  switcher.setAttribute('aria-haspopup', 'tree')
+  switcher.setAttribute('aria-expanded', 'false')
+  title.parentElement = switcher
+  title.nearest.set('header', header)
+  header.queries.set('span[class*="_crumbCurrent"], [class*="_crumbSeg"]:last-child span[class*="_switcherTitle"]', title)
+  const presentation = createWorkbenchPresentation()
+  presentation.update(['chat', 'trajectory'])
+  assert.equal(switcher.getAttribute('aria-haspopup'), 'dialog')
+  let stopped = 0
+  switcher.listeners.get('mouseover')?.({ stopPropagation: () => { stopped++ } } as Event)
+  switcher.listeners.get('keydown')?.({ key: 'ArrowDown', stopPropagation: () => { stopped++ } } as KeyboardEvent)
+  assert.equal(stopped, 2)
+  assert.equal(body.children.length, 0, 'hover/ArrowDown does not open either sibling catalog or info')
+  switcher.listeners.get('click')?.(new Event('click'))
+  assert.equal(body.children[0].shown, true)
+  presentation.clear()
+  assert.equal(switcher.listeners.size, 0)
+  assert.equal(switcher.getAttribute('aria-haspopup'), 'tree')
+  assert.equal(switcher.getAttribute('aria-expanded'), 'false')
+})
+
+test('three pages fade only their content, reduced motion skips it, and Workspace collapse alone is hidden', () => {
+  assert.match(WORKBENCH_CSS, /grid-template-columns: repeat\(3,/)
+  assert.match(WORKBENCH_CSS, /data-mobile-workbench-page="sessions"/)
+  assert.match(WORKBENCH_CSS, /data-mobile-workbench-page="session"/)
+  assert.match(WORKBENCH_CSS, /data-mobile-workbench-page="files"/)
+  assert.match(WORKBENCH_CSS, /@keyframes mobile-workbench-page-enter \{ from \{ opacity: 0; \} to \{ opacity: 1;/)
+  assert.match(WORKBENCH_CSS, /@media \(prefers-reduced-motion: reduce\)[\s\S]*?animation: none !important/)
+  assert.match(WORKBENCH_CSS, /\[data-sidebar-right-toggle\] \{ display: none !important/)
+  assert.doesNotMatch(WORKBENCH_CSS, /\[data-dockkit-close\] \{ display: none/)
 })

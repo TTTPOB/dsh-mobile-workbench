@@ -12,7 +12,7 @@ export const WORKBENCH_CSS = /* css */ `
   }
   [data-mobile-workbench="navigation"] {
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     position: fixed;
     inset: auto 0 0;
     height: var(--mobile-workbench-nav-size);
@@ -141,7 +141,19 @@ export const WORKBENCH_CSS = /* css */ `
     box-sizing: border-box;
   }
   html[data-mobile-workbench-active="true"] [data-mobile-nav="frame"] > :first-child [class*="_wide"] { animation: none !important; }
-  /* All page entries switch without the Files-only lateral slide. */
+  /* Native lateral slides stay off; only content fades when its page enters. */
+  html[data-mobile-workbench-active="true"] [data-sidebar-right-toggle] { display: none !important; }
+  html[data-mobile-workbench-active="true"][data-mobile-workbench-page="sessions"] [data-mobile-nav="frame"] > :first-child,
+  html[data-mobile-workbench-active="true"][data-mobile-workbench-page="session"] [data-mobile-nav="frame"] [data-phase]:has(> [data-slot="conversation.header"]),
+  html[data-mobile-workbench-active="true"][data-mobile-workbench-page="files"] [data-sidebar-right-panel][data-sidebar-right-open]:not([data-sidebar-right-open="false"]) {
+    animation: mobile-workbench-page-enter var(--ds-transition-duration, 0.16s) var(--ds-ease-in-out, ease) !important;
+  }
+  @keyframes mobile-workbench-page-enter { from { opacity: 0; } to { opacity: 1; } }
+  @media (prefers-reduced-motion: reduce) {
+    html[data-mobile-workbench-active="true"][data-mobile-workbench-page="sessions"] [data-mobile-nav="frame"] > :first-child,
+    html[data-mobile-workbench-active="true"][data-mobile-workbench-page="session"] [data-mobile-nav="frame"] [data-phase]:has(> [data-slot="conversation.header"]),
+    html[data-mobile-workbench-active="true"][data-mobile-workbench-page="files"] [data-sidebar-right-panel] { animation: none !important; }
+  }
   html[data-mobile-workbench-active="true"] [data-sidebar-right-panel] :is([data-dockkit-host="dock"], [data-dockkit-empty], [data-dockkit-divider]) { transition: none !important; }
   /* Keyboard visibility never changes layout clearance in a discrete step. */
   html[data-mobile-compose-expanded="true"],

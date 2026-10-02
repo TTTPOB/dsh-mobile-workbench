@@ -7,8 +7,8 @@ export function workbenchStatLabel(label: string): string | null {
 }
 
 /** Mark presentation boundaries without moving React-owned elements. */
-export function createWorkbenchPresentation(openCatalog: (pointerStartedOpen: boolean) => boolean = () => false): { update: (viewIds: readonly string[]) => void; clear: () => void; openInfo: (pointerStartedOpen?: boolean) => void } {
-  let openInfo: (pointerStartedOpen?: boolean) => void = () => {}
+export function createWorkbenchPresentation(): { update: (viewIds: readonly string[]) => void; clear: () => void; openInfo: () => void } {
+  let openInfo: () => void = () => {}
   let marked = new Map<Element, Set<string>>()
   const menuHeadings = new Map<Element, { element: HTMLElement; name: HTMLElement; mode: HTMLElement }>()
   let selectedPane: HTMLElement | null = null
@@ -22,14 +22,18 @@ export function createWorkbenchPresentation(openCatalog: (pointerStartedOpen: bo
     releaseTitle = undefined
     openInfo = () => {}
     if (!next) return
-    const original = ['role', 'tabindex', 'aria-label'].map(key => [key, next.getAttribute(key)] as const)
-    next.setAttribute('role', 'button')
-    next.setAttribute('tabindex', '0')
-    next.setAttribute('aria-label', '查看会话信息')
+    const candidate = next.closest<HTMLElement>('button[class*="_switcherTrigger"]')
+    const switcher = candidate?.getAttribute('class')?.includes('_switcherTrigger') ? candidate : null
+    const target = switcher ?? next
+    const original = ['role', 'tabindex', 'aria-label', 'aria-haspopup', 'aria-expanded', 'data-workbench-title-info'].map(key => [key, target.getAttribute(key)] as const)
+    target.setAttribute('role', 'button')
+    target.setAttribute('tabindex', '0')
+    target.setAttribute('aria-label', '查看会话信息')
+    target.setAttribute('data-workbench-title-info', '')
+    if (switcher) { target.setAttribute('aria-haspopup', 'dialog'); target.removeAttribute('aria-expanded') }
     let dialog: HTMLDialogElement | null = null
     const close = (): void => { dialog?.remove(); dialog = null }
-    const open = (pointerStartedOpen = false): void => {
-      if (openCatalog(pointerStartedOpen)) return
+    const open = (): void => {
       close()
       dialog = document.createElement('dialog')
       dialog.setAttribute('data-workbench-title-dialog', '')
@@ -53,19 +57,24 @@ export function createWorkbenchPresentation(openCatalog: (pointerStartedOpen: bo
       dialog.showModal()
     }
     const keydown = (event: KeyboardEvent): void => {
+      event.stopPropagation()
       if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); open() }
     }
     openInfo = open
     const click = (event: Event): void => { event.stopPropagation(); open() }
-    next.addEventListener('click', click)
-    next.addEventListener('keydown', keydown)
+    const hover = (event: Event): void => { event.stopPropagation() }
+    // Current-title switchers otherwise open the parent's sibling tree on hover/ArrowDown.
+    target.addEventListener('click', click, switcher !== null)
+    target.addEventListener('keydown', keydown, switcher !== null)
+    if (switcher) target.addEventListener('mouseover', hover, true)
     releaseTitle = () => {
       close()
-      next.removeEventListener('click', click)
-      next.removeEventListener('keydown', keydown)
+      target.removeEventListener('click', click, switcher !== null)
+      target.removeEventListener('keydown', keydown, switcher !== null)
+      if (switcher) target.removeEventListener('mouseover', hover, true)
       for (const [key, value] of original) {
-        if (value === null) next.removeAttribute(key)
-        else next.setAttribute(key, value)
+        if (value === null) target.removeAttribute(key)
+        else target.setAttribute(key, value)
       }
     }
   }
@@ -96,10 +105,11 @@ export function createWorkbenchPresentation(openCatalog: (pointerStartedOpen: bo
     if (viewIds.length === 2 && viewIds.includes('chat') && viewIds.includes('trajectory')) {
       mark(header, 'data-workbench-tabs-owned')
     }
-    const ancestors = Array.from(header?.querySelectorAll('nav button:not([aria-haspopup])') ?? [])
+    const ancestors = Array.from(header?.querySelectorAll('nav [class*="_crumbSeg"] > button, nav button[class*="_ancestorSwitcherTrigger"]') ?? [])
     const parent = ancestors.at(-1)
     if (parent) {
       mark(header, 'data-workbench-child')
+      mark(parent.closest('[class*="_crumbSeg"]'), 'data-workbench-ancestor')
       mark(parent, 'data-workbench-parent')
       for (const ancestor of ancestors.slice(0, -1)) mark(ancestor.closest('[class*="_crumbSeg"]'), 'data-workbench-ancestor')
     }
@@ -134,7 +144,7 @@ export function createWorkbenchPresentation(openCatalog: (pointerStartedOpen: bo
         if (label.getAttribute('data-workbench-stat-label') !== summary) label.setAttribute('data-workbench-stat-label', summary)
       }
     }
-    const count = header?.querySelector('[data-slot="conversation.session.header.actions"] button[aria-haspopup="tree"]:not([data-mobile-workbench="agents"])')
+    const count = header?.querySelector('[data-slot="conversation.session.header.actions"] button[aria-haspopup="tree"]:not([class*="_switcherTrigger"]):not([data-mobile-workbench="agents"])')
     mark(count?.parentElement ?? null, 'data-workbench-agent-count')
     const menus = new Set<Element>()
     for (const tree of document.querySelectorAll('[role="tree"][class*="_menuBody"]')) {
@@ -167,5 +177,5 @@ export function createWorkbenchPresentation(openCatalog: (pointerStartedOpen: bo
     }
     marked = next
   }
-  return { update, clear, openInfo: pointerStartedOpen => { openInfo(pointerStartedOpen) } }
+  return { update, clear, openInfo: () => { openInfo() } }
 }
