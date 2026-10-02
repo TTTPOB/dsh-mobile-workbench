@@ -23,7 +23,6 @@ import { fileURLToPath } from 'node:url'
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..')
 const BASE = readFileSync(join(ROOT, 'src/client/styles/base.css.ts'), 'utf8')
 const PHONE = readFileSync(join(ROOT, 'src/client/effects/phone-chrome.ts'), 'utf8')
-const MENU = readFileSync(join(ROOT, 'src/client/effects/session-menu.ts'), 'utf8')
 
 const bandStart = BASE.indexOf('popover band above the open drawer')
 const bandEnd = BASE.indexOf('/* Floating fallback button', bandStart)
@@ -83,16 +82,5 @@ test('every non-gesture closer shares the one late-commit toggle', () => {
     PHONE.slice(overlayAt, PHONE.indexOf('\n', overlayAt)),
     /toggleDrawer\(ctx\)/,
     'createOverlayTask must receive toggleDrawer, not a raw toggleSidebar',
-  )
-  // The session-delete follow-up is a closer on the mobile branch.
-  assert.match(
-    MENU,
-    /if \(wasCurrent && window\.matchMedia\(MOBILE_QUERY\)\.matches\) toggleDrawer\(ctx\)/,
-    'session-menu delete follow-up must route through toggleDrawer',
-  )
-  assert.doesNotMatch(
-    MENU,
-    /ctx\.layout\.toggleSidebar\(\)/,
-    'session-menu must not toggle the drawer raw',
   )
 })
