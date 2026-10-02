@@ -13,11 +13,13 @@ import { subagentCounts, type AgentStatusSource } from './agent-counts.ts'
 import { WorkbenchAgents, WorkbenchNav, type WorkbenchSnapshot } from './WorkbenchNav.tsx'
 import { WORKBENCH_NS, en, zh } from './locales.ts'
 import { installWorkbenchSessionMenu } from './session-menu.ts'
+import { installWorkbenchUpdateNotice } from './update-notice.tsx'
 
 /** Install reversible mobile navigation using the official shell overlay slot. */
 export function installWorkbench(ctx: ClientContext): void {
   ctx.effect(() => ctx.locale.register(WORKBENCH_NS, { zh, en }), 'mobile-workbench: dictionaries')
   installWorkbenchSessionMenu(ctx)
+  installWorkbenchUpdateNotice(ctx)
   ctx.effect(() => {
     const tag = document.createElement('style')
     tag.dataset.pluginCss = 'dsh-web-mobile/workbench.css'

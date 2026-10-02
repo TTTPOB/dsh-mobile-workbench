@@ -3,7 +3,8 @@ export const WORKBENCH_CSS = /* css */ `
 [data-mobile-workbench="navigation"] { display: none; }
 @media (max-width: 1023px) and (pointer: coarse) {
   html[data-mobile-workbench-active="true"] {
-    --mobile-workbench-nav-height: calc(56px + env(safe-area-inset-bottom, 0px));
+    --mobile-workbench-nav-size: calc(56px + env(safe-area-inset-bottom, 0px));
+    --mobile-workbench-nav-height: max(0px, calc(var(--mobile-workbench-nav-size) - var(--mobile-compose-nav-release, 0px)));
   }
   html[data-mobile-workbench-active="true"] [data-mobile-nav="frame"] {
     padding-bottom: var(--mobile-workbench-nav-height) !important;
@@ -14,7 +15,7 @@ export const WORKBENCH_CSS = /* css */ `
     grid-template-columns: repeat(4, minmax(0, 1fr));
     position: fixed;
     inset: auto 0 0;
-    height: var(--mobile-workbench-nav-height);
+    height: var(--mobile-workbench-nav-size);
     padding: 4px 12px calc(4px + env(safe-area-inset-bottom, 0px));
     box-sizing: border-box;
     background: var(--dsw-alias-bg-base);
@@ -142,15 +143,27 @@ export const WORKBENCH_CSS = /* css */ `
   html[data-mobile-workbench-active="true"] [data-mobile-nav="frame"] > :first-child [class*="_wide"] { animation: none !important; }
   /* All page entries switch without the Files-only lateral slide. */
   html[data-mobile-workbench-active="true"] [data-sidebar-right-panel] :is([data-dockkit-host="dock"], [data-dockkit-empty], [data-dockkit-divider]) { transition: none !important; }
-  /* Keyboard, expanded editing and genuine modals retain their existing behavior. */
-  html[data-mobile-workbench-keyboard="true"],
-  html[data-mobile-compose-expanded="true"] {
+  /* Keyboard visibility never changes layout clearance in a discrete step. */
+  html[data-mobile-compose-expanded="true"],
+  html[data-mobile-workbench-keyboard="true"]:has([aria-modal="true"]) {
     --mobile-workbench-nav-height: 0px !important;
   }
   html:has([aria-modal="true"]) [data-mobile-workbench="navigation"],
   html[data-mobile-workbench-keyboard="true"] [data-mobile-workbench="navigation"],
   html[data-mobile-compose-expanded="true"] [data-mobile-workbench="navigation"] {
     display: none !important;
+  }
+  /* Normal editing uses the same visual viewport as the composer budget.
+     Do not translate after the browser has already panned to the caret. */
+  html[data-mobile-workbench-active="true"]:not([data-mobile-compose-expanded="true"]):not(:has([aria-modal="true"])) [data-mobile-nav="frame"]:has([data-mobile-workbench-composer="true"]) {
+    max-height: min(100%, var(--mobile-compose-frame-max, 100%)) !important;
+  }
+  /* Only a coarse keyboard return gets a short theme motion; live viewport frames do not. */
+  html[data-mobile-workbench-active="true"][data-mobile-compose-returning="true"]:not([data-mobile-compose-expanded="true"]):not(:has([aria-modal="true"])) [data-mobile-nav="frame"]:has([data-mobile-workbench-composer="true"]) {
+    transition: max-height var(--ds-transition-duration, 0.2s) var(--ds-ease-in-out, ease), padding-bottom var(--ds-transition-duration, 0.2s) var(--ds-ease-in-out, ease) !important;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    html[data-mobile-compose-returning="true"] [data-mobile-nav="frame"] { transition: none !important; }
   }
   /* The native absolute panel already inherits the shortened rightbar column.
      Anchor to the viewport so navigation clearance is subtracted only once. */

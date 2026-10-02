@@ -4,11 +4,12 @@ import { stripTypeScriptTypes } from 'node:module'
 import { test } from 'node:test'
 import { runInNewContext } from 'node:vm'
 import { WORKBENCH_COMPOSER_CSS } from '../src/client/styles/workbench-composer.css.ts'
+import { WORKBENCH_CSS } from '../src/client/styles/workbench.css.ts'
 
 const source = readFileSync(new URL('../src/client/workbench/composer.ts', import.meta.url), 'utf8')
 // Evaluate the exported pure policy without loading browser effect dependencies.
 const policy = source.slice(source.indexOf('// Pure geometry'), source.indexOf('const CARD')).replaceAll('export function', 'function')
-const { composerHeightBudget: budget, composerKeyboardOpen: keyboard, composerPermissionLabel: permissionLabel, composerModelLabel: modelLabel } = runInNewContext(`${stripTypeScriptTypes(policy)}; ({ composerHeightBudget, composerKeyboardOpen, composerPermissionLabel, composerModelLabel })`)
+const { composerHeightBudget: budget, composerKeyboardOpen: keyboard, composerPermissionLabel: permissionLabel, composerModelLabel: modelLabel, composerNavigationRelease: navigationRelease, composerEndpointReturn: endpointReturn } = runInNewContext(`${stripTypeScriptTypes(policy)}; ({ composerHeightBudget, composerKeyboardOpen, composerPermissionLabel, composerModelLabel, composerNavigationRelease, composerEndpointReturn })`)
 
 test('393x520 long draft leaves 150px context and caps input at 30 percent', () => {
   const result = budget(350, 140)
@@ -34,6 +35,64 @@ test('keyboard requires real viewport shrink and ignores browser chrome and zoom
   assert.equal(keyboard(844, 780, 1), false)
   assert.equal(keyboard(844, 520, 1.5), false)
   assert.doesNotMatch(source, /activeElement|focusin|focusout/)
+})
+
+test('navigation clearance releases continuously across the keyboard threshold and fully clears', () => {
+  const clearance = (height: number, size = 56) => Math.max(0, size - navigationRelease(844, height, 1))
+  assert.equal(clearance(693), 56)
+  assert.ok(Math.abs(clearance(692) - 55.92) < 0.001)
+  assert.equal(clearance(520), 0)
+  assert.equal(clearance(520, 90), 0)
+  assert.equal(clearance(844), 56)
+  const heights = Array.from({ length: 325 }, (_, i) => 844 - i)
+  for (let i = 1; i < heights.length; i++) {
+    assert.ok(Math.abs(clearance(heights[i]) - clearance(heights[i - 1])) <= 1.001)
+  }
+  assert.equal(navigationRelease(844, 520, 1.5), 0)
+  assert.equal(navigationRelease(844, 780, 1), 0)
+})
+
+test('height budget uses the same continuous navigation clearance on both sides of threshold', () => {
+  const value = (height: number) => budget(height - 80 - Math.max(0, 56 - navigationRelease(844, height, 1)) - 24, 120)
+  const before = value(693)
+  const after = value(692)
+  assert.ok(Math.abs(before.card - after.card) <= 1.001)
+  assert.ok(Math.abs(before.input - after.input) <= 1.001)
+  assert.doesNotMatch(source, /root\.hasAttribute\(KEYBOARD\) \? 0 : navHeight/)
+})
+
+test('normal frame clamp yields to expanded editing, true modals and zoom', () => {
+  assert.match(WORKBENCH_CSS, /:not\(\[data-mobile-compose-expanded="true"\]\):not\(:has\(\[aria-modal="true"\]\)\)/)
+  assert.match(WORKBENCH_CSS, /max-height: min\(100%, var\(--mobile-compose-frame-max, 100%\)\) !important/)
+  assert.match(WORKBENCH_CSS, /height: var\(--mobile-workbench-nav-size\)/)
+  assert.match(WORKBENCH_CSS, /--mobile-workbench-nav-height: max\(0px, calc\(var\(--mobile-workbench-nav-size\) - var\(--mobile-compose-nav-release, 0px\)\)\)/)
+  assert.match(source, /height \+ \(viewport\?\.offsetTop \?\? 0\)/)
+  assert.match(source, /: '100%'/)
+  assert.doesNotMatch(source, /setTimeout|virtualKeyboard|scrollTo|scrollIntoView/)
+})
+
+test('only coarse closing steps qualify for theme fallback and continuous viewport steps do not', () => {
+  assert.equal(endpointReturn(520, 844, 844, 1), true)
+  assert.equal(endpointReturn(800, 844, 844, 1), false)
+  assert.equal(endpointReturn(844, 520, 844, 1), false)
+  assert.equal(endpointReturn(520, 844, 844, 1.5), false)
+  assert.match(source, /root\.hasAttribute\(KEYBOARD\) && !keyboard && currentWidth === previousWidth/)
+  assert.match(source, /!reducedMotion\.matches/)
+  assert.match(source, /\(viewport\?\.offsetTop \?\? 0\) === previousBottom - previousHeight/)
+  assert.match(source, /!duration \|\| parseFloat\(duration\) > 0/)
+  assert.match(WORKBENCH_CSS, /transition: max-height var\(--ds-transition-duration, 0\.2s\)[^;]+padding-bottom var\(--ds-transition-duration, 0\.2s\)/)
+  assert.match(WORKBENCH_CSS, /@media \(prefers-reduced-motion: reduce\)/)
+})
+
+test('return budget follows painted frame and actual clearance through the existing observer', () => {
+  assert.match(source, /Math\.min\(height, Math\.max\(0, layoutFrame\.getBoundingClientRect\(\)\.bottom/)
+  assert.match(source, /getComputedStyle\(layoutFrame\)\.paddingBottom/)
+  assert.match(source, /composerHeightBudget\(Math\.max\(100, availableHeight - top - nav - dock - 12\), chrome\)/)
+  assert.match(source, /resizeObserver\?\.observe\(layoutFrame\)/)
+  assert.match(source, /animation\.transitionProperty === 'max-height'/)
+  assert.match(source, /animation\.transitionProperty === 'padding-bottom'/)
+  assert.match(source, /document\.removeEventListener\('transitionend', onTransitionEnd, true\)/)
+  assert.match(source, /reducedMotion\.removeEventListener\('change', onReducedMotion\)/)
 })
 
 test('same-editor contract: inject only owned button, never move or copy host draft', () => {
@@ -99,6 +158,7 @@ test('small DOM contract: same editor/card survives expand, collapse and disposa
     getBoundingClientRect() { return { width: 360, height: 56, top: 0 } }
     querySelector(_selector: string): Node | null { return null }
     closest(_selector: string): Node | null { return null }
+    getAnimations() { return [] }
   }
   const root = new Node()
   const card = new Node()
@@ -117,6 +177,9 @@ test('small DOM contract: same editor/card survives expand, collapse and disposa
   model.querySelector = () => modelText
   const seat = new Node()
   const content = new Node()
+  const layoutFrame = new Node()
+  layoutFrame.getBoundingClientRect = () => ({ width: 393, height: 844, top: 0, bottom: 844 })
+  const motion = Object.assign(new Node(), { matches: false })
   editor.textContent = '长草稿保持不变'
   card.append(scroll, row)
   scroll.append(editor)
@@ -132,7 +195,7 @@ test('small DOM contract: same editor/card survives expand, collapse and disposa
     if (selector.includes('conversation.input.model')) return model
     return null
   }
-  card.closest = selector => selector === '[data-composer-seat]' ? seat : content
+  card.closest = selector => selector === '[data-mobile-nav="frame"]' ? layoutFrame : selector === '[data-composer-seat]' ? seat : content
   root.style.setProperty('--mobile-compose-vv-height', 'original')
   const frames = new Map<number, () => void>()
   let nextFrame = 0
@@ -154,6 +217,7 @@ test('small DOM contract: same editor/card survives expand, collapse and disposa
     document: fakeDocument,
     window: Object.assign(windowEvents, {
       innerWidth: 393, innerHeight: 844, visualViewport: viewport,
+      matchMedia: () => motion,
       requestAnimationFrame: (callback: () => void) => { frames.set(++nextFrame, callback); return nextFrame },
       cancelAnimationFrame: (id: number) => frames.delete(id),
     }),
@@ -220,6 +284,26 @@ test('small DOM contract: same editor/card survives expand, collapse and disposa
   viewport.listeners.get('resize')!({})
   flush()
   assert.equal(root.getAttribute('data-mobile-workbench-keyboard'), 'true')
+  assert.ok(parseFloat(root.style.getPropertyValue('--mobile-compose-nav-release')) > 56)
+  assert.equal(root.style.getPropertyValue('--mobile-compose-frame-max'), '520px')
+  viewport.height = 844
+  viewport.listeners.get('resize')!({})
+  flush()
+  assert.equal(root.getAttribute('data-mobile-compose-returning'), 'true')
+  documentEvents.listeners.get('transitionend')!({ target: layoutFrame, propertyName: 'max-height' })
+  flush()
+  assert.equal(root.hasAttribute('data-mobile-compose-returning'), false)
+  viewport.height = 520
+  viewport.listeners.get('resize')!({})
+  flush()
+  viewport.height = 844
+  viewport.listeners.get('resize')!({})
+  flush()
+  assert.equal(root.getAttribute('data-mobile-compose-returning'), 'true')
+  motion.matches = true
+  motion.listeners.get('change')!({})
+  flush()
+  assert.equal(root.hasAttribute('data-mobile-compose-returning'), false)
   dispose!()
   assert.equal(card.children.length, 2)
   assert.equal(row.children.length, 0)
@@ -231,9 +315,12 @@ test('small DOM contract: same editor/card survives expand, collapse and disposa
   assert.equal(card.hasAttribute('data-mobile-workbench-composer'), false)
   assert.equal(root.hasAttribute('data-mobile-workbench-keyboard'), false)
   assert.equal(root.style.getPropertyValue('--mobile-compose-vv-height'), 'original')
+  assert.equal(root.style.getPropertyValue('--mobile-compose-nav-release'), '')
+  assert.equal(root.style.getPropertyValue('--mobile-compose-frame-max'), '')
   assert.equal(root.children.length, 0)
   assert.equal(viewport.listeners.size, 0)
   assert.equal(windowEvents.listeners.size, 0)
+  assert.equal(motion.listeners.size, 0)
   assert.equal(documentEvents.listeners.size, 0)
   assert.equal(frames.size, 0)
 })

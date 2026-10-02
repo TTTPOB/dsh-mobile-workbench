@@ -3,7 +3,18 @@ import { installMobileEffect } from '../effects/phone-chrome.ts'
 
 // Pure geometry policy; visual viewport shrink, not focus, is keyboard evidence.
 export function composerKeyboardOpen(baseline: number, height: number, scale: number): boolean {
-  return Math.abs(scale - 1) < 0.05 && baseline - height > Math.max(120, baseline * 0.18)
+  return composerNavigationRelease(baseline, height, scale) > 0
+}
+
+// Release navigation clearance by measured shrink beyond the existing keyboard threshold.
+export function composerNavigationRelease(baseline: number, height: number, scale: number): number {
+  if (Math.abs(scale - 1) >= 0.05) return 0
+  return Math.max(0, baseline - height - Math.max(120, baseline * 0.18))
+}
+
+// A coarse return needs a visual fallback; continuous viewport steps stay immediate.
+export function composerEndpointReturn(previousHeight: number, height: number, baseline: number, scale: number): boolean {
+  return Math.abs(scale - 1) < 0.05 && height - previousHeight > Math.max(120, baseline * 0.18)
 }
 
 export function composerHeightBudget(available: number, chrome: number): { input: number; card: number; context: number } {
@@ -31,13 +42,14 @@ const SCROLL = '[data-input-scroll]'
 const MARKER = 'data-mobile-workbench-composer'
 const EXPANDED = 'data-mobile-compose-expanded'
 const KEYBOARD = 'data-mobile-workbench-keyboard'
+const RETURNING = 'data-mobile-compose-returning'
 
 /** Decorate the official Lexical card in place; never own draft or submit state. */
 export function installWorkbenchComposer(ctx: ClientContext): void {
   installMobileEffect(ctx, 'dsh-web-mobile: workbench composer', () => {
     const root = document.documentElement
-    const oldMarkers = new Map([EXPANDED, KEYBOARD].map(key => [key, root.getAttribute(key)]))
-    const properties = ['--mobile-compose-vv-height', '--mobile-compose-vv-top', '--mobile-compose-vv-left', '--mobile-compose-vv-width'] as const
+    const oldMarkers = new Map([EXPANDED, KEYBOARD, RETURNING].map(key => [key, root.getAttribute(key)]))
+    const properties = ['--mobile-compose-vv-height', '--mobile-compose-vv-top', '--mobile-compose-vv-left', '--mobile-compose-vv-width', '--mobile-compose-nav-release', '--mobile-compose-frame-max'] as const
     const oldProperties = properties.map(key => [key, root.style.getPropertyValue(key), root.style.getPropertyPriority(key)] as const)
     let card: HTMLElement | null = null
     let button: HTMLButtonElement | null = null
@@ -58,6 +70,10 @@ export function installWorkbenchComposer(ctx: ClientContext): void {
     let width = window.innerWidth
     let baseline = window.visualViewport?.height ?? window.innerHeight
     const viewport = window.visualViewport
+    let previousHeight = baseline
+    let previousWidth = viewport?.width ?? window.innerWidth
+    let previousBottom = baseline + (viewport?.offsetTop ?? 0)
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)')
     const resizeObserver = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(() => schedule())
 
     const mark = (name: string, on: boolean): void => {
@@ -65,10 +81,19 @@ export function installWorkbenchComposer(ctx: ClientContext): void {
         if (root.getAttribute(name) !== 'true') root.setAttribute(name, 'true')
       } else if (root.hasAttribute(name)) root.removeAttribute(name)
     }
+    const cancelReturning = (): void => {
+      if (!root.hasAttribute(RETURNING)) return
+      mark(RETURNING, false)
+      for (const animation of card?.closest<HTMLElement>('[data-mobile-nav="frame"]')?.getAnimations() ?? []) {
+        if ('transitionProperty' in animation
+          && (animation.transitionProperty === 'max-height' || animation.transitionProperty === 'padding-bottom')) animation.cancel()
+      }
+    }
     const setStyle = (element: HTMLElement, key: string, value: string): void => {
       if (element.style.getPropertyValue(key) !== value) element.style.setProperty(key, value)
     }
     const setExpanded = (value: boolean): void => {
+      cancelReturning()
       expanded = value
       mark(EXPANDED, value)
       if (card) {
@@ -83,6 +108,7 @@ export function installWorkbenchComposer(ctx: ClientContext): void {
       schedule()
     }
     const release = (): void => {
+      cancelReturning()
       resizeObserver?.disconnect()
       removeButtonListeners?.()
       removeButtonListeners = undefined
@@ -167,6 +193,8 @@ export function installWorkbenchComposer(ctx: ClientContext): void {
       resizeObserver?.observe(next)
       const seat = next.closest<HTMLElement>('[data-composer-seat]')
       if (seat) resizeObserver?.observe(seat)
+      const layoutFrame = next.closest<HTMLElement>('[data-mobile-nav="frame"]')
+      if (layoutFrame) resizeObserver?.observe(layoutFrame)
     }
     const ensureControls = (): void => {
       if (!card || !button || !header) return
@@ -206,11 +234,28 @@ export function installWorkbenchComposer(ctx: ClientContext): void {
         baseline = height
       }
       if (Math.abs(scale - 1) < 0.05) baseline = Math.max(baseline, height, window.innerHeight)
-      mark(KEYBOARD, composerKeyboardOpen(baseline, height, scale))
+      const keyboard = composerKeyboardOpen(baseline, height, scale)
+      const bottom = height + (viewport?.offsetTop ?? 0)
+      const layoutFrame = card?.closest<HTMLElement>('[data-mobile-nav="frame"]') ?? null
+      const normal = !!layoutFrame && !expanded && !document.querySelector('[aria-modal="true"]')
+      const duration = getComputedStyle(root).getPropertyValue('--ds-transition-duration').trim()
+      const coarseReturn = normal && root.hasAttribute(KEYBOARD) && !keyboard && currentWidth === previousWidth
+        && (viewport?.offsetTop ?? 0) === previousBottom - previousHeight
+        && composerEndpointReturn(previousHeight, height, baseline, scale) && !reducedMotion.matches
+        && (!duration || parseFloat(duration) > 0)
+      if (coarseReturn) mark(RETURNING, true)
+      else if (!normal || reducedMotion.matches || Math.abs(scale - 1) >= 0.05 || keyboard || height !== previousHeight || bottom !== previousBottom || currentWidth !== previousWidth) cancelReturning()
+      previousHeight = height
+      previousWidth = currentWidth
+      previousBottom = bottom
+      mark(KEYBOARD, keyboard)
       setStyle(root, properties[0], `${height}px`)
       setStyle(root, properties[1], `${viewport?.offsetTop ?? 0}px`)
       setStyle(root, properties[2], `${viewport?.offsetLeft ?? 0}px`)
       setStyle(root, properties[3], `${currentWidth}px`)
+      setStyle(root, properties[4], `${composerNavigationRelease(baseline, height, scale)}px`)
+      // Limit the normal frame to the visible bottom; browser panning already owns its top.
+      setStyle(root, properties[5], Math.abs(scale - 1) < 0.05 ? `${height + (viewport?.offsetTop ?? 0)}px` : '100%')
       if (!card || expanded) return
       const scroll = card.querySelector<HTMLElement>(SCROLL)
       if (!scroll) return
@@ -221,11 +266,14 @@ export function installWorkbenchComposer(ctx: ClientContext): void {
       // The navigation effect owns padding. Resolve its possibly calc()-based variable.
       probeNode.style.height = navValue.trim() ? 'var(--mobile-workbench-nav-height)' : 'calc(56px + env(safe-area-inset-bottom, 0px))'
       const navHeight = probeNode.getBoundingClientRect().height
-      const nav = root.hasAttribute(KEYBOARD) ? 0 : navHeight
+      // During a coarse return, budget from the painted frame, not the final viewport.
+      const nav = layoutFrame ? Math.max(0, parseFloat(getComputedStyle(layoutFrame).paddingBottom) || 0) : navHeight
+      const availableHeight = layoutFrame
+        ? Math.min(height, Math.max(0, layoutFrame.getBoundingClientRect().bottom - (viewport?.offsetTop ?? 0))) : height
       const cardHeight = card.getBoundingClientRect().height
       const dock = Math.max(0, (seat?.getBoundingClientRect().height ?? cardHeight) - cardHeight)
       const chrome = Math.max(cardHeight, card.scrollHeight || cardHeight) - scroll.getBoundingClientRect().height
-      const budget = composerHeightBudget(Math.max(100, height - top - nav - dock - 12), chrome)
+      const budget = composerHeightBudget(Math.max(100, availableHeight - top - nav - dock - 12), chrome)
       setStyle(card, '--mobile-compose-input-max', `${Math.floor(budget.input)}px`)
       setStyle(card, '--mobile-compose-card-max', `${Math.floor(budget.card)}px`)
       const overflow = chrome + 44 > budget.card
@@ -243,7 +291,7 @@ export function installWorkbenchComposer(ctx: ClientContext): void {
     probeNode.setAttribute('aria-hidden', 'true')
     probeNode.style.cssText = 'position:absolute;visibility:hidden;pointer-events:none;width:0'
     root.append(probeNode)
-    observer.observe(document.body, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ['style', 'data-phase', 'aria-label', 'class'] })
+    observer.observe(document.body, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ['style', 'data-phase', 'aria-label', 'aria-modal', 'class'] })
     window.addEventListener('resize', schedule)
     viewport?.addEventListener('resize', schedule)
     viewport?.addEventListener('scroll', schedule)
@@ -254,7 +302,20 @@ export function installWorkbenchComposer(ctx: ClientContext): void {
         setExpanded(false)
       }
     }
+    const onTransitionEnd = (event: TransitionEvent): void => {
+      if ((event.propertyName === 'max-height' || event.propertyName === 'padding-bottom')
+        && event.target === card?.closest('[data-mobile-nav="frame"]')) {
+        mark(RETURNING, false)
+        schedule()
+      }
+    }
+    const onReducedMotion = (): void => {
+      if (reducedMotion.matches) cancelReturning()
+      schedule()
+    }
     document.addEventListener('keydown', onKey, true)
+    document.addEventListener('transitionend', onTransitionEnd, true)
+    reducedMotion.addEventListener('change', onReducedMotion)
     schedule()
     return () => {
       observer.disconnect()
@@ -263,6 +324,8 @@ export function installWorkbenchComposer(ctx: ClientContext): void {
       viewport?.removeEventListener('resize', schedule)
       viewport?.removeEventListener('scroll', schedule)
       document.removeEventListener('keydown', onKey, true)
+      document.removeEventListener('transitionend', onTransitionEnd, true)
+      reducedMotion.removeEventListener('change', onReducedMotion)
       release()
       window.cancelAnimationFrame(frame)
       for (const [key, value] of oldMarkers) {
