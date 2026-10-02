@@ -38,4 +38,4 @@ node dev/fixture/smoke.mjs
 
 构建脚本根据当前目录生成 `dist/index.js` 和 `overlay.yml`，通过 pnpm 全局项目发现 Host 的共享包。移动目录后重新构建即可。若有多个安装，可通过 `MOBILE_AUDIT_RUNTIME` 指定 `@deepseek-ai/dsh` 包目录。
 
-演示模型的 token 数和回答均为测试数据。模型本身不访问外部模型服务；会话、工具结果、子代理和审批仍由 DSH 正常生成。生成文件与演示 Home 均已加入 gitignore。
+演示模型的 token 数和回答均为测试数据。模型本身不访问外部模型服务；会话、工具结果、子代理和审批仍由 DSH 正常生成。生成文件与演示 Home 均已加入 gitignore。多层演示的overlay仅对正式Host行`subagent.config`设置`maxDepth: 2`，保留实际schema的`maxActiveSubagents`默认；标准preset的delegation工具未显式限制深度，沿公开owner策略使用该值，整套preset不替换。只影响测试overlay，不改产品默认或日用配置。

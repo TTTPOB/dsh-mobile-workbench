@@ -3,6 +3,7 @@ import { readFileSync, mkdirSync, writeFileSync } from 'node:fs'
 import { stripTypeScriptTypes } from 'node:module'
 import { pathToFileURL, fileURLToPath } from 'node:url'
 import { hostRequire } from './runtime.mjs'
+import { fixtureSubagentConfig } from './subagent-depth.mjs'
 
 const sourceUrl = new URL('./src/index.ts', import.meta.url)
 const source = readFileSync(sourceUrl, 'utf8')
@@ -16,7 +17,10 @@ mkdirSync(new URL('./dist/', import.meta.url), { recursive: true })
 writeFileSync(new URL('./dist/index.js', import.meta.url), output)
 const entry = fileURLToPath(new URL('./dist/index.js', import.meta.url))
 const fixtureFile = fileURLToPath(new URL('./workspace/mobile-audit.md', import.meta.url))
+const subagentConfig = await fixtureSubagentConfig(require)
 const overlay = [
+  '- id: subagent',
+  '  config: ' + JSON.stringify(subagentConfig),
   '- id: agent-default-model',
   '  config:',
   '    provider: mobile-audit',

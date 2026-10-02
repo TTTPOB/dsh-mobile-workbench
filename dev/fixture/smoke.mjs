@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict'
 import { pathToFileURL, fileURLToPath } from 'node:url'
 import { hostRequire } from './runtime.mjs'
+import { fixtureSubagentConfig } from './subagent-depth.mjs'
 import { readFileSync } from 'node:fs'
 import { stripTypeScriptTypes } from 'node:module'
 const require = hostRequire()
@@ -24,8 +25,32 @@ assert.equal(config.paceMs, 35)
 assert.throws(() => fixture.Config({ paceMs: 0 }))
 assert.throws(() => fixture.apply({}, { fixtureFile, paceMs: -1 }))
 assert.throws(() => fixture.apply({}, { fixtureFile: 'relative.md', paceMs: 0 }))
+const depthConfig = await fixtureSubagentConfig(require)
+const { default: SubagentRuntime } = await import(pathToFileURL(require.resolve('@deepseek-ai/dsh-subagent')).href)
+const { Config: SubagentToolConfig } = await import(pathToFileURL(require.resolve('@deepseek-ai/dsh-tool-subagent')).href)
+assert.equal(depthConfig.maxDepth, 2)
+assert.equal(depthConfig.maxActiveSubagents, SubagentRuntime.Config({}).maxActiveSubagents.get())
+const standardPreset = readFileSync(require.resolve('@deepseek-ai/dsh-web-app/presets/standard.patch.yml'), 'utf8')
+assert.match(standardPreset, /id: preset-standard/)
+assert.match(standardPreset, /id: delegation/)
+const standardTool = standardPreset.split('              - id: tool-subagent\n')[1]?.split('              - id:')[0]
+assert.ok(standardTool)
+assert.match(standardTool, /provider: spawn/)
+assert.match(standardTool, /toolName: subagent/)
+assert.ok(!standardTool.includes('maxDepth:'), 'standard delegates depth policy to the Host subagent service')
+const toolConfig = SubagentToolConfig({ provider: 'spawn', toolName: 'subagent', modelSelectionSettings: true, backgroundMode: 'continuable' })
+assert.equal(toolConfig.maxDepth, undefined)
+if (!process.argv.includes('--source')) {
+  const overlay = readFileSync(new URL('./overlay.yml', import.meta.url), 'utf8')
+  const emitted = overlay.match(/^- id: subagent\n  config: (.+)$/m)
+  assert.ok(emitted)
+  assert.deepEqual(JSON.parse(emitted[1]), depthConfig)
+  assert.ok(!overlay.includes('preset-standard'), 'fixture preserves the entire standard preset composition')
+}
 const ctx = new Context()
 await ctx.plugin(LlmRuntime)
+await ctx.plugin(SubagentRuntime, depthConfig)
+assert.equal(ctx.subagents.resolveMaxDepth(toolConfig.maxDepth), 2)
 try {
   const fiber = await ctx.plugin(fixture, { fixtureFile, paceMs: 0 })
   assert.equal(ctx.llm.listProviders().find(item => item.id === 'mobile-audit').name, 'Mobile Audit (local fixture)')
@@ -196,7 +221,7 @@ try {
   }
   await fiber.dispose()
   assert.deepEqual(ctx.llm.listProviders(), [])
-  console.log(JSON.stringify({ registered: true, dispose: true, twoSessionIsolation: true, cancellation: true, replyCharacters: fixture.REPLY.length, tool: call.name, childRecursionGuard: true, finiteNestedDelegation: true, nestedCompletionChain: true, nestedFailureStops: true, officialQuestionTool: true, questionConfirmation: true, approvalArguments: true, approvalResultBranches: true, dailyReading: true, extendedModelName: true, syntheticStatistics: true, backgroundArguments: true, backgroundReplyBranches: true }))
+  console.log(JSON.stringify({ registered: true, dispose: true, twoSessionIsolation: true, cancellation: true, replyCharacters: fixture.REPLY.length, tool: call.name, childRecursionGuard: true, finiteNestedDelegation: true, fixtureMaxDepth: 2, shippedCapacityPreserved: true, standardPresetPreserved: true, nestedCompletionChain: true, nestedFailureStops: true, officialQuestionTool: true, questionConfirmation: true, approvalArguments: true, approvalResultBranches: true, dailyReading: true, extendedModelName: true, syntheticStatistics: true, backgroundArguments: true, backgroundReplyBranches: true }))
 } finally {
   await ctx.fiber.dispose()
 }
