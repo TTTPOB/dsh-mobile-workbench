@@ -70,6 +70,12 @@ export const DAILY_REPLY = [
   '_本地演示：建议与统计为合成测试内容，未修改业务文件。_',
 ].join('\n')
 
+/** Distinct finite task markers: parent delegates once, leaf reads once and stops. */
+export const NESTED_PARENT_MARKER = 'MOBILE_AUDIT_NESTED_PARENT_TASK'
+export const NESTED_LEAF_MARKER = 'MOBILE_AUDIT_NESTED_LEAF_TASK'
+export const NESTED_PARENT_DESCRIPTION = 'MOBILE_AUDIT_NESTED_B · 两层目录父节点'
+export const NESTED_LEAF_DESCRIPTION = 'MOBILE_AUDIT_NESTED_D · 只读叶子'
+
 /** Stateless progression derives only from the current request history. */
 export class MobileAuditAdapter extends LlmAdapter {
   constructor(private readonly config: Config) { super() }
@@ -96,9 +102,12 @@ export class MobileAuditAdapter extends LlmAdapter {
       (message.source === undefined || message.source.kind === 'user'))
     const prompt = options.messages[lastUser]?.content
       .filter(block => block.type === 'text').map(block => block.text).join('\n') ?? ''
-    // The child marker takes precedence and never enters a delegation branch.
+    // Markers precede user trigger text; only the marked parent delegates.
     const childTask = prompt.startsWith('MOBILE_AUDIT_CHILD_TASK')
-    const scenario = childTask ? 'child-read'
+    const scenario = prompt.startsWith(NESTED_LEAF_MARKER) ? 'nested-leaf'
+      : prompt.startsWith(NESTED_PARENT_MARKER) ? 'nested-parent'
+      : childTask ? 'child-read'
+      : prompt.includes('演示多层子智能体') ? 'nested-root'
       : prompt.includes('演示后台任务') ? 'background'
       : prompt.includes('演示子智能体') ? 'subagent'
       : prompt.includes('演示提问') ? 'question'
@@ -114,6 +123,15 @@ export class MobileAuditAdapter extends LlmAdapter {
           description: '演示本地后台任务固定标记',
           workdir: dirname(this.config.fixtureFile),
           run_in_background: true,
+        }, callId, options)
+      } else if (scenario === 'nested-root' || scenario === 'nested-parent') {
+        const parent = scenario === 'nested-root'
+        yield* this.tool(parent ? '创建固定两层目录测试父节点B，由其首轮创建叶子D。' : '父节点B首轮仅创建一次只读叶子D。', 'subagent', {
+          description: parent ? NESTED_PARENT_DESCRIPTION : NESTED_LEAF_DESCRIPTION,
+          prompt: parent
+            ? NESTED_PARENT_MARKER + '\n只创建一次固定只读叶子D，等待工具结果后结束。不要自我调用或创建其他子代理。'
+            : NESTED_LEAF_MARKER + '\n只读取固定测试资料并给出简短确认后结束。不要创建子代理；不得进入父节点测试场景。',
+          run_in_background: false,
         }, callId, options)
       } else if (scenario === 'subagent') {
         yield* this.tool('创建一个本地子智能体，只读测试资料并等待其简短回复。', 'subagent', {
@@ -142,7 +160,7 @@ export class MobileAuditAdapter extends LlmAdapter {
           justification: '验证移动端审批交互',
         }, callId, options)
       } else {
-        yield* this.tool(childTask ? '子智能体开始只读检查固定测试资料。'
+        yield* this.tool(childTask || scenario === 'nested-leaf' ? '子智能体开始只读检查固定测试资料。'
           : scenario === 'daily-read' ? '先读取本地参考资料，再整理一份简短的改进建议。'
           : '先只读检查本地测试资料，然后提供用于手机布局对比的长回复。', 'read', {
           file_path: this.config.fixtureFile, offset: 1, limit: 40,
@@ -156,6 +174,14 @@ export class MobileAuditAdapter extends LlmAdapter {
       yield* this.text(submitted
         ? '本地后台测试已提交，尚未完成。请查看右上角后台任务与更多菜单；任务结束以后以实际通知为准。'
         : '后台测试未确认提交，不会自动重试。\n' + resultText, options)
+    } else if (scenario === 'nested-leaf' || scenario === 'nested-parent' || scenario === 'nested-root') {
+      const expected = scenario === 'nested-leaf' ? 'MOBILE_AUDIT_READ_OK'
+        : scenario === 'nested-parent' ? 'MOBILE_AUDIT_NESTED_D_COMPLETE' : 'MOBILE_AUDIT_NESTED_B_COMPLETE'
+      const marker = scenario === 'nested-leaf' ? 'MOBILE_AUDIT_NESTED_D'
+        : scenario === 'nested-parent' ? 'MOBILE_AUDIT_NESTED_B' : 'MOBILE_AUDIT_NESTED_ROOT'
+      const completed = result.isError !== true && resultText.includes(expected)
+      yield* this.text((completed ? '固定两层测试步骤完成。' + marker + '_COMPLETE'
+        : '固定两层测试步骤未确认完成，不自动重试。' + marker + '_NOT_COMPLETE') + '\n' + resultText, options)
     } else if (scenario === 'child-read') {
       yield* this.text('子智能体已返回只读资料检查结果。MOBILE_AUDIT_CHILD_COMPLETE\n' +
         (resultText.includes('MOBILE_AUDIT_READ_OK') ? '已读到固定标记 MOBILE_AUDIT_READ_OK。' : resultText), options)
