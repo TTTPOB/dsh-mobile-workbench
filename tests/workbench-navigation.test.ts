@@ -239,3 +239,33 @@ test('optional native Plugins modal stops panel selection before sidebar close w
   assert.equal(openPluginsModal(ctx, event), false, 'ledger/DOM mismatch never intercepts another panel')
   assert.equal(modalCalls, 1)
 })
+
+test('own descendant catalog opens by the native pinned click, while second activation still closes with Escape', t => {
+  let open = false
+  const events: string[] = []
+  const trigger = {
+    getAttribute: (key: string) => key === 'aria-expanded' ? String(open) : null,
+    click: () => { events.push('own-count-click'); open = true },
+    dispatchEvent: () => { assert.fail('keyboard open does not carry the rc2 own-count pinned-click semantics') },
+  }
+  const tree = { dispatchEvent: (event: KeyboardEvent) => { assert.equal(event.key, 'Escape'); events.push('native-Escape'); open = false } }
+  const header = { querySelector: () => null, querySelectorAll: (selector: string) => selector.includes('role="tablist"') ? [] : [trigger] }
+  const frame = { hasAttribute: () => true, querySelector: () => header }
+  class KeyEvent extends Event {
+    key: string
+    constructor(type: string, init: KeyboardEventInit) { super(type, init); this.key = init.key ?? '' }
+  }
+  replaceGlobal(t, 'KeyboardEvent', KeyEvent)
+  replaceGlobal(t, 'document', { querySelector: (selector: string) => selector === '[data-mobile-nav="frame"]' ? frame : selector.startsWith('[role="tree"]') ? tree : null })
+  const bridge = createHostBridge(() => ['chat', 'trajectory'])
+  bridge.activate('agents')
+  assert.equal(bridge.evidence().agentsOpen, true)
+  assert.deepEqual(events, ['own-count-click'])
+  bridge.activate('agents')
+  assert.equal(bridge.evidence().agentsOpen, false)
+  assert.deepEqual(events, ['own-count-click', 'native-Escape'])
+  // Native outside dismissal may finish between pointerdown and the owned click.
+  bridge.activate('agents', true)
+  assert.equal(open, false)
+  assert.equal(events.length, 2, 'the second touch must not reopen the already dismissed catalog')
+})

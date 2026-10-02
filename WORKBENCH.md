@@ -1,6 +1,6 @@
 # DSH Mobile Workbench
 
-面向 **DSH 0.1.7-rc.2** 的手机工作台，基于 [mexiaosqwq/dsh-web-mobile](https://github.com/mexiaosqwq/dsh-web-mobile) 本地 fork。版本为 `3.0.3-fork6`，尚未发布到 npm。
+面向 **DSH 0.1.7-rc.2** 的手机工作台，基于 [mexiaosqwq/dsh-web-mobile](https://github.com/mexiaosqwq/dsh-web-mobile) 本地 fork。版本为 `3.0.3-fork7`，尚未发布到 npm。
 
 ## 先运行演示
 
@@ -40,7 +40,7 @@ fork5 的键盘几何采用可控 VisualViewport 序列与真实桌面 DOM 做�
 
 **尚需真机确认**：Android Chrome 的最终 PWA 安装、真实软键盘与系统返回，以及个人插件组合。已验证 manifest 的 Cookie 发送由缺失变为携带，但不能据此保证远端 WebAPK 安装成功；历史公网预检曾观测到 Cloudflare 403；前轮受控部署已确认匿名401及实际登录HTML，不代表WebAPK全流程验收。当前版本不提供离线会话或 Web Push，未修改 Relay。
 
-fork6 的三页／独立入口／下游统计／原生modal适配已完成源码聚焦测试与类型检查；主代理已完成统一构建及核心测试，新的组合GUI与真机验收待执行，不沿用旧版UI证据。公开refreshProjections首读不含聊天records/messages，但含全部registered projections及全turn的有界摘要；仅对当前可达缺catalog最多2并发，复用owner cache／恢复基线，不另读历史或实现重连管线。插件modal需配套官方ui-plugin-manager fork1公共openModal，mobile不重建管理页。
+fork7 的三页／独立入口／下游统计／原生modal适配已完成源码聚焦测试与类型检查；主代理已完成统一构建及核心测试，新的组合GUI与真机验收待执行，不沿用旧版UI证据。公开refreshProjections首读不含聊天records/messages，但含全部registered projections及全turn的有界摘要；仅对当前可达缺catalog最多2并发，复用owner cache／恢复基线，不另读历史或实现重连管线。插件modal需配套官方ui-plugin-manager fork1公共openModal，mobile不重建管理页。
 
 ## 安装与构建
 
@@ -48,7 +48,7 @@ fork6 的三页／独立入口／下游统计／原生modal适配已完成源码
 
 ```sh
 DSH_HOME=/path/to/isolated-home dsh plugin --profile web add \
-  /path/to/dsh-web-mobile-3.0.3-fork6.tgz --config.auto-install-peers=false
+  /path/to/dsh-web-mobile-3.0.3-fork7.tgz --config.auto-install-peers=false
 ```
 
 一个 profile 只加载一个 `dsh-web-mobile` 版本。先试隔离环境，再按授权部署。目标 rc.2 对已有 bundle 升级返回 `restart-required`；需要受控进程切换后，检查 `/plugins/events` 广告的实际脚本匹配目标产物，再确认页面，不能只凭包版本或 manifest 宣称热升级成功。

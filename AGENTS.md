@@ -2,7 +2,7 @@
 
 ## Mobile Workbench fork 当前约定
 
-- fork6 底栏三页为会话列表、会话、工作区；会话页保留原生当前对话/轨迹view，顶部单独切view。标题只开信息，群组只开当前agent下游目录；上下文行顺序为模式、下游计数、view切换、直接父返回（仅子会话）。原生节点不得移动。
+- fork7 底栏三页为会话列表、会话、工作区；会话页保留原生当前对话/轨迹view，顶部单独切view。标题只开信息，群组只开当前agent下游目录；上下文行顺序为模式、下游计数、view切换、直接父返回（仅子会话）。原生节点不得移动。
 - 下游active/total同范围递归排除自身/父/兄弟；只对当前可达缺catalog用公开refreshProjections补载，最多2并发，missing/error不当叶子0；全局公开projection更新驱动新孙发现，owner恢复清基线后重试，切根/卸载停止旧分支排队。三页仅内容短淡入，底栏固定，reduced-motion跳过；不动画frame、不保留双页面。
 - 列表底部插件/设置用原节点CSS grid并排；插件优先optional公开pluginNavigation.openModal（需要官方owner支持），在原capture关闭列表之前让位，缺API保留原native页。工作区包含文件/预览/终端，只隐藏整个右栏收起按钮，内部分屏/关闭/返回保留。日志导出仅官方更多菜单；以下上游抽屉历史说明不覆盖工作台启用态。
 - 当前 Host 目标为 0.1.7-rc.2；宿主入口仅提供 manifest 与图标，不启用下文上游历史说明中的压缩与删除端点。

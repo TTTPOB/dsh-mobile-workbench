@@ -79,7 +79,8 @@ export function createHostBridge(
     if (destination === 'agents') {
       const trigger = agentTrigger()
       if (pointerStartedOpen || trigger?.getAttribute('aria-expanded') === 'true') closeAgents()
-      else trigger?.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }))
+      // The rc.2 own-count click pins the catalog and cancels hover-close timers.
+      else trigger?.click()
       return
     }
     conversation.show()
