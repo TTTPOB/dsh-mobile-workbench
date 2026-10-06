@@ -121,6 +121,7 @@ export const WORKBENCH_HEADER_CSS = `@media (max-width: 1023px) and (pointer: co
   ${H} nav[class*="_crumbs"] {
     flex: 0 1 auto !important;
     width: 100% !important;
+    min-height: 44px !important;
     gap: 0 !important;
   }
   ${H} [class*="_headerActions"] {

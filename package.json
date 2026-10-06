@@ -1,6 +1,6 @@
 {
   "name": "dsh-web-mobile",
-  "version": "3.0.3-fork7",
+  "version": "3.1.0",
   "description": "DSH Mobile Workbench — mobile-first shell retaining native trajectory and subagents",
   "license": "MIT",
   "author": "mexiaosh",
@@ -37,7 +37,8 @@
   "files": [
     "lib",
     "src",
-    "assets",
+    "assets/workbench-192.png",
+    "assets/workbench-512.png",
     "cordis.patch.yml",
     "README.md",
     "WORKBENCH.md",
@@ -46,7 +47,6 @@
   "scripts": {
     "build": "node scripts/clean-build.mjs && tsc -p tsconfig.json && tsc -p tsconfig.client.json && node scripts/build-client.mjs",
     "verify": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.client.json --noEmit",
-    "smoke:cdp": "node scripts/cdp-probe.mjs",
     "test:core": "node --test tests/*.test.ts",
     "prepack": "npm run build"
   },

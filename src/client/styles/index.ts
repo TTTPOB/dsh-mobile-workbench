@@ -4,10 +4,5 @@ import { COMPAT_CSS } from './compat.css.ts'
 import { MISC_CSS } from './misc.css.ts'
 import { WORKBENCH_COMPOSER_CSS } from './workbench-composer.css.ts'
 
-/**
- * All mobile styles, concatenated in the exact order of the original
- * single-file stylesheet (base → layout → compat → misc, where misc keeps
- * composer → tablet → desktop). Injected as ONE <style data-plugin> tag —
- * do not reorder.
- */
-export const MOBILE_CSS = [BASE_CSS, LAYOUT_CSS, COMPAT_CSS, MISC_CSS, WORKBENCH_COMPOSER_CSS].join('\n')
+/** Region styles share one tag: frame, overlays, integrations, browser inputs, composer. */
+export const MOBILE_CSS = [LAYOUT_CSS, BASE_CSS, COMPAT_CSS, MISC_CSS, WORKBENCH_COMPOSER_CSS].join('\n')

@@ -1,13 +1,12 @@
 import type { ClientContext } from '@deepseek-ai/dsh-client-runtime/client'
 import { ComposerFileButton } from './components/ComposerFileButton.tsx'
-import { openFilesPanel } from './components/open-files-panel.ts'
 import { MOBILE_CSS } from './styles/index.ts'
 import { installWorkbench } from './workbench/index.ts'
 import { installWorkbenchComposer } from './workbench/composer.ts'
 
-import { installFrameController, installOverlayInteractions, installPhoneChrome, installReconciler, registerReconcileTasks } from './effects/phone-chrome.ts'
-import { installSidebarSwipe } from './effects/sidebar-swipe.ts'
-import { installSubagentChipTouch } from './effects/subagent-chip-touch.ts'
+import { installPhoneChrome } from './effects/phone-chrome.ts'
+import { installWorkbenchDecoration } from './effects/workbench-decoration.ts'
+import { installSessionsTouch } from './effects/sessions-touch.ts'
 import { installComposerKeyboardGuard } from './effects/composer-keyboard-guard.ts'
 import { installComposerPlusToggle } from './effects/composer-plus-toggle.ts'
 import { installWorkspaceChipToggle } from './effects/workspace-chip-toggle.ts'
@@ -16,8 +15,6 @@ import { installModelMenuAnchor } from './effects/model-menu-anchor.ts'
 import { installShortcutModalKeyboardGuard } from './effects/shortcut-modal-keyboard-guard.ts'
 import { installSessionFocusGuard } from './effects/session-focus-guard.ts'
 import { installInstalledListStyles } from './effects/installed-list.ts'
-import { installAionuiCompat } from './effects/aionui-compat.ts'
-import { createPanelExit, installPanelRowExit } from './effects/panel-exit.ts'
 import { installDebugBadge } from './debug.ts'
 import { NS, en, zh } from './i18n/locales.ts'
 import type { MobileNavKey } from './i18n/locales.ts'
@@ -33,9 +30,8 @@ declare module '@deepseek-ai/dsh-client-ui-slots' {
 export const inject = ['slots', 'layout', 'locale', 'sessions', 'workspaces']
 
 /**
- * Mobile-adaptive shell, browser half: injects the mobile stylesheet, then
- * contributes the directory toggle to the session header and the backdrop +
- * floating button to the shell overlay.
+ * Mobile workbench browser entry: native conversation enhancements and one
+ * three-page navigation shell. Native business state remains host-owned.
  * @param ctx - client root context.
  */
 export function apply(ctx: ClientContext): void {
@@ -52,36 +48,19 @@ export function apply(ctx: ClientContext): void {
     tag.textContent = MOBILE_CSS
     document.head.appendChild(tag)
 
-    setTimeout(() => {
+    const timer = window.setTimeout(() => {
       if (tag.isConnected) document.head.appendChild(tag)
     }, 0)
     return () => {
+      window.clearTimeout(timer)
       tag.remove()
     }
   }, 'dsh-web-mobile: styles')
 
   installInstalledListStyles(ctx)
 
-  const panelExit = createPanelExit(ctx.layout)
-
-  ctx.effect(() => {
-    const stops = [
-      installFrameController(),
-      installReconciler(ctx),
-      registerReconcileTasks(ctx, panelExit),
-    ]
-    return () => {
-      for (const stop of stops) stop()
-    }
-  }, 'dsh-web-mobile: reconciler infrastructure')
-
-  installOverlayInteractions(ctx)
-
-  installPanelRowExit(ctx, panelExit.exit)
-
-  installSidebarSwipe(ctx, openFilesPanel)
-
-  installSubagentChipTouch(ctx)
+  installWorkbenchDecoration(ctx)
+  installSessionsTouch(ctx)
 
   installComposerKeyboardGuard(ctx)
   installComposerPlusToggle(ctx)
@@ -98,7 +77,6 @@ export function apply(ctx: ClientContext): void {
 
   installPhoneChrome(ctx)
 
-  installAionuiCompat(ctx)
   installWorkbench(ctx)
   installWorkbenchComposer(ctx)
 

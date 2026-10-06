@@ -1,21 +1,43 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { statsAnchorAlive } from '../src/client/effects/stats-line.ts'
+import { createStatsDecoration } from '../src/client/effects/stats-line.ts'
 
-const fake = (opts: { connected?: boolean; phase?: boolean; stack?: boolean }): Element =>
-  ({
-    isConnected: opts.connected !== false,
-    closest(sel: string): Element | null {
-      if (sel === '[data-phase]') return opts.phase === false ? null : ({} as Element)
-      if (sel === '[class*="_composerStack"]') return opts.stack === false ? null : ({} as Element)
-      return null
-    },
-  }) as unknown as Element
-
-test('statsAnchorAlive decision table', () => {
-  assert.equal(statsAnchorAlive(null), false)
-  assert.equal(statsAnchorAlive(fake({ connected: false })), false)
-  assert.equal(statsAnchorAlive(fake({ phase: false })), false)
-  assert.equal(statsAnchorAlive(fake({ stack: false })), false)
-  assert.equal(statsAnchorAlive(fake({})), true)
+test('native metrics are decorated in place, rebound and cleared on disposal', t => {
+  class Node {
+    attributes = new Map<string, string>()
+    parentElement: Node | null = null
+    children: Node[] = []
+    textContent = ''
+    contains(node: Node | null): boolean { return this === node || this.children.some(child => child.contains(node)) }
+    getAttribute(key: string): string | null { return this.attributes.get(key) ?? null }
+    setAttribute(key: string, value: string): void { this.attributes.set(key, value) }
+    removeAttribute(key: string): void { this.attributes.delete(key) }
+  }
+  const dock = new Node(), holder = new Node(), stats = new Node(), ring = new Node()
+  holder.parentElement = dock
+  stats.parentElement = holder
+  ring.parentElement = dock
+  holder.children = [stats]
+  dock.children = [holder, ring]
+  ring.textContent = '12%'
+  let current: Node | null = stats
+  const original = Object.getOwnPropertyDescriptor(globalThis, 'document')
+  Object.defineProperty(globalThis, 'document', { configurable: true, value: { querySelector: () => current } })
+  t.after(() => { if (original) Object.defineProperty(globalThis, 'document', original); else Reflect.deleteProperty(globalThis, 'document') })
+  const decoration = createStatsDecoration()
+  decoration.ensure()
+  decoration.ensure()
+  assert.equal(stats.getAttribute('data-mobile-nav'), 'stats')
+  assert.equal(ring.getAttribute('data-mobile-nav'), 'stats-ring')
+  assert.equal(ring.parentElement, dock)
+  assert.deepEqual(dock.children, [holder, ring])
+  current = null
+  decoration.ensure()
+  assert.equal(stats.attributes.size, 0)
+  assert.equal(ring.attributes.size, 0)
+  current = stats
+  decoration.ensure()
+  decoration.dispose()
+  assert.equal(stats.attributes.size, 0)
+  assert.equal(ring.attributes.size, 0)
 })

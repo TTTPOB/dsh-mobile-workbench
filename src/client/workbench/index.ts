@@ -8,6 +8,7 @@ import { WORKBENCH_CSS } from '../styles/workbench.css.ts'
 import { WORKBENCH_HEADER_CSS } from '../styles/workbench-header.css.ts'
 import { WORKBENCH_TRAJECTORY_CSS } from '../styles/workbench-trajectory.css.ts'
 import { resolveDestination } from './navigation.ts'
+import { boundaryMutation, NAVIGATION_BOUNDARY, PRESENTATION_BOUNDARY, PRESENTATION_LOCAL } from './dom-observation.ts'
 import { installAgentCatalogLoader } from './agent-catalog-loader.ts'
 import { createWorkbenchPresentation } from './presentation.ts'
 import { createHostBridge } from './host-bridge.ts'
@@ -43,9 +44,8 @@ export function installWorkbench(ctx: ClientContext): void {
   }, 'mobile-workbench: reachable catalog baselines')
   const statusSource = (): AgentStatusSource | undefined =>
     (ctx.get('uiSession') as { sessionStatus?: AgentStatusSource } | undefined)?.sessionStatus
-  const bridge = createHostBridge(viewIds, () => subagentCounts(
-    ctx.sessions.list.getSnapshot(), statusSource()?.getSnapshot(),
-  ) ?? {}, () => {
+  let counts = subagentCounts(ctx.sessions.list.getSnapshot(), statusSource()?.getSnapshot()) ?? {}
+  const bridge = createHostBridge(viewIds, () => counts, () => {
     const frame = getFrame()
     if (frame && !frame.hasAttribute('data-sidebar-collapsed')) toggleDrawer(ctx)
   }, () => {
@@ -67,14 +67,19 @@ export function installWorkbench(ctx: ClientContext): void {
   }
   ctx.effect(() => {
     let raf: number | undefined
+    let presentationDirty = true
     const refresh = (): void => {
       raf = undefined
-      if (mq.matches) presentation.update(viewIds())
-      else presentation.clear()
+      if (presentationDirty || !mq.matches) {
+        const frame = mq.matches ? getFrame() : null
+        if (frame) presentation.update(viewIds(), frame)
+        else presentation.clear()
+      }
+      presentationDirty = false
       const next = mq.matches
         ? { ...bridge.evidence(), mobile: true }
         : { ...snapshot, mobile: false }
-      if (JSON.stringify(next) !== JSON.stringify(snapshot)) {
+      if ([...Object.keys(snapshot), ...Object.keys(next)].some(key => next[key as keyof WorkbenchSnapshot] !== snapshot[key as keyof WorkbenchSnapshot])) {
         snapshot = next
         for (const listener of listeners) listener()
       }
@@ -91,18 +96,25 @@ export function installWorkbench(ctx: ClientContext): void {
       if (raf === undefined) raf = window.requestAnimationFrame(refresh)
     }
     const observer = new MutationObserver(records => {
-      // React updates in our own nav must not feed back into the observer.
-      if (records.some(record => !(record.target instanceof Element)
-        || record.target.closest('[data-mobile-workbench="navigation"]') === null)) schedule()
+      if (!mq.matches) return
+      const changedPresentation = records.some(record => boundaryMutation(record, PRESENTATION_BOUNDARY, PRESENTATION_LOCAL))
+      presentationDirty ||= changedPresentation
+      if (changedPresentation || records.some(record => boundaryMutation(record, NAVIGATION_BOUNDARY)
+        || (record.type === 'attributes' && record.target === getFrame()))) schedule()
     })
-    observer.observe(document.documentElement, {
+    observer.observe(document.body, {
       childList: true, subtree: true, characterData: true, attributes: true,
-      attributeFilter: ['data-sidebar-collapsed', 'aria-label', 'aria-selected', 'aria-expanded', 'data-aionui-explorer-open', 'data-aionui-preview-open', 'data-rightbar-collapsed', 'data-sidebar-right-open'],
+      attributeFilter: ['data-sidebar-collapsed', 'aria-label', 'aria-selected', 'aria-expanded', 'data-rightbar-collapsed', 'data-sidebar-right-open', 'data-selected', 'data-trajectory-row-key'],
     })
-    const stopViews = ctx.slots.subscribe('conversation.view', schedule)
-    const stopSessions = ctx.sessions.list.subscribe(schedule)
-    const stopStatus = statusSource()?.subscribe(schedule)
-    mq.addEventListener('change', schedule)
+    const refreshPresentation = (): void => { presentationDirty = true; schedule() }
+    const refreshCounts = (): void => {
+      counts = subagentCounts(ctx.sessions.list.getSnapshot(), statusSource()?.getSnapshot()) ?? {}
+      schedule()
+    }
+    const stopViews = ctx.slots.subscribe('conversation.view', refreshPresentation)
+    const stopSessions = ctx.sessions.list.subscribe(refreshCounts)
+    const stopStatus = statusSource()?.subscribe(refreshCounts)
+    mq.addEventListener('change', refreshPresentation)
     refresh()
     return () => {
       observer.disconnect()
@@ -110,7 +122,7 @@ export function installWorkbench(ctx: ClientContext): void {
       stopSessions()
       stopStatus?.()
       bridge.clear()
-      mq.removeEventListener('change', schedule)
+      mq.removeEventListener('change', refreshPresentation)
       if (raf !== undefined) window.cancelAnimationFrame(raf)
       document.documentElement.removeAttribute('data-mobile-workbench-active')
       document.documentElement.removeAttribute('data-mobile-workbench-page')

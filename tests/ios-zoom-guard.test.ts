@@ -4,7 +4,7 @@
 // leaves a browser-applied zoom impossible to undo.
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { detectIosWebKit } from '../src/client/effects/phone-chrome.ts'
+import { detectIosWebKit } from '../src/client/effects/phone-viewport.ts'
 import { LAYOUT_CSS } from '../src/client/styles/layout.css.ts'
 import { MISC_CSS } from '../src/client/styles/misc.css.ts'
 

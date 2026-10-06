@@ -26,9 +26,6 @@ test('matchesSelectorText handles plain, class-substring and :has() arms', () =>
   assert.equal(matchesSelectorText('li', MESSAGE_P), false)
 })
 
-test('the message text family carries no hardcoded px font-size', () => {
-  const hit = fontSizeFor(LAYOUT_CSS, MESSAGE_P)
-  assert.ok(hit !== null, 'expected a message text rule to match the fixture')
-  assert.doesNotMatch(hit.value, /^\s*[\d.]+px/, `hardcoded size in: ${hit.selector}`)
-  assert.match(hit.value, /var\(/)
+test('native message typography is not overridden by mobile layout', () => {
+  assert.equal(fontSizeFor(LAYOUT_CSS, MESSAGE_P), null)
 })

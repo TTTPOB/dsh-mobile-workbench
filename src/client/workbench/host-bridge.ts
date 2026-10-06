@@ -2,7 +2,7 @@ import { getFrame } from '../effects/phone-chrome.ts'
 import { HOST_FILES_CLOSER, HOST_FILES_OPENER, openFilesPanel } from '../components/open-files-panel.ts'
 import { viewIndex, type NavigationEvidence, type WorkbenchDestination, type WorkbenchView } from './navigation.ts'
 
-/** All rc.2 DOM access stays here; host nodes remain in their React-owned parents. */
+/** Native navigation actions and evidence; host nodes stay in their React-owned parents. */
 export function createHostBridge(
   viewIds: () => readonly string[],
   agentCounts: () => Pick<NavigationEvidence, 'agentActiveCount' | 'agentTotalCount' | 'agentCountsState'> = () => ({}),
@@ -27,9 +27,7 @@ export function createHostBridge(
     // The panel's own open marker is authoritative; its closer stays mounted.
     return document.querySelector('[data-sidebar-right-panel][data-sidebar-right-open]:not([data-sidebar-right-open="false"])') !== null
   }
-  const filesOpen = (): boolean => officialFilesOpen()
-    || getFrame()?.hasAttribute('data-aionui-explorer-open') === true
-    || getFrame()?.hasAttribute('data-aionui-preview-open') === true
+  const filesOpen = officialFilesOpen
   const evidence = (): NavigationEvidence => {
     const ids = viewIds()
     const buttons = tabs()
@@ -47,13 +45,11 @@ export function createHostBridge(
       hasTrajectory: conversation.hasSession() && ids.includes('trajectory'),
       ...agentCounts(),
       hasAgents: trigger !== null,
-      hasFiles: document.querySelector(`${HOST_FILES_OPENER}, ${HOST_FILES_CLOSER}, [data-aionui-explorer-col]`) !== null,
+      hasFiles: getFrame()?.querySelector(`${HOST_FILES_OPENER}, ${HOST_FILES_CLOSER}`) != null,
     }
   }
   const closeFiles = (): void => {
     if (officialFilesOpen()) document.querySelector<HTMLButtonElement>(HOST_FILES_CLOSER)?.click()
-    getFrame()?.removeAttribute('data-aionui-explorer-open')
-    getFrame()?.removeAttribute('data-aionui-preview-open')
   }
   const closeAgents = (): void => {
     if (agentTrigger()?.getAttribute('aria-expanded') !== 'true') return

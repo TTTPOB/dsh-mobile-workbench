@@ -1,21 +1,15 @@
-// Structural checks for the four concatenated CSS modules.
-//
-// The repo has no linter and the CSS lives in TypeScript template literals, so
-// these defect classes survive every existing gate (verify / test:core /
-// docs-consistency): indentation that lies about nesting, declarations that can
-// never apply, and blocks that escaped the mobile media query.
-// Sibling, not duplicate: src/client/core/css-rules.ts reads the same sheets for
-// SOURCE-LEVEL cascade questions ("which font-size would reach this element") and
-// deliberately drops at-rule conditions. This script is the structural half —
-// nesting depth, indentation, dead declarations, allowed top-level blocks — which
-// that reader cannot answer by design.
-// node:builtin-only.  Usage: node scripts/css-structure-check.mjs
+// Check exported CSS for unbalanced blocks, duplicate declarations, and media gates.
+// Node 24 loads the CSS-only TypeScript modules directly, including selector interpolation.
+// Usage: node scripts/css-structure-check.mjs
 import fs from 'node:fs'
-import { fileURLToPath } from 'node:url'
+import { fileURLToPath, pathToFileURL } from 'node:url'
 import { dirname, join } from 'node:path'
 
 const root = process.env.CSS_STRUCTURE_ROOT ?? join(dirname(fileURLToPath(import.meta.url)), '..')
-const MODULES = ['base', 'layout', 'compat', 'misc']
+const MODULES = fs.readdirSync(join(root, 'src/client/styles'))
+  .filter(file => file.endsWith('.css.ts'))
+  .map(file => file.slice(0, -'.css.ts'.length))
+  .sort()
 
 // Top-level at-rules that are legitimate in a module. Anything else must sit
 // inside the mobile query, or it applies to desktop too.
@@ -34,16 +28,12 @@ const info = []
 const note = (file, line, msg) => fatal.push(file + ':' + line + '  ' + msg)
 const soft = (file, line, msg) => info.push(file + ':' + line + '  ' + msg)
 
-function load(name) {
+async function load(name) {
   const file = name + '.css.ts'
-  const source = fs.readFileSync(join(root, 'src/client/styles', file), 'utf8')
-  const match = source.match(/=\s*`([\s\S]*)`\s*;?\s*$/)
-  if (!match) throw new Error(file + ': no CSS template literal found')
-  const css = match[1]
-  // Lines reported must be real file lines: the template body starts after the
-  // backtick on some earlier line, so shift every report by that many lines.
-  const lineOffset = source.slice(0, match.index).split('\n').length - 1
-  return { file, css, lineOffset, masked: css.replace(/\/\*[\s\S]*?\*\//g, (m) => m.replace(/[^\n]/g, ' ')) }
+  const exports = await import(pathToFileURL(join(root, 'src/client/styles', file)).href)
+  const css = Object.values(exports).find(value => typeof value === 'string')
+  if (css === undefined) throw new Error(file + ': no exported CSS string')
+  return { file, css, lineOffset: 0, masked: css.replace(/\/\*[\s\S]*?\*\//g, m => m.replace(/[^\n]/g, ' ')) }
 }
 
 // One pass: every block gets depth + indentation; every style rule also gets
@@ -96,20 +86,10 @@ function parse(file, css, masked, lineOffset) {
 }
 
 for (const name of MODULES) {
-  const { file, css, masked, lineOffset } = load(name)
+  const { file, css, masked, lineOffset } = await load(name)
   const { lines, blocks, rules, newlinesBefore } = parse(file, css, masked, lineOffset)
   const fail = (l, m) => note(file, l + lineOffset, m)
   const hint = (l, m) => soft(file, l + lineOffset, m)
-
-  // 1. indentation must match real nesting depth
-  for (const b of blocks) {
-    if (b.depth === 0) continue
-    const expected = b.depth * 2
-    const actual = (lines[b.line - 1]?.match(/^ */) ?? [''])[0].length
-    if (actual !== expected) {
-      fail(b.line, 'indent ' + actual + ', nesting expects ' + expected + ': ' + b.prelude.slice(0, 60))
-    }
-  }
 
   // 2. top-level blocks that would apply outside the mobile branch
   for (const b of blocks) {

@@ -28,6 +28,8 @@ export function installWorkbenchSessionMenu(ctx: ClientContext): void {
     let menu: HTMLElement | null = null
     let row: HTMLElement | null = null
     let removeClick: (() => void) | undefined
+    let wrapper: Element | null = null
+    const observer = new MutationObserver(() => schedule())
 
     const release = (): void => {
       removeClick?.()
@@ -41,7 +43,13 @@ export function installWorkbenchSessionMenu(ctx: ClientContext): void {
       // HeaderAction does not portal this menu. The wrapper is the ownership
       // check; a download label in some unrelated menu is never sufficient.
       const trigger = document.querySelector<HTMLButtonElement>('header button[class*="_moreButton"][aria-haspopup="menu"][aria-expanded="true"]')
-      const next = trigger?.parentElement?.querySelector<HTMLElement>(':scope > [role="menu"]') ?? null
+      const nextWrapper = trigger?.parentElement ?? null
+      if (nextWrapper !== wrapper) {
+        observer.disconnect()
+        wrapper = nextWrapper
+        if (wrapper) observer.observe(wrapper, { childList: true, subtree: true, attributes: true, attributeFilter: ['aria-expanded'] })
+      }
+      const next = nextWrapper?.querySelector<HTMLElement>(':scope > [role="menu"]') ?? null
       const native = next ? Array.from(next.querySelectorAll<HTMLButtonElement>('button[role="menuitem"]')).find(item => item.textContent?.trim() === hostT('menu.download')) : undefined
       if (!next || !native) { release(); return }
       if (menu === next && row && next.contains(row)) return
@@ -103,13 +111,24 @@ export function installWorkbenchSessionMenu(ctx: ClientContext): void {
     const schedule = (): void => {
       if (!frame) frame = window.requestAnimationFrame(ensure)
     }
-    // A native Menu opens/remounts under its trigger wrapper. Coalesce React commits.
-    const observer = new MutationObserver(schedule)
-    observer.observe(document.body, { childList: true, subtree: true })
+    // Observe the wrapper only while open. Schedule after native activation,
+    // including ArrowDown; the host still owns all keyboard/menu state.
+    const onClick = (event: Event): void => {
+      if (event.target instanceof Element && event.target.closest('header button[class*="_moreButton"][aria-haspopup="menu"]')) schedule()
+    }
+    const onKey = (event: KeyboardEvent): void => {
+      if (['Enter', ' ', 'ArrowDown', 'ArrowUp'].includes(event.key)) onClick(event)
+    }
+    document.addEventListener('click', onClick, true)
+    document.addEventListener('keydown', onKey, true)
+    const stopSessions = ctx.sessions.list.subscribe(schedule)
     schedule()
     return () => {
       disposed = true
       observer.disconnect()
+      document.removeEventListener('click', onClick, true)
+      document.removeEventListener('keydown', onKey, true)
+      stopSessions()
       window.cancelAnimationFrame(frame)
       release()
     }

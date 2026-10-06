@@ -1,4 +1,4 @@
-// Append after base → layout → compat → misc. The official card owns the editor.
+// The native card owns both daily and expanded editing surfaces.
 export const WORKBENCH_COMPOSER_CSS = `@media (max-width: 1023px) and (pointer: coarse) {
   /* Full-width writing surface above a single, shared 44px control baseline. */
   html [data-mobile-nav="frame"] [data-phase] [data-composer-card][data-mobile-workbench-composer="true"] {
@@ -85,8 +85,7 @@ export const WORKBENCH_COMPOSER_CSS = `@media (max-width: 1023px) and (pointer: 
   html [data-mobile-nav="frame"] [data-phase] [data-composer-card][data-mobile-workbench-composer="true"] > [data-mobile-compose-bar] [data-slot="conversation.input.permission"] {
     display: contents !important;
   }
-  html [data-mobile-nav="frame"] [data-phase] [data-composer-card][data-mobile-workbench-composer="true"] > [data-mobile-compose-bar] [data-mobile-nav="file-upload"],
-  html [data-mobile-nav="frame"] [data-phase] [data-composer-card][data-mobile-workbench-composer="true"] > [data-mobile-compose-bar] [data-mobile-nav="stats-ring-reserve"] {
+  html [data-mobile-nav="frame"] [data-phase] [data-composer-card][data-mobile-workbench-composer="true"] > [data-mobile-compose-bar] [data-mobile-nav="file-upload"] {
     display: none !important;
   }
   html [data-mobile-nav="frame"] [data-phase] [data-composer-card][data-mobile-workbench-composer="true"] > [data-mobile-compose-bar] > [class*="_tools"] > button[class*="_add"],

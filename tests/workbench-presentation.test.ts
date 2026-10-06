@@ -2,6 +2,7 @@ import assert from 'node:assert/strict'
 import { test } from 'node:test'
 import { createWorkbenchPresentation, workbenchStatLabel } from '../src/client/workbench/presentation.ts'
 import { WORKBENCH_CSS } from '../src/client/styles/workbench.css.ts'
+import { LAYOUT_CSS } from '../src/client/styles/layout.css.ts'
 import { WORKBENCH_HEADER_CSS } from '../src/client/styles/workbench-header.css.ts'
 import { WORKBENCH_TRAJECTORY_CSS } from '../src/client/styles/workbench-trajectory.css.ts'
 
@@ -128,8 +129,8 @@ test('native catalog and inspector markers are reversible without changing host 
 test('sessions page leaves navigation visible with constant clearance and no drawer animation', () => {
   assert.doesNotMatch(WORKBENCH_CSS, /html:has\(\[data-mobile-nav="(frame|backdrop)"/)
   assert.match(WORKBENCH_CSS, /bottom: var\(--mobile-workbench-nav-height\) !important/)
-  assert.match(WORKBENCH_CSS, /\[data-sidebar-collapsed\] > :first-child \{ display: none !important/)
-  assert.match(WORKBENCH_CSS, /\[data-mobile-nav="backdrop"\],[\s\S]*?display: none !important/)
+  assert.match(LAYOUT_CSS, /\[data-sidebar-collapsed\] > :first-child \{\s*display: none !important/)
+  assert.doesNotMatch(LAYOUT_CSS + WORKBENCH_CSS, /data-mobile-nav="(?:backdrop|fab)"/)
   assert.match(WORKBENCH_CSS, /html:has\(\[aria-modal="true"\]\) \[data-mobile-workbench="navigation"\]/)
 })
 
@@ -198,7 +199,7 @@ test('native fullscreen file panels subtract navigation height once from the vie
   assert.match(panel, /height: auto !important/)
   assert.match(panel, /max-height: none !important/)
   assert.match(panel, /box-sizing: border-box/)
-  assert.doesNotMatch(panel, /padding-top/)
+  assert.match(panel, /padding-top: env\(safe-area-inset-top, 0px\)/)
 })
 
 test('title always opens information even when a native descendant catalog exists', t => {

@@ -1,8 +1,3 @@
-/**
- * All mobile styles, concatenated in the exact order of the original
- * single-file stylesheet (base → layout → compat → misc, where misc keeps
- * composer → tablet → desktop). Injected as ONE <style data-plugin> tag —
- * do not reorder.
- */
+/** Region styles share one tag: frame, overlays, integrations, browser inputs, composer. */
 export declare const MOBILE_CSS: string;
 //# sourceMappingURL=index.d.ts.map

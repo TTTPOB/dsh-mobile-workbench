@@ -139,6 +139,7 @@ test('small DOM contract: same editor/card survives expand, collapse and disposa
     children: Node[] = []
     parent: Node | null = null
     get parentElement() { return this.parent }
+    contains(node: Node | null): boolean { return this === node || this.children.some(child => child.contains(node)) }
     textContent = ''
     style = {
       cssText: '', height: '',
@@ -204,17 +205,19 @@ test('small DOM contract: same editor/card survives expand, collapse and disposa
   const viewport = Object.assign(new Node(), { height: 844, width: 393, scale: 1, offsetTop: 0, offsetLeft: 0 })
   const documentEvents = new Node()
   let menuOpen = false
+  let cardVisible = true
   const fakeDocument = Object.assign(documentEvents, {
     documentElement: root, body: new Node(),
     createElement: () => new Node(),
     createElementNS: () => new Node(),
-    querySelectorAll: () => [card],
+    querySelectorAll: () => cardVisible ? [card] : [],
     querySelector: () => menuOpen ? new Node() : null,
   })
-  let mutate: (() => void) | undefined
+  let mutate: ((record?: object) => void) | undefined
   const browserSource = source.replace(/^import .*\n/gm, '').replaceAll('export function', 'function')
   runInNewContext(`${stripTypeScriptTypes(browserSource)}; installWorkbenchComposer({})`, {
     document: fakeDocument,
+    boundaryMutation: (record: { target: object }) => record.target === card, COMPOSER_BOUNDARY: '[data-composer-card]', Element: Node,
     window: Object.assign(windowEvents, {
       innerWidth: 393, innerHeight: 844, visualViewport: viewport,
       matchMedia: () => motion,
@@ -223,7 +226,7 @@ test('small DOM contract: same editor/card survives expand, collapse and disposa
     }),
     installMobileEffect: (_ctx: unknown, _label: string, install: () => () => void) => { dispose = install() },
     getComputedStyle: () => root.style,
-    MutationObserver: class { constructor(callback: () => void) { mutate = callback } observe() {} disconnect() {} },
+    MutationObserver: class { constructor(callback: (records: object[]) => void) { mutate = (record = { target: card, type: 'childList' }) => callback([record]) } observe() {} disconnect() {} },
     ResizeObserver: class { observe() {} disconnect() {} },
   })
   const flush = () => {
@@ -304,6 +307,17 @@ test('small DOM contract: same editor/card survives expand, collapse and disposa
   motion.listeners.get('change')!({})
   flush()
   assert.equal(root.hasAttribute('data-mobile-compose-returning'), false)
+  mutate!({ target: new Node(), type: 'characterData' })
+  assert.equal(frames.size, 0, 'conversation tokens do not schedule composer measurements')
+  cardVisible = false
+  mutate!(); flush()
+  assert.equal(card.hasAttribute('data-mobile-workbench-composer'), false)
+  cardVisible = true
+  const phase = new Node()
+  phase.querySelector = selector => selector === '[data-composer-card]' ? card : null
+  mutate!({ target: phase, type: 'attributes', attributeName: 'data-phase' }); flush()
+  assert.equal(card.hasAttribute('data-mobile-workbench-composer'), true, 'app phase reveals the hidden-in-place card even after release')
+  assert.equal(editor.parent, scroll)
   dispose!()
   assert.equal(card.children.length, 2)
   assert.equal(row.children.length, 0)

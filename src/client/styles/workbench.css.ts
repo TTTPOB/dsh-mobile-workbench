@@ -79,14 +79,6 @@ export const WORKBENCH_CSS = /* css */ `
     outline: 2px solid var(--dsw-static-deepseek-500);
     outline-offset: -2px;
   }
-  /* One file entry is sufficient; reclaim its existing header reservation. */
-  html[data-mobile-workbench-active="true"] [data-mobile-nav="files"] { display: none !important; }
-  html[data-mobile-workbench-active="true"] header [class*="_titleCluster"] {
-    padding-right: 8px !important;
-  }
-  html[data-mobile-workbench-active="true"] [data-conversation-scroll] {
-    scroll-padding-bottom: 24px;
-  }
   /* Secondary metrics are summaries; tapping opens the unchanged native details. */
   html[data-mobile-workbench-active="true"] [data-composer-stats],
   html[data-mobile-workbench-active="true"] [data-composer-stats] button {
@@ -106,17 +98,7 @@ export const WORKBENCH_CSS = /* css */ `
     font-size: 11px;
     line-height: 16px;
   }
-  /* The native sidebar is the sessions page, not an overlay drawer. */
-  html[data-mobile-workbench-active="true"] [data-mobile-nav="frame"] > :first-child {
-    bottom: var(--mobile-workbench-nav-height) !important;
-    height: auto !important;
-    width: 100% !important;
-    transform: none !important;
-    transition: none !important;
-  }
-  html[data-mobile-workbench-active="true"] [data-mobile-nav="frame"][data-sidebar-collapsed] > :first-child { display: none !important; }
-  html[data-mobile-workbench-active="true"] [data-mobile-nav="backdrop"],
-  html[data-mobile-workbench-active="true"] [data-mobile-nav="fab"] { display: none !important; }
+  /* Native sessions content fills the page; bottom tools share one grid row. */
   html[data-mobile-workbench-active="true"] [data-mobile-nav="frame"] > :first-child [class*="_root"]:has(> [class*="_regionArea"]) {
     display: grid !important;
     position: relative;
@@ -189,6 +171,7 @@ export const WORKBENCH_CSS = /* css */ `
     bottom: var(--mobile-workbench-nav-height) !important;
     height: auto !important;
     max-height: none !important;
+    padding-top: env(safe-area-inset-top, 0px) !important;
     box-sizing: border-box;
   }
 }

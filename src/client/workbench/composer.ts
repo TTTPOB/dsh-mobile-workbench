@@ -1,5 +1,6 @@
 import type { ClientContext } from '@deepseek-ai/dsh-client-runtime/client'
 import { installMobileEffect } from '../effects/phone-chrome.ts'
+import { boundaryMutation, COMPOSER_BOUNDARY } from './dom-observation.ts'
 
 // Pure geometry policy; visual viewport shrink, not focus, is keyboard evidence.
 export function composerKeyboardOpen(baseline: number, height: number, scale: number): boolean {
@@ -285,7 +286,12 @@ export function installWorkbenchComposer(ctx: ClientContext): void {
     }
     // Observe host visibility changes too: the composer fallback can hide in place.
     // Idempotent CSS writes settle after one extra observer pass.
-    const observer = new MutationObserver(schedule)
+    const observer = new MutationObserver(records => {
+      if (records.some(record => boundaryMutation(record, COMPOSER_BOUNDARY)
+        || (record.type === 'attributes' && record.target instanceof Element
+          && (record.target.contains(card) || record.attributeName === 'aria-modal'
+            || (record.attributeName === 'data-phase' && record.target.querySelector(CARD) !== null))))) schedule()
+    })
     // Outside body, so measurements cannot trigger the tree observer.
     const probeNode = document.createElement('div')
     probeNode.setAttribute('aria-hidden', 'true')

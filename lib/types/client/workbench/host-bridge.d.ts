@@ -1,5 +1,5 @@
 import { type NavigationEvidence, type WorkbenchDestination, type WorkbenchView } from './navigation.ts';
-/** All rc.2 DOM access stays here; host nodes remain in their React-owned parents. */
+/** Native navigation actions and evidence; host nodes stay in their React-owned parents. */
 export declare function createHostBridge(viewIds: () => readonly string[], agentCounts?: () => Pick<NavigationEvidence, 'agentActiveCount' | 'agentTotalCount' | 'agentCountsState'>, closeDrawer?: () => void, openSessions?: () => void, conversation?: {
     show: () => void;
     hasSession: () => boolean;

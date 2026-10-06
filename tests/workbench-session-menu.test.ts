@@ -36,6 +36,7 @@ test('native wrapper attachment reads latest ID, shows outcome, reinjects once a
     contains(node: Node): boolean { return this === node || this.children.some(child => child.contains(node)) }
     addEventListener(key: string, fn: () => Promise<void>) { this.listeners.set(key, fn) }
     removeEventListener(key: string) { this.listeners.delete(key) }
+    closest(_selector: string): Node | null { return this }
     querySelector(_selector: string): Node | null { return null }
     querySelectorAll(_selector: string): Node[] { return [] }
   }
@@ -67,20 +68,24 @@ test('native wrapper attachment reads latest ID, shows outcome, reinjects once a
   const copied: string[] = []
   let disposed = false
   let dispose = () => {}
-  let mutate = () => {}
+  let mutate: (records?: object[]) => void = () => {}
   const frames = new Map<number, () => void>()
   let sequence = 0
   let visibleTrigger = true
+  const observed: Node[] = []
+  const documentListeners = new Map<string, (event: object) => void>()
+  let sessionChanged = () => {}
   const ctx = {
-    sessions: { list: { getSnapshot: () => ({ current }) } },
+    sessions: { list: { getSnapshot: () => ({ current }), subscribe: (fn: () => void) => { sessionChanged = fn; return () => { sessionChanged = () => {} } } } },
     locale: { bind: (namespace: string) => (key: string) => namespace === 'mobileWorkbench' ? key : 'download' },
   }
   runInNewContext(`${executable}; installWorkbenchSessionMenu(ctx)`, {
-    ctx, currentSessionIdOf, WORKBENCH_NS: 'mobileWorkbench',
-    document: { body, createElement: () => new Node(), createElementNS: () => new Node(), querySelector: () => visibleTrigger ? trigger : null },
+    ctx, currentSessionIdOf, WORKBENCH_NS: 'mobileWorkbench', Element: Node,
+    document: { body, createElement: () => new Node(), createElementNS: () => new Node(), querySelector: () => visibleTrigger ? trigger : null,
+      addEventListener: (key: string, fn: (event: object) => void) => documentListeners.set(key, fn), removeEventListener: (key: string) => documentListeners.delete(key) },
     navigator: { clipboard: { writeText: async (id: string) => { if (rejected) throw new Error('denied'); copied.push(id) } } },
     window: { requestAnimationFrame: (fn: () => void) => { frames.set(++sequence, fn); return sequence }, cancelAnimationFrame: (id: number) => frames.delete(id) },
-    MutationObserver: class { constructor(fn: () => void) { mutate = fn } observe() {} disconnect() { disposed = true } },
+    MutationObserver: class { constructor(fn: (records: object[]) => void) { mutate = (records = [{}]) => fn(records) } observe(node: Node) { observed.push(node) } disconnect() { disposed = true } },
     installMobileEffect: (_ctx: unknown, _label: string, install: () => () => void) => { dispose = install() },
   })
   const flush = () => { const pending = [...frames.values()]; frames.clear(); pending.forEach(fn => fn()) }
@@ -115,12 +120,19 @@ test('native wrapper attachment reads latest ID, shows outcome, reinjects once a
   mutate(); flush()
   assert.equal(viewport.children.length, 2, 'same menu has exactly one added row')
   visibleTrigger = false
-  mutate(); flush()
+  sessionChanged(); flush()
   assert.equal(viewport.children.length, 1, 'no header wrapper means no injection into an unrelated download menu')
   assert.equal(button.listeners.size, 0)
   visibleTrigger = true
-  mutate(); flush()
+  documentListeners.get('click')?.({ target: trigger }); flush()
   assert.equal(viewport.children.length, 2)
+  for (const key of ['Enter', 'ArrowDown']) {
+    visibleTrigger = false
+    mutate(); flush()
+    visibleTrigger = true
+    documentListeners.get('keydown')?.({ target: trigger, key }); flush()
+    assert.equal(viewport.children.length, 2, key + ' keeps native keyboard opening observable')
+  }
   const reopened = viewport.children[1].children[0]
   assert.equal(reopened.children[0].children[0].children[0].attrs.get('d'), copyPath)
   assert.equal(viewport.children[1].children[1].hidden, true)
@@ -128,6 +140,8 @@ test('native wrapper attachment reads latest ID, shows outcome, reinjects once a
   assert.equal(disposed, true)
   assert.equal(viewport.children.length, 1)
   assert.equal(frames.size, 0)
+  assert.equal(documentListeners.size, 0)
+  assert.ok(observed.every(node => node === wrapper), 'only the native more-button wrapper is observed')
 })
 
 test('mobile gating and native ownership need no copied nodes or independent keyboard system', () => {
@@ -135,5 +149,5 @@ test('mobile gating and native ownership need no copied nodes or independent key
   assert.match(source, /header button\[class\*="_moreButton"\]/)
   assert.match(source, /:scope > \[role="menu"\]/)
   assert.match(source, /currentSessionIdOf\(snapshot\)/)
-  assert.doesNotMatch(source, /cloneNode|innerHTML|execCommand|location\.|dispatchEvent|addEventListener\('keydown'/)
+  assert.doesNotMatch(source, /cloneNode|innerHTML|execCommand|location\.|dispatchEvent|preventDefault|stopPropagation/)
 })

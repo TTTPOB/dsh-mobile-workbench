@@ -16,8 +16,8 @@ import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..')
-const LAYOUT = readFileSync(join(ROOT, 'src/client/styles/layout.css.ts'), 'utf8')
-const PHONE = readFileSync(join(ROOT, 'src/client/effects/phone-chrome.ts'), 'utf8')
+const LAYOUT = readFileSync(join(ROOT, 'src/client/styles/base.css.ts'), 'utf8')
+const PHONE = readFileSync(join(ROOT, 'src/client/effects/phone-viewport.ts'), 'utf8')
 const VAR = 'var(--dsh-web-mobile-vh, 100dvh)'
 
 test('phone-chrome maintains the keyboard-less viewport height', () => {

@@ -14,12 +14,14 @@ import assert from 'node:assert/strict'
 import { execFileSync } from 'node:child_process'
 import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
+import { MOBILE_QUERY } from '../src/client/effects/phone-chrome.ts'
 
 const SCRIPT = fileURLToPath(new URL('../scripts/css-structure-check.mjs', import.meta.url))
 
-test('the four style modules keep zero structural fatals', () => {
+test('the current style modules keep zero structural fatals', () => {
   const out = execFileSync(process.execPath, [SCRIPT], { encoding: 'utf8' })
-  assert.match(out, /4 modules/)
+  const modules = Number(/(\d+) modules/.exec(out)?.[1])
+  assert.ok(modules >= 5, 'the region and workbench modules must be checked')
   assert.match(out, /0 fatal/)
 })
 
@@ -39,8 +41,7 @@ test('the four style modules keep zero structural fatals', () => {
 // 2026-08-30 PC leak came through, so it is pinned here against the query it
 // has to complement.
 test('the desktop hide block stays the complement of MOBILE_QUERY', () => {
-  const CHROME = readFileSync(new URL('../src/client/effects/phone-chrome.ts', import.meta.url), 'utf8')
-  const query = /MOBILE_QUERY\s*=\s*'([^']+)'/.exec(CHROME)?.[1]
+  const query = MOBILE_QUERY
   assert.equal(query, '(max-width: 1023px) and (pointer: coarse)', 'MOBILE_QUERY moved: the hide block below must move with it')
 
   const width = /max-width:\s*(\d+)px/.exec(query)?.[1]

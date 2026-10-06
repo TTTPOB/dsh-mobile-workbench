@@ -7,7 +7,7 @@ export function workbenchStatLabel(label: string): string | null {
 }
 
 /** Mark presentation boundaries without moving React-owned elements. */
-export function createWorkbenchPresentation(): { update: (viewIds: readonly string[]) => void; clear: () => void; openInfo: () => void } {
+export function createWorkbenchPresentation(): { update: (viewIds: readonly string[], scope?: ParentNode) => void; clear: () => void; openInfo: () => void } {
   let openInfo: () => void = () => {}
   let marked = new Map<Element, Set<string>>()
   const menuHeadings = new Map<Element, { element: HTMLElement; name: HTMLElement; mode: HTMLElement }>()
@@ -89,7 +89,7 @@ export function createWorkbenchPresentation(): { update: (viewIds: readonly stri
     selectedRowKey = null
     bindTitle(null)
   }
-  const update = (viewIds: readonly string[]): void => {
+  const update = (viewIds: readonly string[], scope: ParentNode = document): void => {
     const next = new Map<Element, Set<string>>()
     const mark = (element: Element | null, attribute: string): void => {
       if (!element) return
@@ -98,7 +98,7 @@ export function createWorkbenchPresentation(): { update: (viewIds: readonly stri
       attributes.add(attribute)
       next.set(element, attributes)
     }
-    const header = document.querySelector('header:has([data-conversation-tabs])')
+    const header = scope.querySelector('header:has([data-conversation-tabs])')
     mark(header, 'data-mobile-workbench-header')
     bindTitle(header?.querySelector<HTMLElement>('span[class*="_crumbCurrent"], [class*="_crumbSeg"]:last-child span[class*="_switcherTitle"]') ?? null)
     // Extra third-party views keep their native tab strip available.
@@ -113,7 +113,7 @@ export function createWorkbenchPresentation(): { update: (viewIds: readonly stri
       mark(parent, 'data-workbench-parent')
       for (const ancestor of ancestors.slice(0, -1)) mark(ancestor.closest('[class*="_crumbSeg"]'), 'data-workbench-ancestor')
     }
-    const trajectory = document.querySelector<HTMLElement>('[data-trajectory-scroll]')
+    const trajectory = scope.querySelector<HTMLElement>('[data-trajectory-scroll]')
     mark(trajectory?.parentElement?.parentElement ?? null, 'data-workbench-trajectory')
     const inspecting = trajectory?.parentElement?.querySelector('aside[class*="_details"]')
     if (!trajectory || !inspecting) {
@@ -136,7 +136,7 @@ export function createWorkbenchPresentation(): { update: (viewIds: readonly stri
         if (delta !== 0) trajectory.scrollTop += delta
       }
     }
-    for (const button of document.querySelectorAll('[data-composer-stats] button[aria-label]')) {
+    for (const button of scope.querySelectorAll('[data-composer-stats] button[aria-label]')) {
       const summary = workbenchStatLabel(button.getAttribute('aria-label') ?? '')
       const label = button.querySelector('[class*="_label"]')
       if (summary && label) {
