@@ -13,6 +13,18 @@
 
 安装、演示、架构与兼容范围见 [工作台指南](WORKBENCH.md)。
 
+## 安装
+
+从 [GitHub Release](https://github.com/TTTPOB/dsh-mobile-workbench/releases/tag/v3.1.0) 安装：
+
+```sh
+dsh plugin --profile web add \
+  https://github.com/TTTPOB/dsh-mobile-workbench/releases/download/v3.1.0/dsh-web-mobile-3.1.0.tgz \
+  --config.auto-install-peers=false
+```
+
+更新已运行的实例后，按正常服务方式重启并刷新页面。
+
 ## 开发
 
 需要 Node.js 24+ 和 pnpm。

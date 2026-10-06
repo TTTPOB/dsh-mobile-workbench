@@ -6,11 +6,11 @@
   "author": "mexiaosh",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/mexiaosqwq/dsh-web-mobile.git"
+    "url": "git+https://github.com/TTTPOB/dsh-mobile-workbench.git"
   },
-  "homepage": "https://github.com/mexiaosqwq/dsh-web-mobile#readme",
+  "homepage": "https://github.com/TTTPOB/dsh-mobile-workbench#readme",
   "bugs": {
-    "url": "https://github.com/mexiaosqwq/dsh-web-mobile/issues"
+    "url": "https://github.com/TTTPOB/dsh-mobile-workbench/issues"
   },
   "keywords": [
     "dsh",
