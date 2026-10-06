@@ -24,10 +24,11 @@ DSH Mobile Workbench 3.1.0 面向 DSH 0.1.7-rc.2。包名为 `dsh-web-mobile`，
 
 ```sh
 DSH_HOME=/path/to/isolated-home dsh plugin --profile web add \
-  /path/to/dsh-web-mobile-3.1.0.tgz --config.auto-install-peers=false
+  https://github.com/TTTPOB/dsh-mobile-workbench/releases/download/v3.1.0/dsh-web-mobile-3.1.0.tgz \
+  --config.auto-install-peers=false
 ```
 
-插件复用 Host 提供的共享依赖。一个 profile 加载一个版本。先在隔离环境验证，再按部署授权更新日用实例；rc.2 的已有 bundle 更新需要受控重启。安装完成后，核对服务器实际提供的客户端资源与浏览器加载结果。
+插件复用 Host 提供的共享依赖。一个 profile 加载一个版本。先在隔离环境验证，再按部署授权更新日用实例；rc.2 的已有 bundle 更新需要受控重启。安装完成后，核对服务器实际提供的客户端资源与浏览器加载结果。发布与日用更新步骤见 [部署指南](docs/deployment.md)。
 
 manifest 与 192/512px PNG 图标支持 standalone 安装元数据，同源 manifest 请求携带登录 Cookie。PWA 安装还受浏览器、认证和代理环境影响。当前版本不提供离线会话或 Web Push。
 

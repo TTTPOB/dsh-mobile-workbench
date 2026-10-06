@@ -34,6 +34,15 @@ pnpm build
 - 开发时不要启停日用 Host、修改真实 profile 或安装。隔离实例使用独立 DSH_HOME 和端口。push、PR、发布和日用部署分别需要授权。
 - 本地验收后按任务范围清理测试实例、临时文件与工作树；保留提交和最终交付物，不删除其他任务或历史发布资产。
 
+## Deployment and update
+
+- 发布到 `TTTPOB/dsh-mobile-workbench` 的 GitHub Release；tag 为 `v<version>`，资产为 `dsh-web-mobile-<version>.tgz`。已发布资产不可覆盖；修订递增版本。
+- 日用使用 `dsh-web.service`、端口 53083 和 Web profile。授权部署时只替换移动端普通依赖，使用 Release URL、`auto-install-peers=false`，保留其他依赖和 profile 组合。
+- 不从当前会话直接停承载它的 Host。用独立 user systemd unit 直接执行运维脚本，使其与 Host 分属不同 cgroup；脚本完成后自动回收单元，不需要再套 tmux。
+- 运维任务负责停服、安装、启动、失败恢复和结果记录。验收区分安装版本、服务恢复、服务器实际客户端与浏览器应用状态；不得只凭版本号报成功。
+- 部署成功且 profile 已改用 Release URL 后，清理无引用的本地安装包、解压副本、临时脚本和过渡备份；保留提交、公开 Release 和简短验收记录，不手工清理 node_modules 或全局 store。
+- 具体命令和重启约束见 [部署与更新指南](docs/deployment.md)。
+
 ## 协作与文档
 
 - 主代理负责拆解、关键决策、整合、审查和最终交付。独立实现可以并行；派发时写明目标、接口、文件范围、交付和验收条件。
