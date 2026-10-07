@@ -15,7 +15,7 @@
 - 优先稳定 `data-*` 和结构选择器。需要 CSS-module 片段时使用 `[class*="..."]`，限定所属区域。
 - 不移动或复制宿主 React 节点。只创建、移动和清理插件拥有的节点。
 - 副作用纳入 `ctx.effect`，返回 disposer；清理监听器、timer、观察者、DOM 标记与自有节点。保留有实际移动浏览器问题依据的焦点修复。
-- TypeScript 使用单引号、无分号、显式导出返回类型；相对导入带 `.ts`／`.tsx`。代码注释为英文，用户文档为中文。
+- TypeScript 使用单引号、无分号、显式导出返回类型；相对导入带 `.ts`／`.tsx`。
 
 ## 开发与验证
 
@@ -33,7 +33,7 @@ pnpm build
 ## Deployment and update
 
 - 发布到 `TTTPOB/dsh-mobile-workbench` 的 GitHub Release；tag 为 `v<version>`，资产为 `dsh-web-mobile-<version>.tgz`。已发布资产不可覆盖；修订递增版本。
-- 日用使用 `dsh-web.service`、端口 53083 和 Web profile。授权部署时只替换移动端普通依赖，使用 Release URL、`auto-install-peers=false`，保留其他依赖和 profile 组合。
+- 日用使用 `dsh-web.service`、端口 53083 和 Web profile。授权部署时只替换移动端普通依赖，使用 Release URL，保留其他依赖和 profile 组合。
 - 日用停启由独立 user systemd unit 执行完整运维脚本，运维任务与 Host 分属不同 cgroup；脚本完成后自动回收单元。
 - 运维任务负责停服、安装、启动、失败恢复和结果反馈。验收包括安装版本、服务恢复、服务器实际客户端与浏览器应用状态；向用户报告已确认的结果。
 - 部署成功且 profile 已改用 Release URL 后，清理无引用的本地安装包、解压副本、临时脚本和过渡备份；保留提交、公开 Release 和必要截图；依赖与缓存由包管理器管理。
