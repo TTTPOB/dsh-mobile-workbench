@@ -1,5 +1,6 @@
 /** Install metadata for the mobile workbench; session and model APIs stay host-owned. */
 import type { IncomingMessage, ServerResponse } from 'node:http';
+import Schema from '@deepseek-ai/schemastery';
 interface Route {
     kind: 'exact';
     path: string;
@@ -33,7 +34,13 @@ export declare const MANIFEST: {
         purpose: string;
     }[];
 };
+/** Instance-specific installation labels, validated by the plugin loader. */
+export interface Config {
+    name: string;
+    shortName: string;
+}
+export declare const Config: Schema<Config>;
 /** Register installable metadata without caching dynamic APIs or patching HTTP prototypes. */
-export declare function apply(ctx: HostContext): void;
+export declare function apply(ctx: HostContext, config: Config): void;
 export {};
 //# sourceMappingURL=index.d.ts.map

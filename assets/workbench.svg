@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <title>DSH Mobile Workbench</title>
+  <rect width="512" height="512" fill="#14161b" />
+  <rect x="128" y="148" width="256" height="216" rx="20" fill="none" stroke="#e9edf5" stroke-width="12" />
+  <path d="m176 220 36 36-36 36" fill="none" stroke="#e9edf5" stroke-width="14" stroke-linecap="round" stroke-linejoin="round" />
+  <path d="M248 292h72" fill="none" stroke="#82e6cc" stroke-width="14" stroke-linecap="round" />
+</svg>

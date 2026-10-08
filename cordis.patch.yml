@@ -3,3 +3,4 @@
 - insert:
     - id: dsh-web-mobile
       name: 'dsh-web-mobile'
+      # Override config.name and config.shortName in each instance profile patch.

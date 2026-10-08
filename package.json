@@ -37,6 +37,8 @@
   "files": [
     "lib",
     "src",
+    "assets/workbench.svg",
+    "assets/workbench-180.png",
     "assets/workbench-192.png",
     "assets/workbench-512.png",
     "cordis.patch.yml",
@@ -48,6 +50,7 @@
     "build": "node scripts/clean-build.mjs && tsc -p tsconfig.json && tsc -p tsconfig.client.json && node scripts/build-client.mjs",
     "verify": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.client.json --noEmit",
     "test:core": "node --test tests/*.test.ts",
+    "build:icons": "node scripts/build-workbench-icons.mjs",
     "prepack": "npm run build"
   },
   "dsh": {
@@ -96,5 +99,8 @@
     "@deepseek-ai/dsh-client-ui-slots": {
       "optional": true
     }
+  },
+  "dependencies": {
+    "@deepseek-ai/schemastery": "^3.18.1"
   }
 }

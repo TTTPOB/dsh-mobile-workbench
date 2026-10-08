@@ -30,7 +30,38 @@ DSH_HOME=/path/to/isolated-home dsh plugin --profile web add \
 
 插件复用 Host 提供的共享依赖。一个 profile 加载一个版本。先在隔离环境验证，再按部署授权更新日用实例；rc.2 的已有 bundle 更新需要受控重启。安装完成后，核对服务器实际提供的客户端资源与浏览器加载结果。发布与日用更新步骤见 [部署指南](docs/deployment.md)。
 
-manifest 与 192/512px PNG 图标支持 standalone 安装元数据，同源 manifest 请求携带登录 Cookie。PWA 安装还受浏览器、认证和代理环境影响。当前版本不提供离线会话或 Web Push。
+### PWA 图标与实例名称
+
+图标采用深色底、白色几何终端框和薄荷色光标，原稿为 [SVG](assets/workbench.svg)。192/512px PNG 共用该设计：不透明背景填满画布，主体位于中心半径 40% 的 maskable 安全区内，因此同时声明 `any maskable`。Apple 主屏幕使用独立的 180px PNG 与 `apple-touch-icon` 标记；不会替换桌面网页 favicon。
+
+插件 Config 提供每个 Host 实例的安装名称：
+
+| 字段 | 默认值 | 用途 |
+| --- | --- | --- |
+| `name` | DSH Mobile Workbench | manifest 的完整应用名 |
+| `shortName` | DSH Workbench | manifest 的短名与 Apple 主屏幕建议名 |
+
+名称必须为含非空白字符的字符串。修改该实例 profile 的 `cordis.patch.yml`，按插件 id 覆盖 config；工作站例子：
+
+```yaml
+- id: dsh-web-mobile
+  config:
+    name: 'DSH 工作站'
+    shortName: '工作站'
+```
+
+服务器例子（在服务器自己的 profile 中配置）：
+
+```yaml
+- id: dsh-web-mobile
+  config:
+    name: 'DSH 服务器'
+    shortName: '服务器'
+```
+
+按实例的正常配置加载流程应用后，刷新网页并检查 `/manifest.webmanifest` 的名称，再执行浏览器的“安装应用”或“添加到主屏幕”。这些字段提供安装建议名称；是否允许安装时编辑、显示完整名还是短名、何时更新已安装应用，由浏览器和操作系统决定。已有安装可能保留旧名或旧图标，必要时移除旧安装，再从对应实例 URL 重新安装。
+
+应用标识、启动 URL 和 scope 固定为 `/`。工作站与服务器应使用不同 origin（域名／端口）；更改名称不会在同一 origin 下创建第二个独立应用，也不提供同源多路径实例安装。同源 manifest 请求保持携带登录 Cookie。PWA 安装还受浏览器、认证和代理环境影响；当前版本不提供离线会话或 Web Push。
 
 ## 本地演示
 
@@ -48,7 +79,7 @@ node scripts/demo.mjs --port 54076
 
 工作台复用官方界面，通过客户端插槽增加导航和操作控件，通过有限的 DOM 适配调整原生组件的移动端呈现。
 
-- **宿主端**：`src/index.ts` 注册 manifest、图标路由及 manifest link 的凭据属性。
+- **宿主端**：`src/index.ts` 注册每实例 manifest、图标路由及公开 `tapIndex` 安装元数据（manifest 凭据属性与 Apple 图标／建议名称）。
 - **客户端入口**：`src/client/index.tsx` 安装样式、移动端效果和插槽。
 - **导航与宿主适配**：`src/client/workbench/` 订阅官方会话、状态和插槽；原生服务或按钮执行页面切换，DOM 观察补充未公开的界面状态。
 - **浏览器适配**：`src/client/effects/` 处理视口、安全区、焦点、会话列表触控和原生菜单定位。
@@ -73,6 +104,8 @@ pnpm build
 ```
 
 `pnpm build` 清理过期输出，编译 Host／Client 并生成 `lib/client.js`。源码和 `lib/` 一起提交。
+
+修改 SVG 原稿后，安装系统 librsvg 的 `rsvg-convert`（例如 Debian/Ubuntu 的 `librsvg2-bin`），运行 `pnpm build:icons` 重新导出 180/192/512px PNG，再执行核心测试。PNG 随包交付；正常构建与用户运行不需要图像渲染工具。
 
 布局验收覆盖窄屏触屏、平板和鼠标设备；核心场景包括三页导航、子会话往返、展开编辑、模型／权限菜单、轨迹详情、工作区和原生弹层。软键盘可见区可以用 VisualViewport 序列测试，真实输入法、系统返回及 PWA 安装还需手机验证。
 
