@@ -15,6 +15,7 @@ import { installModelMenuAnchor } from './effects/model-menu-anchor.ts'
 import { installShortcutModalKeyboardGuard } from './effects/shortcut-modal-keyboard-guard.ts'
 import { installSessionFocusGuard } from './effects/session-focus-guard.ts'
 import { installInstalledListStyles } from './effects/installed-list.ts'
+import { installAuthExpiryNotice } from './effects/auth-expiry.ts'
 import { installDebugBadge } from './debug.ts'
 import { NS, en, zh } from './i18n/locales.ts'
 import type { MobileNavKey } from './i18n/locales.ts'
@@ -58,6 +59,7 @@ export function apply(ctx: ClientContext): void {
   }, 'dsh-web-mobile: styles')
 
   installInstalledListStyles(ctx)
+  installAuthExpiryNotice(ctx)
 
   installWorkbenchDecoration(ctx)
   installSessionsTouch(ctx)

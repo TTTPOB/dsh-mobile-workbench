@@ -60,6 +60,18 @@ test('index hook sends manifest credentials without changing URLs and disposes',
   assert.equal(fixture.taps.length, 0)
 })
 
+test('Host injects the explicit Access policy once without changing instance metadata', () => {
+  for (const cloudflareAccess of [true, false]) {
+    const fixture = routes(Config({ cloudflareAccess }))
+    const transform = fixture.taps[0]!
+    const result = transform('<head></head>')
+    assert.ok(result.includes('name="dsh-mobile-cloudflare-access" content="' + cloudflareAccess + '"'))
+    assert.equal(transform(result), result)
+    fixture.dispose()
+  }
+  assert.throws(() => Config({ cloudflareAccess: 'true' }))
+})
+
 test('PNG assets have the declared dimensions and image content type', () => {
   const fixture = routes()
   for (const size of [180, 192, 512]) {
@@ -94,7 +106,7 @@ test('metadata routes support HEAD and reject mutations', () => {
 
 test('instance config changes served labels without changing install identity or other instances', () => {
   assert.deepEqual(Config['~standard'].validate({}), {
-    value: { name: MANIFEST.name, shortName: MANIFEST.short_name },
+    value: { name: MANIFEST.name, shortName: MANIFEST.short_name, cloudflareAccess: true },
   })
   assert.throws(() => Config({ name: '  ' }))
   assert.throws(() => Config({ shortName: 42 }))

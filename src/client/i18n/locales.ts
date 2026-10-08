@@ -3,6 +3,7 @@ export const NS = 'mobileNav'
 
 /** Simplified Chinese dictionary (the key-set source of truth). */
 export const zh = {
+  'authExpired': '登录认证已过期，连接无法恢复。请先保存或复制未发送的内容，并另行保存附件，再手动刷新页面重新登录。此提示不会自动刷新页面。',
   'open': '打开目录',
   'close': '收起目录',
   'backdrop': '点击关闭目录',
@@ -26,6 +27,7 @@ export const zh = {
 
 /** English dictionary, key-identical to the Chinese source of truth. */
 export const en: Record<MobileNavKey, string> = {
+  'authExpired': 'Your login authentication has expired and the connection cannot recover. Save or copy unsent content and save attachments separately, then manually refresh the page to sign in again. This notice will not refresh the page automatically.',
   'open': 'Open directory',
   'close': 'Close directory',
   'backdrop': 'Click to close directory',

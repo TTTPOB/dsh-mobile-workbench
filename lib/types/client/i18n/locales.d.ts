@@ -2,6 +2,7 @@
 export declare const NS = "mobileNav";
 /** Simplified Chinese dictionary (the key-set source of truth). */
 export declare const zh: {
+    readonly authExpired: "登录认证已过期，连接无法恢复。请先保存或复制未发送的内容，并另行保存附件，再手动刷新页面重新登录。此提示不会自动刷新页面。";
     readonly open: "打开目录";
     readonly close: "收起目录";
     readonly backdrop: "点击关闭目录";

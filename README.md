@@ -13,6 +13,8 @@
 
 PWA 使用深色几何终端图标；通过插件 `name` / `shortName` 配置可区分工作站与服务器的安装建议名称。配置例子、重新安装限制、演示与架构见 [工作台指南](WORKBENCH.md)。
 
+移动连接失败后可探测认证过期并弹窗提醒先保存未发送内容和附件，再手动刷新；不会自动刷新或停止核心重试。此提示需要 Host 公开 `connection.state`；Access 部署配置与原始 npm rc.2 限制见[认证提示说明](WORKBENCH.md#连接失败后的认证提示)。
+
 ## 安装
 
 从 [GitHub Release](https://github.com/TTTPOB/dsh-mobile-workbench/releases/tag/v3.1.0) 安装：

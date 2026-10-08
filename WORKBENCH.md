@@ -63,6 +63,24 @@ DSH_HOME=/path/to/isolated-home dsh plugin --profile web add \
 
 应用标识、启动 URL 和 scope 固定为 `/`。工作站与服务器应使用不同 origin（域名／端口）；更改名称不会在同一 origin 下创建第二个独立应用，也不提供同源多路径实例安装。同源 manifest 请求保持携带登录 Cookie。PWA 安装还受浏览器、认证和代理环境影响；当前版本不提供离线会话或 Web Push。
 
+### 连接失败后的认证提示
+
+手机连接进入 `connecting` / `disconnected` 后，插件通过公开 `connection.state.getSnapshot/subscribe` 探测认证；正常 `connected` 和首次连接尚无结果时不探测。此提示需要提供该公开接口的 Host（当前维护的 Harness fork 基线）；原始 npm rc.2 不提供它，插件会在控制台说明并仅禁用认证提示，其余移动功能不受影响。
+
+探测请求为同源 `GET /api`，携带同源凭据、禁用缓存且不跟随重定向。Host 的 `/api` 先认证再分派路径，因此通过认证后的 404 不表示登录过期。请求最多等待 10 秒，一次仅一个请求；未确定过期时每次完成后等待 15 秒再探测，不依赖重复的 `connecting` 通知。恢复连接、退出手机媒体条件或卸载会取消探测。
+
+401 或明确指向 `/cdn-cgi/access/login` 的可读重定向表示认证过期。Config 的 `cloudflareAccess` 默认为 `true`，面向本项目的 Cloudflare Access 部署：它声明 `/api` 受 Access 保护且重定向为登录挑战，因此浏览器隐藏目标的 `opaqueredirect` 也算过期。非 Access 部署、API 存在其他重定向或无法保证这个条件时设为 `false`：
+
+```yaml
+- id: dsh-web-mobile
+  config:
+    name: 'DSH 工作站'
+    shortName: '工作站'
+    cloudflareAccess: false
+```
+
+403、5xx、网络错误和普通 HTML 均不触发提示。确认过期后显示当前语言的系统弹窗，要求先保存或复制未发送内容、另行保存附件，再手动刷新重新登录。插件不自动刷新或导航，不停止核心重试，不管理草稿或附件，也不提供离线界面。同一次连续断线只提示一次；成功恢复连接后才允许下次提示。
+
 ## 本地演示
 
 在已安装 DSH 的机器上，从仓库根目录执行：

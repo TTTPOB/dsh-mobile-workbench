@@ -34,10 +34,11 @@ export declare const MANIFEST: {
         purpose: string;
     }[];
 };
-/** Instance-specific installation labels, validated by the plugin loader. */
+/** Instance installation labels and Access redirect policy, validated by the plugin loader. */
 export interface Config {
     name: string;
     shortName: string;
+    cloudflareAccess: boolean;
 }
 export declare const Config: Schema<Config>;
 /** Register installable metadata without caching dynamic APIs or patching HTTP prototypes. */

@@ -40,15 +40,17 @@ export const MANIFEST = {
   })),
 }
 
-/** Instance-specific installation labels, validated by the plugin loader. */
+/** Instance installation labels and Access redirect policy, validated by the plugin loader. */
 export interface Config {
   name: string
   shortName: string
+  cloudflareAccess: boolean
 }
 
 export const Config: Schema<Config> = Schema.object({
   name: Schema.string().pattern(/\S/).default(MANIFEST.name),
   shortName: Schema.string().pattern(/\S/).default(MANIFEST.short_name),
+  cloudflareAccess: Schema.boolean().default(true),
 })
 
 function escapeAttribute(value: string): string {
@@ -81,8 +83,10 @@ export function apply(ctx: HostContext, config: Config): void {
       return index
         .replace(/<link\b[^>]*\srel\s*=\s*["']apple-touch-icon["'][^>]*>/gi, '')
         .replace(/<meta\b[^>]*\sname\s*=\s*["']apple-mobile-web-app-title["'][^>]*>/gi, '')
+        .replace(/<meta\b[^>]*\sname\s*=\s*["']dsh-mobile-cloudflare-access["'][^>]*>/gi, '')
         .replace(/<\/head>/i, '<link rel="apple-touch-icon" sizes="180x180" href="/mobile-workbench/icon-180.png" />'
-          + '<meta name="apple-mobile-web-app-title" content="' + escapeAttribute(config.shortName) + '" /></head>')
+          + '<meta name="apple-mobile-web-app-title" content="' + escapeAttribute(config.shortName) + '" />'
+          + '<meta name="dsh-mobile-cloudflare-access" content="' + config.cloudflareAccess + '" /></head>')
     }), 'mobile-workbench: install metadata')
     for (const asset of assets) {
       web.effect(() => web.webServer.register({
