@@ -5,8 +5,8 @@
 ## 发布
 
 1. 更新 `package.json` 版本及使用指南，执行类型检查、相关测试和 clean build。源码与 `lib/` 同批提交。
-2. 用 `pnpm pack` 生成 `dsh-web-mobile-<version>.tgz`。按仓库保护规则推送源码，再创建 `v<version>` tag。
-3. 在 GitHub Release 上传安装包，公开说明只写当前功能、兼容范围和实际验证结果，保留来源与 MIT 许可证。
+2. 按仓库保护规则推送源码分支，再推送新的 `v<version>` tag。`.github/workflows/release.yml` 从 tag 冻结安装依赖，执行 `verify`、`test:core`、build，并确认提交的 `lib/` 没有漂移。
+3. Release workflow 打包 `dsh-web-mobile-<version>.tgz`、核对包名与版本，发布 tarball 与 `SHA256SUMS`。不从本地上传产物，不发布 npm；已有 Release 拒绝覆盖。失败时检查 Actions 日志，修复后使用新的 tag/version，绝不移动已推送 tag。公开说明只写当前功能、兼容范围和实际验证结果，保留来源与 MIT 许可证。
 
 已发布的 tag 和资产保持不可变。需要修订时递增版本，不覆盖原包。当前 3.1.0 的安装来源为：
 

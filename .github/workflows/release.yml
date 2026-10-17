@@ -1,0 +1,90 @@
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: mobile-release-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  NODE_OPTIONS: --max-old-space-size=4096
+
+jobs:
+  release:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Check immutable tag
+        id: identity
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          version=$(node -p 'require("./package.json").version')
+          test "$GITHUB_REF_TYPE" = tag
+          test "$GITHUB_REF_NAME" = "v$version"
+          test "$(git rev-parse "refs/tags/$GITHUB_REF_NAME^{commit}")" = "$GITHUB_SHA"
+          if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
+            echo "::error::Release already exists; refusing to overwrite"
+            exit 1
+          fi
+          echo "asset=dsh-web-mobile-$version.tgz" >> "$GITHUB_OUTPUT"
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm verify
+      - run: pnpm test:core
+      - run: pnpm build
+      - name: Check committed build output
+        run: git diff --exit-code lib
+      - name: Pack and checksum
+        env:
+          ASSET: ${{ steps.identity.outputs.asset }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p .artifacts/release
+          pnpm pack --pack-destination .artifacts/release
+          test -f ".artifacts/release/$ASSET"
+          tar -xOf ".artifacts/release/$ASSET" package/package.json | node --input-type=module -e '
+            import assert from "node:assert/strict";
+            let input = "";
+            for await (const chunk of process.stdin) input += chunk;
+            const pkg = JSON.parse(input);
+            assert.equal(pkg.name, "dsh-web-mobile");
+            assert.equal("v" + pkg.version, process.env.GITHUB_REF_NAME);
+          '
+          cd .artifacts/release
+          sha256sum "$ASSET" > SHA256SUMS
+          sha256sum -c SHA256SUMS
+      - name: Publish immutable GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          ASSET: ${{ steps.identity.outputs.asset }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh release create "$GITHUB_REF_NAME" \
+            ".artifacts/release/$ASSET" .artifacts/release/SHA256SUMS \
+            --verify-tag --title "$GITHUB_REF_NAME" --latest=false \
+            --notes "Mobile Workbench for DSH 0.2.1-rc.1. Built and verified by GitHub Actions from $GITHUB_SHA. MIT license and upstream attribution are included. Browser profile qualification is a separate deployment check."
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-package
+          path: .artifacts/release/*
+          if-no-files-found: error
