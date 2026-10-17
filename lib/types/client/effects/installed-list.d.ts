@@ -1,4 +1,4 @@
-import type { ClientContext } from '@deepseek-ai/dsh-client-runtime/client';
+import type { Context as ClientContext } from '@deepseek-ai/cordis';
 /**
  * Hard-fix the installed-plugins list text layout: the host market UI
  * injects its own CSS after this plugin's stylesheet, so CSS overrides can

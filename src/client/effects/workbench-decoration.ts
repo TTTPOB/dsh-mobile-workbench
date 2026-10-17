@@ -1,4 +1,4 @@
-import type { ClientContext } from '@deepseek-ai/dsh-client-runtime/client'
+import type { Context as ClientContext } from '@deepseek-ai/cordis'
 import { findFrame, installMobileEffect } from './phone-chrome.ts'
 import { createStatsDecoration } from './stats-line.ts'
 import { createPanelBack } from './panel-back.ts'
@@ -51,7 +51,7 @@ export function installWorkbenchDecoration(ctx: ClientContext): void {
     // Discover mount/replacement only; token text and style changes are ignored.
     const mounts = new MutationObserver(records => {
       if (records.some(record => !(record.target instanceof Element)
-        || record.target.closest('[class*="_composerStack"], [data-mobile-workbench="navigation"], [class*="_messageList"]') === null)) schedule()
+        || record.target.closest('[class*="_composerStack"], [data-mobile-workbench="navigation"], [data-chat-flow]') === null)) schedule()
     })
     mounts.observe(document.body, { childList: true, subtree: true })
     refresh()

@@ -1,4 +1,4 @@
-import type { ClientContext } from '@deepseek-ai/dsh-client-runtime/client'
+import type { Context as ClientContext } from '@deepseek-ai/cordis'
 import { NS } from '../i18n/locales.ts'
 import { MOBILE_QUERY } from './phone-chrome.ts'
 import { watchAuthExpiry, type ConnectionStateSource } from './auth-expiry-probe.ts'

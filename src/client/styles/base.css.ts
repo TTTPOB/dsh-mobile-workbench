@@ -63,11 +63,6 @@ export const BASE_CSS = `@media (max-width: 1023px) and (pointer: coarse) {
   ${SETTINGS} > :last-child > :last-child { padding: 0 12px 24px; }
   [aria-modal="true"] [class*="_tabs"],
   [role="dialog"][aria-modal="true"] [class*="_footer"] { flex-wrap: wrap !important; }
-  [aria-modal="true"] [class*="_searchInline"] {
-    flex: 1 1 100% !important;
-    width: 100% !important;
-    max-width: 100% !important;
-  }
   [aria-modal="true"] details[class*="_customized"]:not([open]) > [class*="_customizedBody"] { display: none !important; }
   [aria-modal="true"] [class*="_cubeRow"] { gap: 6px; }
   [aria-modal="true"] [class*="_cubeRow"] > * {

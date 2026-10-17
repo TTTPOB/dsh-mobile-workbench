@@ -1,4 +1,4 @@
-import type { ClientContext } from '@deepseek-ai/dsh-client-runtime/client'
+import type { Context as ClientContext } from '@deepseek-ai/cordis'
 import type { InjectFace, PropsLocale, PropsRuntime } from '@deepseek-ai/dsh-client-ui-slots'
 import { MOBILE_QUERY } from '../effects/phone-chrome.ts'
 import { WORKBENCH_UPDATE_NOTICE_CSS } from '../styles/workbench-update-notice.css.ts'
@@ -31,7 +31,7 @@ function UpdateNotice({ useRecovery, dismiss, reload, t }: Props) {
 export function installWorkbenchUpdateNotice(ctx: ClientContext): void {
   ctx.inject(['modules'], child => {
     const scoped = child as ClientContext
-    // This structural face mirrors rc.2's public entries.state; it carries no revision tables.
+    // The public entry status carries no private revision tables.
     const modules = scoped.get('modules') as {
       entries: { state: { getSnapshot: () => ClientSyncSnapshot; subscribe: (listener: () => void) => () => void } }
     }

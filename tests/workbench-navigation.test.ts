@@ -223,7 +223,7 @@ test('optional native Plugins modal stops panel selection before sidebar close w
   replaceGlobal(t, 'Element', PanelElement)
   replaceGlobal(t, 'document', { documentElement: { getAttribute: () => mobile ? 'true' : null }, querySelector: () => panelList })
   const ctx = {
-    get: () => available ? { openModal: () => { modalCalls++ } } : {},
+    get: () => available ? { openModal: (...args: object[]) => { assert.equal(args.length, 0); modalCalls++ } } : {},
     slots: { entriesOfSlot: () => [{ options: { id: 'other', order: 10 } }, { options: { id: 'plugins', order: 0 } }] },
   } as Parameters<typeof openPluginsModal>[0]
   const event = { target: plugins, preventDefault: () => { intercepted++ }, stopImmediatePropagation: () => { intercepted++ } } as MouseEvent

@@ -25,11 +25,11 @@ test('滚动/改变尺寸只重算缓存节点，绝不查询', () => {
 })
 
 test('全文档查询只有一个入口，且只在命中触发器/菜单的交互后触发', () => {
-  const queries = SRC.match(/querySelectorAll<HTMLElement>\(MODEL_MENU\)/g) ?? []
+  const queries = SRC.match(/querySelectorAll<HTMLElement>\(MODEL_TRIGGER\)/g) ?? []
   assert.equal(queries.length, 1, '菜单查询必须集中在 findMenu() 一处')
   assert.match(
     SRC,
-    /target\.closest\(MODEL_TRIGGER\) !== null \|\| target\.closest\(MODEL_MENU\) !== null/,
+    /target\.closest\(MODEL_TRIGGER\) !== null \|\| active\?\.contains\(target\) === true/,
     '交互路径必须按目标做门控，不能对每次点击都查询',
   )
   for (const event of ['pointerdown', 'keydown', 'focusin', 'click']) {

@@ -1,6 +1,6 @@
 import { currentSessionIdOf } from '../core/sessions-compat.ts'
 
-/** Public rc.2 catalog/status fields, independent of the older development typings. */
+/** Public catalog and status fields needed for descendant counts. */
 interface CatalogList {
   byId?: Record<string, { running?: boolean }>
   projectionsBySession?: Readonly<Record<string, { state?: string; values: { subagentCatalog?: readonly { id: string }[] } }>>

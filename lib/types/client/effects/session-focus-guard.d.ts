@@ -1,4 +1,4 @@
-import type { ClientContext } from '@deepseek-ai/dsh-client-runtime/client';
+import type { Context as ClientContext } from '@deepseek-ai/cordis';
 /**
  * Keep the session-switch autofocus from raising the soft keyboard, on the
  * mobile breakpoint only.

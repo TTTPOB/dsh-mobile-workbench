@@ -1,4 +1,4 @@
-import type { ClientContext } from '@deepseek-ai/dsh-client-runtime/client';
+import type { Context as ClientContext } from '@deepseek-ai/cordis';
 export declare function composerKeyboardOpen(baseline: number, height: number, scale: number): boolean;
 export declare function composerNavigationRelease(baseline: number, height: number, scale: number): number;
 export declare function composerEndpointReturn(previousHeight: number, height: number, baseline: number, scale: number): boolean;

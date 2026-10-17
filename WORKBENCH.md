@@ -1,6 +1,6 @@
 # DSH Mobile Workbench 使用与架构
 
-DSH Mobile Workbench 3.1.0 面向 DSH 0.1.7-rc.2。包名为 `dsh-web-mobile`，版本使用 `major.minor.patch`。
+DSH Mobile Workbench 3.2.0 面向 DSH 0.2.1-rc.1。包名为 `dsh-web-mobile`，版本使用 `major.minor.patch`。
 
 ## 页面与操作
 
@@ -20,15 +20,15 @@ DSH Mobile Workbench 3.1.0 面向 DSH 0.1.7-rc.2。包名为 `dsh-web-mobile`，
 
 ## 安装
 
-需要 Node.js 24+、pnpm 和 DSH 0.1.7-rc.2。使用交付的 tarball 安装到指定 profile：
+需要 Node.js 24+、pnpm 11.28.5 和 DSH 0.2.1-rc.1。使用交付的 tarball 安装到指定 profile：
 
 ```sh
 DSH_HOME=/path/to/isolated-home dsh plugin --profile web add \
-  https://github.com/TTTPOB/dsh-mobile-workbench/releases/download/v3.1.0/dsh-web-mobile-3.1.0.tgz \
+  ./dsh-web-mobile-3.2.0.tgz \
   --config.auto-install-peers=false
 ```
 
-插件复用 Host 提供的共享依赖。一个 profile 加载一个版本。先在隔离环境验证，再按部署授权更新日用实例；rc.2 的已有 bundle 更新需要受控重启。安装完成后，核对服务器实际提供的客户端资源与浏览器加载结果。发布与日用更新步骤见 [部署指南](docs/deployment.md)。
+插件复用 Host 提供的共享依赖。一个 profile 加载一个版本。插件入口要求 `@deepseek-ai/dsh-client-ui-plugin-manager@0.2.1-rc.1-fork1` 提供无参数 `openModal(): void`。先在隔离环境验证，再按部署授权更新日用实例。安装完成后，核对服务器实际提供的客户端资源与浏览器加载结果。发布与日用更新步骤见 [部署指南](docs/deployment.md)。
 
 ### PWA 图标与实例名称
 
@@ -65,7 +65,7 @@ DSH_HOME=/path/to/isolated-home dsh plugin --profile web add \
 
 ### 连接失败后的认证提示
 
-手机连接进入 `connecting` / `disconnected` 后，插件通过公开 `connection.state.getSnapshot/subscribe` 探测认证；正常 `connected` 和首次连接尚无结果时不探测。此提示需要提供该公开接口的 Host（当前维护的 Harness fork 基线）；原始 npm rc.2 不提供它，插件会在控制台说明并仅禁用认证提示，其余移动功能不受影响。
+手机连接进入 `connecting` / `disconnected` 后，插件通过公开 `connection.state.getSnapshot/subscribe` 探测认证；正常 `connected` 和首次连接尚无结果时不探测。rc.1 提供此公开接口；若自定义 Host 缺失它，插件会在控制台说明并仅禁用认证提示，其余移动功能不受影响。
 
 探测请求为同源 `GET /api`，携带同源凭据、禁用缓存且不跟随重定向。Host 的 `/api` 先认证再分派路径，因此通过认证后的 404 不表示登录过期。请求最多等待 10 秒，一次仅一个请求；未确定过期时每次完成后等待 15 秒再探测，不依赖重复的 `connecting` 通知。恢复连接、退出手机媒体条件或卸载会取消探测。
 
@@ -113,6 +113,12 @@ node scripts/demo.mjs --port 54076
 
 键盘收起若只报告大幅单次高度恢复，且宽度、`offsetTop` 不变，普通编辑态可用主题时长同时过渡 frame 的 `max-height` 和 `padding-bottom`；长草稿预算跟随当前绘制尺寸。连续可见区变化、缩放、重新打开键盘、展开编辑或 modal 接管时即时更新或取消该过渡；减少动态效果及零时长主题禁用它。这是有限视觉回落，不是 IME 动画同步：PWA 与普通网页均不提供 Android 原生键盘动画控制，真实输入法与安装态仍需分别验证。
 
+## rc.1 宿主适配
+
+客户端使用 Cordis `Context` 和各服务包的公开声明，不依赖已删除的 `dsh-client-runtime`。统计栏按 `data-composer-stat="activity"` / `"usage"` 定位独立 pill；普通读数与按钮均可压缩显示，原始文字和无障碍名称保持不变。context meter 从独立 `data-composer-dock` 查找，统计为空仍可显示。模型菜单通过 `conversation.input.model` 触发器的 `aria-controls` 绑定 portal，不固定 CSS-module hash。
+
+第三方 dshmarket 的 `data-dsh-market-root`、`irow` 和 `cardShots` 样式是可选兼容层，不是 rc.1 官方插件管理器的 DOM。官方管理器由 F3 fork 的原生 modal 处理；不能用这些第三方选择器的存在来确认官方管理器验收通过。
+
 ## 构建与验收
 
 ```sh
@@ -125,7 +131,7 @@ pnpm build
 
 修改 SVG 原稿后，安装系统 librsvg 的 `rsvg-convert`（例如 Debian/Ubuntu 的 `librsvg2-bin`），运行 `pnpm build:icons` 重新导出 180/192/512px PNG，再执行核心测试。PNG 随包交付；正常构建与用户运行不需要图像渲染工具。
 
-布局验收覆盖窄屏触屏、平板和鼠标设备；核心场景包括三页导航、子会话往返、展开编辑、模型／权限菜单、轨迹详情、工作区和原生弹层。软键盘可见区可以用 VisualViewport 序列测试，真实输入法、系统返回及 PWA 安装还需手机验证。
+布局验收覆盖窄屏触屏、平板和鼠标设备；逐项检查点见[兼容性与验收参考](docs/compatibility.md)。核心场景包括三页导航、子会话往返、展开编辑、模型／权限菜单、轨迹详情、工作区和原生弹层。软键盘可见区可以用 VisualViewport 序列测试，真实输入法、系统返回及 PWA 安装还需手机验证。
 
 ## 来源与许可证
 

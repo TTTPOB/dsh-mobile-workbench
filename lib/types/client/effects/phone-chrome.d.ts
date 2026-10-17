@@ -1,4 +1,4 @@
-import type { ClientContext } from '@deepseek-ai/dsh-client-runtime/client';
+import type { Context as ClientContext } from '@deepseek-ai/cordis';
 export { detectIosWebKit, installPhoneChrome, STABLE_VIEWPORT_VAR } from './phone-viewport.ts';
 /** Mobile adaptation is restricted to touch-primary viewports below 1024px. */
 export declare const MOBILE_QUERY = "(max-width: 1023px) and (pointer: coarse)";

@@ -1,4 +1,4 @@
-import type { ClientContext } from '@deepseek-ai/dsh-client-runtime/client';
+import type { Context as ClientContext } from '@deepseek-ai/cordis';
 /**
  * Keep the shortcut modal's search field from grabbing focus (and the soft
  * keyboard) by itself, on the mobile breakpoint only.

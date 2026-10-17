@@ -1,10 +1,10 @@
-/** Structural state access keeps released rc.2 usable with the older dev SDK. */
+/** Main-view retention selects the visible session without reading private stores. */
 interface SessionListLike {
   current?: unknown
   byId?: Record<string, { id?: unknown; retainedBy?: { mainView?: unknown } }>
 }
 
-/** Read the retained main-view session, with the dev SDK snapshot fallback. */
+/** Read the retained main-view session, accepting legacy snapshots used by fixtures. */
 export function currentSessionIdOf(list: unknown): string | undefined {
   if (typeof list !== 'object' || list === null) return undefined
   const snapshot = list as SessionListLike

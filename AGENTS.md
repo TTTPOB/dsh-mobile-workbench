@@ -2,7 +2,7 @@
 
 ## 范围与行为
 
-- 目标 Host 为 DSH 0.1.7-rc.2；包名 `dsh-web-mobile`，使用独立语义化版本号。当前架构与使用说明以 [WORKBENCH.md](WORKBENCH.md) 为准。
+- 目标 Host 为 DSH 0.2.1-rc.1；包名 `dsh-web-mobile`，使用独立语义化版本号。当前架构与使用说明以 [WORKBENCH.md](WORKBENCH.md) 为准。
 - 移动端条件为 `(max-width: 1023px) and (pointer: coarse)`。鼠标设备在任何宽度保持官方桌面布局。
 - 底部三页为会话列表、会话、工作区；对话／轨迹是会话页内的 view，子智能体目录是独立弹层。
 - 顶栏提供当前会话信息、模式、下游计数、view 切换及直接父返回。下游递归统计所有子孙，排除自身／父／兄弟；缺失或失败不显示为叶子 `0/0`。

@@ -1,4 +1,4 @@
-import type { ClientContext } from '@deepseek-ai/dsh-client-runtime/client'
+import type { Context as ClientContext } from '@deepseek-ai/cordis'
 import { currentSessionIdOf } from '../core/sessions-compat.ts'
 import { detectIosWebKit, getFrame, installMobileEffect, toggleDrawer } from './phone-chrome.ts'
 import { createTapFallback, isTapWithinSlop } from './session-tap-fallback.ts'
@@ -43,7 +43,7 @@ export function installSessionsTouch(ctx: ClientContext): void {
       const key = row.getAttribute('data-row-key')
       if (!key?.startsWith('session:')) return null
       const id = key.slice('session:'.length)
-      return ctx.sessions.list.getSnapshot().byId[id] !== undefined ? id : null
+      return Object.hasOwn(ctx.sessions.list.getSnapshot().byId, id) ? id : null
     }
     const stopSessions = ctx.sessions.list.subscribe(() => {
       if (pendingSession && currentSessionIdOf(ctx.sessions.list.getSnapshot()) === pendingSession) {

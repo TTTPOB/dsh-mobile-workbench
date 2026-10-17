@@ -80,13 +80,13 @@ export const WORKBENCH_CSS = /* css */ `
     outline-offset: -2px;
   }
   /* Secondary metrics are summaries; tapping opens the unchanged native details. */
-  html[data-mobile-workbench-active="true"] [data-composer-stats],
-  html[data-mobile-workbench-active="true"] [data-composer-stats] button {
+  html[data-mobile-workbench-active="true"] [data-composer-stat],
+  html[data-mobile-workbench-active="true"] [data-composer-stat] > :is(button, span) {
     min-height: 28px !important;
     height: 28px !important;
     align-items: center;
   }
-  html[data-mobile-workbench-active="true"] [data-composer-stats] [data-workbench-stat-label] {
+  html[data-mobile-workbench-active="true"] [data-composer-stat] [data-workbench-stat-label] {
     font-size: 0 !important;
     white-space: nowrap !important;
     overflow: visible !important;

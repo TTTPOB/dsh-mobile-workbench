@@ -1,4 +1,4 @@
-import type { ClientContext } from '@deepseek-ai/dsh-client-runtime/client'
+import type { Context as ClientContext } from '@deepseek-ai/cordis'
 import { installMobileEffect } from '../effects/phone-chrome.ts'
 import { boundaryMutation, COMPOSER_BOUNDARY } from './dom-observation.ts'
 

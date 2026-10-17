@@ -1,6 +1,6 @@
 // Only inspect changed boundary nodes, never the streamed conversation subtree.
-export const PRESENTATION_LOCAL = 'header:has([data-conversation-tabs]), [data-composer-stats], [role="tree"][class*="_menuBody"]'
-export const PRESENTATION_BOUNDARY = 'header:has([data-conversation-tabs]), [data-composer-stats], [data-trajectory-scroll], tr[data-selected="true"][data-trajectory-row-key], aside[class*="_details"], [role="tree"][class*="_menuBody"]'
+export const PRESENTATION_LOCAL = 'header:has([data-conversation-tabs]), [data-composer-stat], [role="tree"][class*="_menuBody"]'
+export const PRESENTATION_BOUNDARY = 'header:has([data-conversation-tabs]), [data-composer-stat], [data-trajectory-scroll], tr[data-selected="true"][data-trajectory-row-key], aside[class*="_details"], [role="tree"][class*="_menuBody"]'
 export const NAVIGATION_BOUNDARY = 'header:has([data-conversation-tabs]), [data-sidebar-right-panel], [data-sidebar-right-toggle], [data-mobile-workbench="navigation"]'
 export const COMPOSER_BOUNDARY = '[data-composer-card], [data-composer-seat], [data-chain-overlay-fallback="conversation.composer"], [aria-modal="true"]'
 

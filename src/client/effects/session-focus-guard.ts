@@ -1,4 +1,4 @@
-import type { ClientContext } from '@deepseek-ai/dsh-client-runtime/client'
+import type { Context as ClientContext } from '@deepseek-ai/cordis'
 import { currentSessionIdOf } from '../core/sessions-compat.ts'
 import { SHADOW_MARKER } from './composer-keyboard-guard.ts'
 import { installMobileEffect } from './phone-chrome.ts'

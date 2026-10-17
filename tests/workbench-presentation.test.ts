@@ -52,11 +52,12 @@ function fixture(t: { after: (fn: () => void) => void }) {
   count.parentElement = countRoot
   header.selected = count
   let menus: Node[] = []
+  let stats: Node[] = []
   const body = new Node()
   const original = Object.getOwnPropertyDescriptor(globalThis, 'document')
   Object.defineProperty(globalThis, 'document', { configurable: true, value: {
     querySelector: (selector: string) => selector.startsWith('header') ? header : scroll,
-    querySelectorAll: () => menus,
+    querySelectorAll: (selector: string) => selector.includes('data-composer-stat') ? stats : menus,
     createElement: () => new Node(),
     body,
   } })
@@ -64,13 +65,37 @@ function fixture(t: { after: (fn: () => void) => void }) {
     if (original) Object.defineProperty(globalThis, 'document', original)
     else Reflect.deleteProperty(globalThis, 'document')
   })
-  return { header, root, scroll, split, body, count, countRoot, setMenus: (value: Node[]) => { menus = value } }
+  return { header, root, scroll, split, body, count, countRoot, setMenus: (value: Node[]) => { menus = value }, setStats: (value: Node[]) => { stats = value } }
 }
 
 test('metric summaries preserve native values and leave unknown formats alone', () => {
   assert.equal(workbenchStatLabel('2 轮 4 步 · 1913 tok/s'), '2 轮 · 4 步')
   assert.equal(workbenchStatLabel('1.7K tok · 缓存命中 30%'), '1.7K tok')
+  assert.equal(workbenchStatLabel('2 turns 4 steps · 100 tok/s'), '2 turns · 4 steps')
   assert.equal(workbenchStatLabel('unknown format'), null)
+})
+
+test('plain activity readings and usage buttons condense without changing host text or accessibility', t => {
+  const { setStats } = fixture(t)
+  const activity = new Node(), usage = new Node(), button = new Node()
+  const activityLabel = new Node(), usageLabel = new Node()
+  activity.textContent = '2 轮 4 步 · 100 tok/s'
+  button.setAttribute('aria-label', '1.7K tok · 缓存命中 30%')
+  usage.queries.set('button[aria-label]', button)
+  activity.queries.set('[class*="_label"]', activityLabel)
+  usage.queries.set('[class*="_label"]', usageLabel)
+  setStats([activity, usage])
+  const presentation = createWorkbenchPresentation()
+  presentation.update(['chat', 'trajectory'])
+  assert.equal(activityLabel.getAttribute('data-workbench-stat-label'), '2 轮 · 4 步')
+  assert.equal(usageLabel.getAttribute('data-workbench-stat-label'), '1.7K tok')
+  assert.equal(button.getAttribute('aria-label'), '1.7K tok · 缓存命中 30%')
+  assert.equal(activity.textContent, '2 轮 4 步 · 100 tok/s')
+  activity.textContent = '100 tok/s'
+  presentation.update(['chat', 'trajectory'])
+  assert.equal(activityLabel.hasAttribute('data-workbench-stat-label'), false, 'compact speed stays native')
+  presentation.clear()
+  assert.equal(usageLabel.attributes.size, 0)
 })
 
 test('remove duplicate native tabs only when the workbench represents every view', t => {

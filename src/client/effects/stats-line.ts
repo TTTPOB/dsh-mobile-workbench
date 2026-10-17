@@ -11,16 +11,17 @@ export function createStatsDecoration(): StatsDecoration {
     marked = []
   }
   const ensure = (): void => {
-    const stats = document.querySelector('[data-composer-stats]')
-    const dock = stats?.parentElement?.parentElement
+    const stats = Array.from(document.querySelectorAll('[data-composer-stat]'))
+    const dock = document.querySelector('[data-composer-dock]')
     const ring = Array.from(dock?.children ?? []).find(child =>
-      !child.contains(stats ?? null) && /\d\s*%/.test(child.textContent ?? ''),
+      !child.matches('[data-composer-stat]') && !child.querySelector('[data-composer-stat]')
+      && /\d\s*%/.test(child.textContent ?? ''),
     )
-    const next = [stats, ring].filter((element): element is Element => element != null)
+    const next = [...stats, ...ring ? [ring] : []]
     for (const element of marked) {
       if (!next.includes(element)) element.removeAttribute('data-mobile-nav')
     }
-    for (const [element, marker] of [[stats, 'stats'], [ring, 'stats-ring']] as const) {
+    for (const [element, marker] of [...stats.map(element => [element, 'stats'] as const), [ring, 'stats-ring'] as const]) {
       if (element && element.getAttribute('data-mobile-nav') !== marker) element.setAttribute('data-mobile-nav', marker)
     }
     marked = next

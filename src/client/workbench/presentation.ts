@@ -2,6 +2,8 @@
 export function workbenchStatLabel(label: string): string | null {
   const turn = label.match(/^(\d+)\s*轮\s*(\d+)\s*步/)
   if (turn) return turn[1] + ' 轮 · ' + turn[2] + ' 步'
+  const english = label.match(/^(\d+)\s+turns?\s*(\d+)\s+steps?/i)
+  if (english) return english[1] + ' turns · ' + english[2] + ' steps'
   const tokens = label.match(/^([\d.,]+[KMB]?)\s+tok(?:\s|$)/i)
   return tokens ? tokens[1] + ' tok' : null
 }
@@ -136,9 +138,10 @@ export function createWorkbenchPresentation(): { update: (viewIds: readonly stri
         if (delta !== 0) trajectory.scrollTop += delta
       }
     }
-    for (const button of scope.querySelectorAll('[data-composer-stats] button[aria-label]')) {
-      const summary = workbenchStatLabel(button.getAttribute('aria-label') ?? '')
-      const label = button.querySelector('[class*="_label"]')
+    for (const stat of scope.querySelectorAll('[data-composer-stat="activity"], [data-composer-stat="usage"]')) {
+      const button = stat.querySelector('button[aria-label]')
+      const summary = workbenchStatLabel(button?.getAttribute('aria-label') ?? stat.textContent ?? '')
+      const label = stat.querySelector('[class*="_label"]')
       if (summary && label) {
         mark(label, 'data-workbench-stat-label')
         if (label.getAttribute('data-workbench-stat-label') !== summary) label.setAttribute('data-workbench-stat-label', summary)

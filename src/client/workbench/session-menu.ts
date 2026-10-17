@@ -1,4 +1,4 @@
-import type { ClientContext } from '@deepseek-ai/dsh-client-runtime/client'
+import type { Context as ClientContext } from '@deepseek-ai/cordis'
 import { currentSessionIdOf } from '../core/sessions-compat.ts'
 import { installMobileEffect } from '../effects/phone-chrome.ts'
 import { WORKBENCH_NS } from './locales.ts'
@@ -20,7 +20,7 @@ export async function copyCurrentSessionId(snapshot: unknown, clipboard: Pick<Cl
 export function installWorkbenchSessionMenu(ctx: ClientContext): void {
   installMobileEffect(ctx, 'dsh-web-mobile: copy session id', () => {
     const t = ctx.locale.bind(WORKBENCH_NS)
-    // Development typings predate rc.2's menu key; use the public raw-namespace overload.
+    // The public raw-namespace overload reads the native download menu label.
     const hostNamespace: string = 'session-log-download'
     const hostT = ctx.locale.bind(hostNamespace)
     let frame = 0
