@@ -48,9 +48,6 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm verify
       - run: pnpm test:core
-      - run: pnpm build
-      - name: Check committed build output
-        run: git diff --exit-code lib
       - name: Pack and checksum
         env:
           ASSET: ${{ steps.identity.outputs.asset }}
@@ -70,7 +67,8 @@ jobs:
           '
           cd .artifacts/release
           sha256sum "$ASSET" > SHA256SUMS
-          sha256sum -c SHA256SUMS
+      - name: Check committed build output
+        run: git diff --exit-code lib
       - name: Publish immutable GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}

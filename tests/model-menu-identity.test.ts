@@ -7,7 +7,7 @@ import { runInNewContext } from 'node:vm'
 const source = readFileSync(new URL('../src/client/effects/model-menu-anchor.ts', import.meta.url), 'utf8')
 const executable = stripTypeScriptTypes(source.replace(/^import .*\n/gm, '').replaceAll('export function', 'function'))
 
-test('model seat resolves its own portal by aria-controls, including the drilled group pane', () => {
+test('model seat resolves its own portal by aria-controls', () => {
   class Element {
     readonly trigger: boolean
     constructor(trigger = false) { this.trigger = trigger }
@@ -53,7 +53,7 @@ test('model seat resolves its own portal by aria-controls, including the drilled
   assert.equal(menu.style.left, '56px')
   assert.equal(unrelated.style.left, '12px')
   listeners.get('click')!({ target: menu }); flush()
-  assert.equal(scans, 2, 'portal interaction keeps the native identity after a pane change')
+  assert.equal(scans, 2, 'portal interaction rescans the model seat')
   viewListeners.get('resize')!(); flush()
   assert.equal(scans, 2, 'viewport following does not rescan model seats')
   dispose()
