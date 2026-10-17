@@ -46,3 +46,6 @@ minimumReleaseAgeExclude:
   - '@deepseek-ai/dsh-util-crypto@0.2.1-rc.1'
   - '@deepseek-ai/dsh-util-values@0.2.1-rc.1'
   - '@deepseek-ai/dsh-workspace@0.2.1-rc.1'
+
+overrides:
+  "@deepseek-ai/dsh-client-ui-plugin-manager": "https://github.com/TTTPOB/deepseek-harness/releases/download/daily-driver-v0.2.1-rc.1-fork3/deepseek-ai-dsh-client-ui-plugin-manager-0.2.1-rc.1-fork1.tgz"

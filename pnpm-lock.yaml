@@ -4,10 +4,16 @@ settings:
   autoInstallPeers: false
   excludeLinksFromLockfile: false
 
+overrides:
+  '@deepseek-ai/dsh-client-ui-plugin-manager': https://github.com/TTTPOB/deepseek-harness/releases/download/daily-driver-v0.2.1-rc.1-fork3/deepseek-ai-dsh-client-ui-plugin-manager-0.2.1-rc.1-fork1.tgz
+
 importers:
 
   .:
     dependencies:
+      '@deepseek-ai/dsh-client-ui-plugin-manager':
+        specifier: https://github.com/TTTPOB/deepseek-harness/releases/download/daily-driver-v0.2.1-rc.1-fork3/deepseek-ai-dsh-client-ui-plugin-manager-0.2.1-rc.1-fork1.tgz
+        version: https://github.com/TTTPOB/deepseek-harness/releases/download/daily-driver-v0.2.1-rc.1-fork3/deepseek-ai-dsh-client-ui-plugin-manager-0.2.1-rc.1-fork1.tgz(@deepseek-ai/cordis@4.0.5)
       '@deepseek-ai/schemastery':
         specifier: ^3.18.5
         version: 3.18.5
@@ -305,6 +311,12 @@ packages:
 
   '@deepseek-ai/dsh-client-ui-layout@0.2.1-rc.1':
     resolution: {integrity: sha512-g7stNa35pGLKwO3i/RRSLxwKgmzRARjf/zVKi+GTrMAlGLBEuRvB6h8sgj8vl0BMIvL8RRbSlEuyGi/uRuaUQw==}
+    peerDependencies:
+      '@deepseek-ai/cordis': ~4.0.5
+
+  '@deepseek-ai/dsh-client-ui-plugin-manager@https://github.com/TTTPOB/deepseek-harness/releases/download/daily-driver-v0.2.1-rc.1-fork3/deepseek-ai-dsh-client-ui-plugin-manager-0.2.1-rc.1-fork1.tgz':
+    resolution: {integrity: sha512-Dnix1dqqomrZSqUyQCPLNAWg7sqm0Lu/y+EpYNWed9H5XtMFrzMK9uYG36UqIyuBD6vQLHdWVAupZoafZrV45Q==, tarball: https://github.com/TTTPOB/deepseek-harness/releases/download/daily-driver-v0.2.1-rc.1-fork3/deepseek-ai-dsh-client-ui-plugin-manager-0.2.1-rc.1-fork1.tgz}
+    version: 0.2.1-rc.1-fork1
     peerDependencies:
       '@deepseek-ai/cordis': ~4.0.5
 
@@ -701,6 +713,14 @@ snapshots:
   '@deepseek-ai/dsh-client-ui-layout@0.2.1-rc.1(@deepseek-ai/cordis@4.0.5)':
     dependencies:
       '@deepseek-ai/cordis': 4.0.5(@deepseek-ai/cordis-plugin-loader@1.0.6)
+
+  '@deepseek-ai/dsh-client-ui-plugin-manager@https://github.com/TTTPOB/deepseek-harness/releases/download/daily-driver-v0.2.1-rc.1-fork3/deepseek-ai-dsh-client-ui-plugin-manager-0.2.1-rc.1-fork1.tgz(@deepseek-ai/cordis@4.0.5)':
+    dependencies:
+      '@deepseek-ai/cordis': 4.0.5(@deepseek-ai/cordis-plugin-loader@1.0.6)
+      '@deepseek-ai/dsh-timeout': 0.2.1-rc.1(@deepseek-ai/cordis@4.0.5)
+      '@deepseek-ai/dsh-typert-protocol': 0.2.1-rc.1(@deepseek-ai/cordis@4.0.5)
+      '@deepseek-ai/schemastery': 3.18.5
+      zod: 4.4.3
 
   '@deepseek-ai/dsh-client-ui-primitives@0.2.1-rc.1(@deepseek-ai/cordis@4.0.5)':
     dependencies:
