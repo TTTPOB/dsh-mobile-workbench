@@ -1,41 +1,11 @@
 import type { Context as ClientContext } from '@deepseek-ai/cordis'
 import { installMobileEffect } from '../effects/phone-chrome.ts'
 import { boundaryMutation, COMPOSER_BOUNDARY } from './dom-observation.ts'
-
-// Pure geometry policy; visual viewport shrink, not focus, is keyboard evidence.
-export function composerKeyboardOpen(baseline: number, height: number, scale: number): boolean {
-  return composerNavigationRelease(baseline, height, scale) > 0
-}
-
-// Release navigation clearance by measured shrink beyond the existing keyboard threshold.
-export function composerNavigationRelease(baseline: number, height: number, scale: number): number {
-  if (Math.abs(scale - 1) >= 0.05) return 0
-  return Math.max(0, baseline - height - Math.max(120, baseline * 0.18))
-}
-
-// A coarse return needs a visual fallback; continuous viewport steps stay immediate.
-export function composerEndpointReturn(previousHeight: number, height: number, baseline: number, scale: number): boolean {
-  return Math.abs(scale - 1) < 0.05 && height - previousHeight > Math.max(120, baseline * 0.18)
-}
-
-export function composerHeightBudget(available: number, chrome: number): { input: number; card: number; context: number } {
-  const context = Math.min(150, Math.max(48, available - chrome - 44))
-  const card = Math.max(80, available - context)
-  return { input: Math.max(44, Math.min(160, available * 0.3, card - chrome)), card, context }
-}
-
-// Only shorten recognized names; unknown permission states remain verbatim.
-export function composerPermissionLabel(name: string): string | null {
-  const state = name.replace(/^访问模式[，,:：]\s*当前[：:]\s*/, '').trim()
-  if (/^(只读|仅可查看|Read[- ]only)$/i.test(state)) return '只读'
-  if (/^(工作区内修改|工作区|Workspace(?: write)?)$/i.test(state)) return '工作区'
-  if (/^(完全权限|Full access)$/i.test(state)) return '完全权限'
-  return null
-}
-
-export function composerModelLabel(name: string): string {
-  return name.trim().replace(/^(?:openai|anthropic|deepseek)\//i, '').replace(/^claude-/i, 'Claude ').replace(/^gpt-/i, 'GPT-')
-}
+import { composerEndpointReturn, composerHeightBudget, composerKeyboardOpen, composerNavigationRelease } from './composer-geometry.ts'
+import { createComposerControls } from './composer-controls.ts'
+import { createComposerFocus } from './composer-focus.ts'
+import { composerTriggers } from './composer-session.ts'
+import { COMPOSER_NS, en, zh } from './composer-locales.ts'
 
 const CARD = '[data-composer-card]'
 const INPUT = '[data-composer-input]'
@@ -47,6 +17,7 @@ const RETURNING = 'data-mobile-compose-returning'
 
 /** Decorate the official Lexical card in place; never own draft or submit state. */
 export function installWorkbenchComposer(ctx: ClientContext): void {
+  ctx.effect(() => ctx.locale.register(COMPOSER_NS, { zh, en }), 'dsh-web-mobile: composer dictionaries')
   installMobileEffect(ctx, 'dsh-web-mobile: workbench composer', () => {
     const root = document.documentElement
     const oldMarkers = new Map([EXPANDED, KEYBOARD, RETURNING].map(key => [key, root.getAttribute(key)]))
@@ -65,7 +36,8 @@ export function installWorkbenchComposer(ctx: ClientContext): void {
       else element.setAttribute(key, value)
     }
     let restoreCard: (() => void) | undefined
-    let removeButtonListeners: (() => void) | undefined
+    let controls: ReturnType<typeof createComposerControls> | undefined
+    let focus: ReturnType<typeof createComposerFocus> | undefined
     let expanded = false
     let frame = 0
     let width = window.innerWidth
@@ -93,7 +65,7 @@ export function installWorkbenchComposer(ctx: ClientContext): void {
     const setStyle = (element: HTMLElement, key: string, value: string): void => {
       if (element.style.getPropertyValue(key) !== value) element.style.setProperty(key, value)
     }
-    const setExpanded = (value: boolean): void => {
+    const setExpanded = (value: boolean, keyboard = false, restoreFocus = true): void => {
       cancelReturning()
       expanded = value
       mark(EXPANDED, value)
@@ -101,18 +73,21 @@ export function installWorkbenchComposer(ctx: ClientContext): void {
         if (value) card.setAttribute(EXPANDED, 'true')
         else card.removeAttribute(EXPANDED)
       }
-      if (button) {
-        button.setAttribute('aria-label', value ? '收起编辑' : '展开编辑')
-        button.title = value ? '收起编辑' : '展开编辑'
-        button.setAttribute('aria-expanded', String(value))
+      controls?.update(value)
+      if (value) focus?.start(keyboard)
+      else {
+        focus?.stop()
+        if (restoreFocus && button?.isConnected) button.focus({ preventScroll: true })
       }
       schedule()
     }
     const release = (): void => {
       cancelReturning()
       resizeObserver?.disconnect()
-      removeButtonListeners?.()
-      removeButtonListeners = undefined
+      focus?.stop()
+      focus = undefined
+      controls?.dispose()
+      controls = undefined
       button?.remove()
       button = null
       header?.remove()
@@ -127,7 +102,7 @@ export function installWorkbenchComposer(ctx: ClientContext): void {
       restoreCard?.()
       restoreCard = undefined
       card = null
-      setExpanded(false)
+      setExpanded(false, false, false)
     }
     const attach = (next: HTMLElement): void => {
       release()
@@ -145,51 +120,10 @@ export function installWorkbenchComposer(ctx: ClientContext): void {
         }
       }
       next.setAttribute(MARKER, 'true')
-      button = document.createElement('button')
-      button.type = 'button'
-      button.setAttribute('data-mobile-compose-toggle', '')
-      button.setAttribute('aria-expanded', 'false')
-      button.setAttribute('aria-label', '展开编辑')
-      button.title = '展开编辑'
-      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
-      svg.setAttribute('viewBox', '0 0 24 24')
-      svg.setAttribute('aria-hidden', 'true')
-      svg.setAttribute('focusable', 'false')
-      const path = document.createElementNS('http://www.w3.org/2000/svg', 'path')
-      path.setAttribute('d', 'M8 3H3v5m13-5h5v5M3 16v5h5m13-5v5h-5M3 3l6 6m12-6-6 6M3 21l6-6m12 6-6-6')
-      svg.append(path)
-      button.append(svg)
-      header = document.createElement('div')
-      header.setAttribute('data-mobile-compose-header', '')
-      const heading = document.createElement('strong')
-      heading.textContent = '编辑草稿'
-      const done = document.createElement('button')
-      done.type = 'button'
-      done.textContent = '完成'
-      done.setAttribute('aria-label', '收起编辑')
-      done.title = '收起编辑'
-      header.append(heading, done)
-      // Keep the native selection, including an active IME composition, intact.
-      const keepSelection = (event: Event): void => event.preventDefault()
-      const toggle = (event: Event): void => {
-        event.stopPropagation()
-        setExpanded(!expanded)
-      }
-      const ownedButton = button
-      ownedButton.addEventListener('pointerdown', keepSelection)
-      ownedButton.addEventListener('mousedown', keepSelection)
-      ownedButton.addEventListener('click', toggle)
-      done.addEventListener('pointerdown', keepSelection)
-      done.addEventListener('mousedown', keepSelection)
-      done.addEventListener('click', toggle)
-      removeButtonListeners = () => {
-        ownedButton.removeEventListener('pointerdown', keepSelection)
-        ownedButton.removeEventListener('mousedown', keepSelection)
-        ownedButton.removeEventListener('click', toggle)
-        done.removeEventListener('pointerdown', keepSelection)
-        done.removeEventListener('mousedown', keepSelection)
-        done.removeEventListener('click', toggle)
-      }
+      controls = createComposerControls(ctx, keyboard => setExpanded(!expanded, keyboard))
+      button = controls.button
+      header = controls.header
+      focus = createComposerFocus(next, controls.heading, controls.done)
       next.append(header)
       resizeObserver?.observe(next)
       const seat = next.closest<HTMLElement>('[data-composer-seat]')
@@ -206,18 +140,6 @@ export function installWorkbenchComposer(ctx: ClientContext): void {
         if (button.parentElement !== row) row.append(button)
       } else button.remove()
       if (header.parentElement !== card) card.append(header)
-      const permission = card.querySelector<HTMLElement>('[data-slot="conversation.input.permission"] button')
-      const permissionText = permission?.querySelector<HTMLElement>('[class*="_triggerLabel"]')
-      if (permission && permissionText) {
-        decorate(permissionText, 'data-mobile-compose-label', composerPermissionLabel(permission.getAttribute('aria-label') ?? permissionText.textContent ?? ''))
-      }
-      const model = card.querySelector<HTMLElement>('[data-slot="conversation.input.model"] button[aria-haspopup="menu"]')
-      const modelText = model?.querySelector<HTMLElement>('[class*="_triggerLabel"]')
-      if (modelText) {
-        const full = modelText.textContent ?? ''
-        const short = composerModelLabel(full)
-        decorate(modelText, 'data-mobile-compose-label', short !== full.trim() ? short : null)
-      }
     }
     const update = (): void => {
       frame = 0
@@ -297,12 +219,21 @@ export function installWorkbenchComposer(ctx: ClientContext): void {
     probeNode.setAttribute('aria-hidden', 'true')
     probeNode.style.cssText = 'position:absolute;visibility:hidden;pointer-events:none;width:0'
     root.append(probeNode)
-    observer.observe(document.body, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ['style', 'data-phase', 'aria-label', 'aria-modal', 'class'] })
+    observer.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['style', 'data-phase', 'aria-modal', 'class'] })
     window.addEventListener('resize', schedule)
     viewport?.addEventListener('resize', schedule)
     viewport?.addEventListener('scroll', schedule)
     const onKey = (event: KeyboardEvent): void => {
-      if (event.key === 'Escape' && expanded && !event.isComposing && !document.querySelector('[role="dialog"][aria-modal="true"], [role="menu"], [role="listbox"]')) {
+      if (event.key !== 'Escape' || !expanded || event.isComposing) return
+      const triggers = composerTriggers(ctx)
+      if (triggers?.menu.getSnapshot().open) {
+        event.preventDefault()
+        event.stopPropagation()
+        triggers.dismiss()
+        return
+      }
+      if (!document.querySelector('[role="menu"], [role="listbox"]')
+        && !Array.from(document.querySelectorAll('[role="dialog"][aria-modal="true"]')).some(dialog => dialog !== card)) {
         event.preventDefault()
         event.stopPropagation()
         setExpanded(false)

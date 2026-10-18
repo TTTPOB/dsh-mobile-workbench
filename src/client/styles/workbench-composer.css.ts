@@ -1,6 +1,5 @@
 // The native card owns both daily and expanded editing surfaces.
 export const WORKBENCH_COMPOSER_CSS = `@media (max-width: 1023px) and (pointer: coarse) {
-  /* Full-width writing surface above a single, shared 44px control baseline. */
   html [data-mobile-nav="frame"] [data-phase] [data-composer-card][data-mobile-workbench-composer="true"] {
     max-height: var(--mobile-compose-card-max, 320px) !important;
     gap: 6px !important;
@@ -27,57 +26,38 @@ export const WORKBENCH_COMPOSER_CSS = `@media (max-width: 1023px) and (pointer: 
     overflow: visible;
     text-overflow: clip;
   }
-  /* Only exceptional attachment chrome scrolls the whole card. Ordinary menus escape. */
   html [data-mobile-nav="frame"] [data-phase] [data-composer-card][data-mobile-workbench-composer="true"][data-mobile-compose-overflow="true"]:not([data-mobile-compose-expanded="true"]) {
     overflow-y: auto !important;
     overscroll-behavior-y: contain;
+  }
+  /* Metrics live in the header. Hide the whole native row, not just its contents. */
+  html [data-composer-dock] {
+    display: none !important;
   }
   html [data-mobile-nav="frame"] [data-phase] [data-composer-card][data-mobile-workbench-composer="true"] > [data-mobile-compose-bar] {
     display: flex !important;
     align-items: center;
     flex-wrap: nowrap !important;
-    flex: 0 0 60px;
-    height: 60px;
-    min-height: 60px;
-    gap: 6px !important;
-    padding: 8px !important;
+    flex: 0 0 48px;
+    height: 48px;
+    min-height: 48px;
+    gap: 4px !important;
+    padding: 2px 8px !important;
     justify-content: flex-start !important;
     box-sizing: border-box;
     overflow: visible;
     --dsh-composer-model-text-display: block;
     --dsh-composer-model-icon-display: none;
   }
-  /* Preserve the permission Menu measurement box: contents gives portal placement a zero rect. */
+  /* Keep the native permission Menu's nonzero anchor rect. */
   html [data-mobile-nav="frame"] [data-phase] [data-composer-card][data-mobile-workbench-composer="true"] > [data-mobile-compose-bar] [data-slot="conversation.input.permission"] > span {
     display: inline-flex !important;
-    flex: 0 0 auto;
+    flex: 0 1 auto;
+    max-width: clamp(60px, 20vw, 76px);
+    min-width: 44px;
     order: 10;
     position: relative;
   }
-  html [data-mobile-nav="frame"] [data-phase] [data-composer-card][data-mobile-workbench-composer="true"] > [data-mobile-compose-bar] > [class*="_tools"] > button[class*="_add"] {
-    border-radius: 10px !important;
-    background: color-mix(in srgb, currentColor 4%, transparent);
-    border: 1px solid color-mix(in srgb, currentColor 8%, transparent);
-  }
-  /* The host shell owns its runtime height clamp; only its listbox scrolls. */
-  html [data-composer-card][data-mobile-workbench-composer="true"] [data-trigger-menu] {
-    display: flex !important;
-    flex-direction: column;
-    overflow: hidden !important;
-    min-height: 0;
-  }
-  html [data-composer-card][data-mobile-workbench-composer="true"] [data-trigger-menu] > [role="listbox"] {
-    flex: 1 1 auto !important;
-    min-height: 0 !important;
-    overflow-y: auto !important;
-    overscroll-behavior-y: contain;
-    touch-action: pan-y pinch-zoom;
-    -webkit-overflow-scrolling: touch;
-  }
-  html [data-composer-card][data-mobile-workbench-composer="true"] [data-trigger-menu] [role="option"] {
-    flex-shrink: 0 !important;
-  }
-  /* Flatten layout wrappers, not React ownership. No menus or plugin controls are removed. */
   html [data-mobile-nav="frame"] [data-phase] [data-composer-card][data-mobile-workbench-composer="true"] > [data-mobile-compose-bar] > [class*="_tools"],
   html [data-mobile-nav="frame"] [data-phase] [data-composer-card][data-mobile-workbench-composer="true"] > [data-mobile-compose-bar] > [class*="_tools"] > [class*="_modes"],
   html [data-mobile-nav="frame"] [data-phase] [data-composer-card][data-mobile-workbench-composer="true"] > [data-mobile-compose-bar] > [class*="_trailing"],
@@ -102,21 +82,53 @@ export const WORKBENCH_COMPOSER_CSS = `@media (max-width: 1023px) and (pointer: 
     align-items: center;
     justify-content: center;
   }
+  html [data-mobile-nav="frame"] [data-phase] [data-composer-card][data-mobile-workbench-composer="true"] > [data-mobile-compose-bar] > [class*="_tools"] > button[class*="_add"],
+  html [data-mobile-nav="frame"] [data-phase] [data-composer-card][data-mobile-workbench-composer="true"] > [data-mobile-compose-bar] > [data-mobile-compose-toggle] {
+    appearance: none;
+    border: 0 !important;
+    background: transparent !important;
+    border-radius: 10px !important;
+    color: var(--dsw-alias-label-secondary);
+    touch-action: manipulation;
+    cursor: pointer;
+  }
+  html [data-mobile-nav="frame"] [data-phase] [data-composer-card][data-mobile-workbench-composer="true"] > [data-mobile-compose-bar] > [class*="_tools"] > button[class*="_add"] svg,
+  html [data-mobile-nav="frame"] [data-phase] [data-composer-card][data-mobile-workbench-composer="true"] > [data-mobile-compose-bar] > [data-mobile-compose-toggle] svg {
+    width: 20px;
+    height: 20px;
+  }
+  html [data-mobile-nav="frame"] [data-phase] [data-composer-card][data-mobile-workbench-composer="true"] > [data-mobile-compose-bar] > [data-mobile-compose-toggle] svg {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.6;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  html [data-mobile-nav="frame"] [data-phase] [data-composer-card][data-mobile-workbench-composer="true"] > [data-mobile-compose-bar] > [class*="_trailing"] > button[class*="_primary"] {
+    order: 50;
+    border: 4px solid var(--dsw-alias-bg-base) !important;
+    border-radius: 14px !important;
+    background-clip: padding-box;
+    transform: none !important;
+  }
   html [data-mobile-nav="frame"] [data-phase] [data-composer-card][data-mobile-workbench-composer="true"] > [data-mobile-compose-bar] [data-slot="conversation.input.permission"] button {
     display: inline-flex !important;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-start;
     gap: 4px !important;
+    width: 100%;
+    min-width: 0;
     height: 44px;
     min-height: 44px;
-    padding: 0 4px !important;
-    order: 10;
-    flex: 0 0 auto;
+    padding: 0 2px !important;
     margin: 0;
-    border-radius: 10px;
     box-sizing: border-box;
-    background: color-mix(in srgb, currentColor 4%, transparent);
-    border: 1px solid color-mix(in srgb, currentColor 8%, transparent);
+    border: 0;
+    background: transparent;
+    color: var(--dsw-alias-label-secondary);
+  }
+  html [data-mobile-nav="frame"] [data-phase] [data-composer-card][data-mobile-workbench-composer="true"] > [data-mobile-compose-bar] [data-slot="conversation.input.permission"] button [class*="_triggerIcon"] {
+    flex: none;
   }
   html [data-mobile-nav="frame"] [data-phase] [data-composer-card][data-mobile-workbench-composer="true"] > [data-mobile-compose-bar] [data-slot="conversation.input.permission"] button [class*="_triggerIcon"] svg {
     width: 16px !important;
@@ -124,9 +136,10 @@ export const WORKBENCH_COMPOSER_CSS = `@media (max-width: 1023px) and (pointer: 
   }
   html [data-mobile-nav="frame"] [data-phase] [data-composer-card][data-mobile-workbench-composer="true"] > [data-mobile-compose-bar] [data-slot="conversation.input.permission"] button [class*="_triggerLabel"] {
     display: block !important;
-    white-space: normal !important;
-    overflow: visible;
-    text-overflow: clip;
+    min-width: 0;
+    overflow: hidden;
+    white-space: nowrap !important;
+    text-overflow: ellipsis;
     font-size: 12px;
     line-height: 16px;
   }
@@ -146,7 +159,7 @@ export const WORKBENCH_COMPOSER_CSS = `@media (max-width: 1023px) and (pointer: 
     display: flex !important;
     align-items: center;
     flex: 1 1 0 !important;
-    min-width: 24px;
+    min-width: 0;
     order: 30;
     overflow: visible;
   }
@@ -166,96 +179,90 @@ export const WORKBENCH_COMPOSER_CSS = `@media (max-width: 1023px) and (pointer: 
     height: 44px;
     min-height: 44px;
     min-width: 0;
-    padding: 0 18px 0 6px !important;
+    padding: 0 14px 0 2px !important;
     gap: 0 !important;
     overflow: visible;
-    border-radius: 10px;
+    border: 0;
+    background: transparent;
+    color: var(--dsw-alias-label-secondary);
     position: relative;
     box-sizing: border-box;
-    background: color-mix(in srgb, currentColor 4%, transparent);
-    border: 1px solid color-mix(in srgb, currentColor 8%, transparent);
   }
-  /* The native chevron identifies the menu without spending a second text lane. */
-  html [data-mobile-nav="frame"] [data-phase] [data-composer-card][data-mobile-workbench-composer="true"] > [data-mobile-compose-bar] [data-slot="conversation.input.model"] [class*="_root"] > button[aria-haspopup="menu"] [class*="_chevron"] {
+  html [data-mobile-nav="frame"] [data-phase] [data-composer-card][data-mobile-workbench-composer="true"] > [data-mobile-compose-bar] [data-slot="conversation.input.model"] button[aria-haspopup="menu"] [class*="_chevron"] {
     display: block !important;
     position: absolute;
-    right: 5px;
+    right: 1px;
     top: 50%;
     width: 12px;
     height: 12px;
     margin: 0;
     transform: translateY(-50%);
-    opacity: .55;
     pointer-events: none;
   }
-  html [data-mobile-nav="frame"] [data-phase] [data-composer-card][data-mobile-workbench-composer="true"] > [data-mobile-compose-bar] [data-slot="conversation.input.model"] [class*="_root"] > button[aria-haspopup="menu"] > [class*="_triggerLabel"],
-  html [data-mobile-nav="frame"] [data-phase] [data-composer-card][data-mobile-workbench-composer="true"] > [data-mobile-compose-bar] [data-slot="conversation.input.model"] [class*="_root"] > button[aria-haspopup="menu"] > [class*="_triggerEffort"] {
-    display: block !important;
+  html [data-mobile-nav="frame"] [data-phase] [data-composer-card][data-mobile-workbench-composer="true"] > [data-mobile-compose-bar] [data-slot="conversation.input.model"] button[aria-haspopup="menu"] > [class*="_triggerLabel"],
+  html [data-mobile-nav="frame"] [data-phase] [data-composer-card][data-mobile-workbench-composer="true"] > [data-mobile-compose-bar] [data-slot="conversation.input.model"] button[aria-haspopup="menu"] > [class*="_triggerEffort"] {
+    display: -webkit-box !important;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
     flex: 0 1 auto;
     min-width: 0;
     max-width: 100%;
+    max-height: 30px;
     white-space: normal !important;
     overflow-wrap: anywhere;
-    overflow: visible;
-    text-overflow: clip;
+    overflow: hidden;
     font-size: 12px;
     line-height: 15px;
+    color: var(--dsw-alias-label-secondary);
+    opacity: 1;
   }
-  /* Only the compact model preview is bounded; the official menu retains full names. */
-  html [data-mobile-nav="frame"] [data-phase] [data-composer-card][data-mobile-workbench-composer="true"] > [data-mobile-compose-bar] [data-slot="conversation.input.model"] [class*="_root"] > button[aria-haspopup="menu"] > [class*="_triggerLabel"] {
-    display: -webkit-box !important;
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: 2;
-    max-height: 30px;
-    overflow: hidden;
-    flex-shrink: 0;
-  }
-  html [data-mobile-nav="frame"] [data-phase] [data-composer-card][data-mobile-workbench-composer="true"] > [data-mobile-compose-bar] [data-slot="conversation.input.model"] [class*="_root"] > button[aria-haspopup="menu"]:has(> [class*="_triggerEffort"]:not(:empty)) > [class*="_triggerLabel"] {
+  html [data-mobile-nav="frame"] [data-phase] [data-composer-card][data-mobile-workbench-composer="true"] > [data-mobile-compose-bar] [data-slot="conversation.input.model"] button[aria-haspopup="menu"]:has(> [class*="_triggerEffort"]:not(:empty)) > [class*="_triggerLabel"],
+  html [data-mobile-nav="frame"] [data-phase] [data-composer-card][data-mobile-workbench-composer="true"] > [data-mobile-compose-bar] [data-slot="conversation.input.model"] button[aria-haspopup="menu"] > [class*="_triggerEffort"] {
     -webkit-line-clamp: 1;
     max-height: 15px;
   }
-  html [data-mobile-nav="frame"] [data-phase] [data-composer-card][data-mobile-workbench-composer="true"] > [data-mobile-compose-bar] [data-slot="conversation.input.model"] [class*="_root"] > button[aria-haspopup="menu"] > [class*="_triggerEffort"] {
-    display: -webkit-box !important;
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: 1;
-    max-height: 15px;
-    overflow: hidden;
-    flex-shrink: 0;
-    font-size: 10px;
-    opacity: .65;
+  html [data-mobile-nav="frame"] [data-phase] [data-composer-card][data-mobile-workbench-composer="true"] > [data-mobile-compose-bar] > [class*="_trailing"] > [class*="_activity"] {
+    order: 35;
+    margin: 0 !important;
   }
-  /* The accessible original text stays in the host node; only known display names change. */
-  html [data-mobile-nav="frame"] [data-phase] [data-composer-card][data-mobile-workbench-composer="true"] > [data-mobile-compose-bar] [data-slot] button [class*="_triggerLabel"][data-mobile-compose-label] {
-    font-size: 0 !important;
-    line-height: 0 !important;
+  html [data-mobile-nav="frame"] [data-phase] [data-composer-card][data-mobile-workbench-composer="true"] > [data-mobile-compose-bar] > [class*="_trailing"] > [class*="_activity"]:not([class*="_activityExpanded"]):has(> [data-slot="conversation.input.activity"]:only-child:empty) {
+    display: none !important;
   }
-  html [data-mobile-nav="frame"] [data-phase] [data-composer-card][data-mobile-workbench-composer="true"] > [data-mobile-compose-bar] [data-slot] button [class*="_triggerLabel"][data-mobile-compose-label]::after {
-    content: attr(data-mobile-compose-label);
-    display: block;
-    font-size: 12px;
-    line-height: 15px;
-    white-space: normal;
-    overflow-wrap: anywhere;
+  html [data-mobile-nav="frame"] [data-phase] [data-composer-card][data-mobile-workbench-composer="true"] > [data-mobile-compose-bar] > [data-mobile-compose-toggle] {
+    order: 40;
+    margin-left: auto !important;
   }
-  /* Known display-name replacements use the same line budget as verbatim labels. */
-  html [data-mobile-nav="frame"] [data-phase] [data-composer-card][data-mobile-workbench-composer="true"] > [data-mobile-compose-bar] [data-slot="conversation.input.model"] [class*="_root"] > button[aria-haspopup="menu"] > [class*="_triggerLabel"][data-mobile-compose-label]::after {
-    display: -webkit-box;
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: 2;
-    max-height: 30px;
-    overflow: hidden;
+  html [data-mobile-nav="frame"] [data-phase] [data-composer-card][data-mobile-workbench-composer="true"] > [data-mobile-compose-bar] > [data-mobile-compose-toggle]:active {
+    background: var(--dsw-alias-interactive-bg-hover) !important;
   }
-  html [data-mobile-nav="frame"] [data-phase] [data-composer-card][data-mobile-workbench-composer="true"] > [data-mobile-compose-bar] [data-slot="conversation.input.model"] [class*="_root"] > button[aria-haspopup="menu"]:has(> [class*="_triggerEffort"]:not(:empty)) > [class*="_triggerLabel"][data-mobile-compose-label]::after {
-    -webkit-line-clamp: 1;
-    max-height: 15px;
+  html [data-mobile-nav="frame"] [data-phase] [data-composer-card][data-mobile-workbench-composer="true"] [data-mobile-compose-toggle]:focus-visible,
+  html [data-mobile-nav="frame"] [data-phase] [data-composer-card][data-mobile-workbench-composer="true"] > [data-mobile-compose-header] button:focus-visible {
+    outline: 2px solid currentColor;
+    outline-offset: -2px;
   }
-  /* Portal scope recognizes both levels of the official model menu, not other menus. */
+  /* Native command/menu geometry remains host-owned. */
+  html [data-mobile-nav="frame"] [data-phase] [data-composer-card][data-mobile-workbench-composer="true"] [data-trigger-menu] {
+    display: flex !important;
+    flex-direction: column;
+    overflow: hidden !important;
+    min-height: 0;
+  }
+  html [data-mobile-nav="frame"] [data-phase] [data-composer-card][data-mobile-workbench-composer="true"] [data-trigger-menu] > [role="listbox"] {
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    overflow-y: auto !important;
+    overscroll-behavior-y: contain;
+    touch-action: pan-y pinch-zoom;
+    -webkit-overflow-scrolling: touch;
+  }
+  html [data-mobile-nav="frame"] [data-phase] [data-composer-card][data-mobile-workbench-composer="true"] [data-trigger-menu] [role="option"] {
+    flex-shrink: 0 !important;
+  }
   html body [role="menu"][class*="_menu"]:has([class*="_cellValue"], [class*="_modelName"]) {
     box-sizing: border-box;
     max-width: calc(100vw - 24px) !important;
   }
-  html body [role="menu"][class*="_menu"]:has([class*="_cellValue"], [class*="_modelName"]) [class*="_cellValue"],
-  html body [role="menu"][class*="_menu"]:has([class*="_cellValue"], [class*="_modelName"]) [class*="_modelName"] {
+  html body [role="menu"][class*="_menu"]:has([class*="_cellValue"], [class*="_modelName"]) :is([class*="_cellValue"], [class*="_modelName"]) {
     white-space: normal !important;
     overflow: visible !important;
     text-overflow: clip !important;
@@ -270,91 +277,62 @@ export const WORKBENCH_COMPOSER_CSS = `@media (max-width: 1023px) and (pointer: 
     min-width: 0;
     max-width: 100%;
   }
-  html body [role="menu"][class*="_menu"]:has([class*="_cellValue"], [class*="_modelName"]) button[role="menuitem"]:has([class*="_cellValue"]),
-  html body [role="menu"][class*="_menu"]:has([class*="_cellValue"], [class*="_modelName"]) button[role="menuitemradio"]:has([class*="_modelName"]) {
+  html body [role="menu"][class*="_menu"]:has([class*="_cellValue"], [class*="_modelName"]) button[role] {
     height: auto;
     min-height: 44px;
   }
-  html [data-mobile-nav="frame"] [data-phase] [data-composer-card][data-mobile-workbench-composer="true"] > [data-mobile-compose-bar] > [class*="_trailing"] > [class*="_activity"] {
-    order: 35;
-    margin: 0 !important;
+  /* The native trigger anchor is above the full-height card;
+    expanded menus use its viewport. */
+  html [data-composer-card][data-mobile-compose-expanded="true"] [data-trigger-menu] {
+    position: fixed !important;
+    top: auto !important;
+    bottom: calc(100dvh - var(--mobile-compose-vv-top, 0px) - var(--mobile-compose-vv-height, 100dvh) + 60px) !important;
+    left: calc(var(--mobile-compose-vv-left, 0px) + 16px) !important;
+    width: calc(var(--mobile-compose-vv-width, 100vw) - 32px) !important;
+    max-width: calc(var(--mobile-compose-vv-width, 100vw) - 32px) !important;
+    max-height: min(400px, calc(var(--mobile-compose-vv-height, 100dvh) - 132px)) !important;
+    z-index: 905;
   }
-  /* An empty activity slot otherwise contributes two gaps after wrappers flatten. */
-  html [data-mobile-nav="frame"] [data-phase] [data-composer-card][data-mobile-workbench-composer="true"] > [data-mobile-compose-bar] > [class*="_trailing"] > [class*="_activity"]:not([class*="_activityExpanded"]):has(> [data-slot="conversation.input.activity"]:only-child:empty) {
-    display: none !important;
+  /* A 12px cross keeps a 32px target within the image cell and its 8px gap. */
+  html [data-mobile-nav="frame"] [data-phase] [data-composer-card][data-mobile-workbench-composer="true"] div:has(> button > img):has(> button[class*="_remove"]) {
+    overflow: visible;
   }
-  html [data-mobile-nav="frame"] [data-phase] [data-composer-card][data-mobile-workbench-composer="true"] > [data-mobile-compose-bar] > [data-mobile-compose-toggle] {
-    order: 40;
-    appearance: none;
-    border-radius: 10px !important;
-    margin-left: auto !important;
-    background: color-mix(in srgb, currentColor 4%, transparent);
-    border: 1px solid color-mix(in srgb, currentColor 8%, transparent);
-    color: inherit;
-    touch-action: manipulation;
-    cursor: pointer;
+  html [data-mobile-nav="frame"] [data-phase] [data-composer-card][data-mobile-workbench-composer="true"] div:has(> button > img) > button[class*="_remove"] {
+    width: 32px;
+    height: 32px;
+    top: -4px;
+    right: -4px;
+    border: 0;
+    background: transparent;
   }
-  html [data-mobile-nav="frame"] [data-phase] [data-composer-card][data-mobile-workbench-composer="true"] > [data-mobile-compose-bar] > [data-mobile-compose-toggle] svg {
-    width: 18px;
-    height: 18px;
-    fill: none;
-    stroke: currentColor;
-    stroke-width: 1.6;
-    stroke-linecap: round;
-    stroke-linejoin: round;
-    opacity: .65;
+  html [data-mobile-nav="frame"] [data-phase] [data-composer-card][data-mobile-workbench-composer="true"] div:has(> button > img) > button[class*="_remove"]::before {
+    content: '';
+    position: absolute;
+    inset: 7px;
+    border-radius: 50%;
+    background: var(--dsw-alias-bg-mask-1, rgb(0 0 0 / 50%));
+    pointer-events: none;
   }
-  html [data-mobile-nav="frame"] [data-phase] [data-composer-card][data-mobile-workbench-composer="true"] > [data-mobile-compose-bar] > [class*="_trailing"] > button[class*="_primary"] {
-    order: 50;
-    border-radius: 10px !important;
-    /* rc.2's desktop primary has translateY(-2px); the shared bar needs no offset. */
-    transform: none !important;
-  }
-  html [data-mobile-nav="frame"] [data-phase] [data-composer-card][data-mobile-workbench-composer="true"] > [data-mobile-compose-bar] > [data-mobile-compose-toggle]:active {
-    background: rgb(128 128 128 / 12%);
-  }
-  html [data-mobile-nav="frame"] [data-phase] [data-composer-card][data-mobile-workbench-composer="true"] [data-mobile-compose-toggle]:focus-visible,
-  html [data-mobile-nav="frame"] [data-phase] [data-composer-card][data-mobile-workbench-composer="true"] > [data-mobile-compose-header] button:focus-visible {
-    outline: 2px solid currentColor;
-    outline-offset: -2px;
-  }
-  /* Keep the live host percentage and context details in the native footer. */
-  html [data-mobile-nav="frame"] [data-phase] [data-mobile-nav="stats-ring"] {
-    position: static !important;
-    width: auto !important;
-    height: 28px;
-  }
-  html [data-mobile-nav="frame"] [data-phase] [data-mobile-nav="stats-ring"] > button {
-    width: auto !important;
-    height: 28px;
-    gap: 4px !important;
-    font-size: 11px !important;
-    line-height: 16px;
-  }
-  html [data-mobile-nav="frame"] [data-phase] [data-mobile-nav="stats-ring"] > button > svg {
-    width: 14px !important;
-    height: 14px !important;
-  }
-  html [data-mobile-nav="frame"] [data-phase] [data-mobile-nav="stats-ring"] > button > span {
-    display: inline !important;
-    font-size: 11px !important;
-    line-height: 16px;
+  html [data-mobile-nav="frame"] [data-phase] [data-composer-card][data-mobile-workbench-composer="true"] div:has(> button > img) > button[class*="_remove"] svg {
+    position: relative;
+    width: 12px;
+    height: 12px;
+    pointer-events: none;
   }
   html [data-mobile-nav="frame"] [data-phase] [data-composer-card][data-mobile-workbench-composer="true"] > [data-mobile-compose-header] {
     display: none;
   }
-  /* Chat navigation is unrelated to the full-screen draft editor. */
   html[data-mobile-compose-expanded="true"] [data-mobile-nav="frame"] [class*="_toBottomSlot"] {
     visibility: hidden !important;
     pointer-events: none !important;
   }
-  /* Reposition the same card; never move the Lexical node or mirror its draft. */
   html [data-mobile-nav="frame"] [data-phase] [data-composer-card][data-mobile-workbench-composer="true"][data-mobile-compose-expanded="true"] {
     position: fixed !important;
     z-index: 900 !important;
     top: var(--mobile-compose-vv-top, 0px) !important;
     left: var(--mobile-compose-vv-left, 0px) !important;
     width: var(--mobile-compose-vv-width, 100vw) !important;
+    max-width: var(--mobile-compose-vv-width, 100vw) !important;
     height: var(--mobile-compose-vv-height, 100dvh) !important;
     max-height: var(--mobile-compose-vv-height, 100dvh) !important;
     margin: 0 !important;
@@ -376,7 +354,7 @@ export const WORKBENCH_COMPOSER_CSS = `@media (max-width: 1023px) and (pointer: 
     min-height: 44px;
     padding: 0 8px;
     font-size: 16px;
-    border-bottom: 1px solid rgb(128 128 128 / 16%);
+    border-bottom: 1px solid var(--dsw-alias-border-l2);
   }
   html [data-mobile-nav="frame"] [data-phase] [data-composer-card][data-mobile-workbench-composer="true"] > [data-mobile-compose-header] button {
     min-width: 60px;
@@ -406,8 +384,7 @@ export const WORKBENCH_COMPOSER_CSS = `@media (max-width: 1023px) and (pointer: 
   }
 }
 @media (min-width: 1024px), (pointer: fine), (pointer: none) {
-  [data-mobile-compose-toggle],
-  [data-mobile-compose-header] {
+  [data-mobile-compose-toggle], [data-mobile-compose-header] {
     display: none !important;
   }
 }

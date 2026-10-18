@@ -6,7 +6,7 @@ export const MISC_CSS = `@media (max-width: 1023px) and (pointer: coarse) {
   html[data-mobile-nav-ios] [data-input-mirror],
   html[data-mobile-nav-ios] [data-input-backdrop],
   html[data-mobile-nav-ios] input:not([type="button"]):not([type="checkbox"]):not([type="color"]):not([type="file"]):not([type="hidden"]):not([type="image"]):not([type="radio"]):not([type="range"]):not([type="reset"]):not([type="submit"]) {
-    font-size: 16px !important;
+    font-size: max(16px, var(--dsw-font-markdown-base-font-size, var(--dsh-content-font-size, 16px))) !important;
   }
 }
 @media (min-width: 1024px), (pointer: fine), (pointer: none) {

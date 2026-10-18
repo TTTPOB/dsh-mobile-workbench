@@ -3,6 +3,7 @@ import { ComposerFileButton } from './components/ComposerFileButton.tsx'
 import { MOBILE_CSS } from './styles/index.ts'
 import { installWorkbench } from './workbench/index.ts'
 import { installWorkbenchComposer } from './workbench/composer.ts'
+import { ModelLabel } from './workbench/ModelLabel.tsx'
 
 import { installPhoneChrome } from './effects/phone-chrome.ts'
 import { installWorkbenchDecoration } from './effects/workbench-decoration.ts'
@@ -28,7 +29,7 @@ declare module '@deepseek-ai/dsh-client-ui-slots' {
 }
 
 /** Required services (cordis fiber inject — the loader passes all module exports as an object plugin). */
-export const inject = ['slots', 'layout', 'locale', 'sessions', 'workspaces']
+export const inject = ['slots', 'layout', 'locale', 'sessions', 'workspaces', 'inputTriggers']
 
 /**
  * Mobile workbench browser entry: native conversation enhancements and one
@@ -83,6 +84,10 @@ export function apply(ctx: ClientContext): void {
   installWorkbenchComposer(ctx)
 
   installDebugBadge(ctx)
+
+  ctx.slots.inject('conversation.input.model.label', () => ctx.slots.register({
+    name: 'conversation.input.model.label',
+  }, ModelLabel))
 
   ctx.slots.inject('conversation.input.left', () => ctx.slots.register({
     name: 'conversation.input.left',

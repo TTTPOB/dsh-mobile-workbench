@@ -49,7 +49,7 @@ test('detectIosWebKit: a missing or throwing CSS.supports never throws', () => {
 test('the 16px floor is scoped to the iOS marker and to text-entry fields', () => {
   // Anchored on the declaration line, not on the marker name: the block
   // comment above the rule mentions the marker too.
-  const rule = /\n  (html\[data-mobile-nav-ios\] textarea,[^{]*)\{\s*font-size: 16px !important;\s*\}/.exec(
+  const rule = /\n  (html\[data-mobile-nav-ios\] textarea,[^{]*)\{\s*font-size: max\(16px, var\(--dsw-font-markdown-base-font-size, var\(--dsh-content-font-size, 16px\)\)\) !important;\s*\}/.exec(
     MISC_CSS,
   )?.[1]
   assert.ok(rule, 'the iOS font-size floor rule must exist')
