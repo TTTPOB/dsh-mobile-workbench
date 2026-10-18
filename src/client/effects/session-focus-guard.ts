@@ -80,6 +80,7 @@ export function installSessionFocusGuard(ctx: ClientContext): void {
       window.clearTimeout(windowTimer)
       windowTimer = 0
       windowOpen = false
+      observer.disconnect()
       const el = document.querySelector<HTMLElement>(`[${SHADOW_MARKER}]`)
       if (el === null) return
       el.removeAttribute(SHADOW_MARKER)
@@ -102,6 +103,7 @@ export function installSessionFocusGuard(ctx: ClientContext): void {
     const arm = (): void => {
       restore()
       windowOpen = true
+      observer.observe(document.documentElement, { childList: true, subtree: true })
       const el = document.querySelector<HTMLElement>(COMPOSER_INPUT_SELECTOR)
       if (el !== null) shadow(el)
       windowTimer = window.setTimeout(restore, FOCUS_GUARD_WINDOW_MS)
@@ -145,7 +147,6 @@ export function installSessionFocusGuard(ctx: ClientContext): void {
       arm()
     })
 
-    observer.observe(document.documentElement, { childList: true, subtree: true })
     document.addEventListener('pointerdown', onPointerDown, true)
     document.addEventListener('focusin', onFocusIn, true)
     return () => {

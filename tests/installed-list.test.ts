@@ -9,4 +9,8 @@ test('installed-list styling excludes nested action rows in CSS and inline overr
   const outerRow = /\[class\*="irow"\]:not\(\[class\*="irowActions"\]\):not\(\[class\*="irowTrailing"\]\)/
   assert.match(COMPAT_CSS, outerRow)
   assert.match(source, outerRow)
+  assert.match(source, /const MARKET = '\[data-dsh-market-root\]'/)
+  assert.doesNotMatch(source, /role=\"dialog\"|document\.querySelectorAll<HTMLElement>\(ROW\)/)
+  assert.match(source, /node\.matches\(MARKET\) \|\| node\.querySelector\(MARKET\)/)
+  assert.match(source, /original\.priority/)
 })

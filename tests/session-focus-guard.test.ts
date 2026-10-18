@@ -13,6 +13,8 @@ import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
+import { stripTypeScriptTypes } from 'node:module'
+import { runInNewContext } from 'node:vm'
 
 const SOURCE = readFileSync(
   fileURLToPath(new URL('../src/client/effects/session-focus-guard.ts', import.meta.url)),
@@ -77,6 +79,48 @@ test('the window keeps a focusin fallback that blurs synchronously', () => {
 test('disposal unsubscribes, disconnects and restores', () => {
   assert.match(SOURCE, /unsubscribe\(\)\s*\n\s*observer\.disconnect\(\)/)
   assert.match(SOURCE, /document\.removeEventListener\('pointerdown', onPointerDown, true\)\s*\n\s*document\.removeEventListener\('focusin', onFocusIn, true\)\s*\n\s*restore\(\)/)
+})
+
+test('observer connects only during a session-change guard window and stops on tap, timeout and dispose', () => {
+  const executable = stripTypeScriptTypes(SOURCE.replace(/^import .*\n/gm, '').replaceAll('export function', 'function'))
+  let current = 'A'
+  let changed = () => {}
+  let dispose = () => {}
+  let timer = () => {}
+  let observed = false
+  const listeners = new Map<string, (event: object) => void>()
+  class Element {
+    attributes = new Set<string>()
+    focus?: () => void
+    closest() { return this }
+    hasAttribute(key: string) { return this.attributes.has(key) }
+    setAttribute(key: string) { this.attributes.add(key) }
+    removeAttribute(key: string) { this.attributes.delete(key) }
+  }
+  const editor = new Element()
+  runInNewContext(executable + '; installSessionFocusGuard(ctx)', {
+    ctx: { sessions: { list: { getSnapshot: () => current, subscribe: (listener: () => void) => { changed = listener; return () => { changed = () => {} } } } } },
+    currentSessionIdOf: (snapshot: string) => snapshot,
+    SHADOW_MARKER: 'data-mobile-nav-focus-shadow',
+    Element, HTMLElement: Element,
+    document: { documentElement: {}, querySelector: () => editor, addEventListener: (key: string, listener: (event: object) => void) => listeners.set(key, listener), removeEventListener: (key: string) => listeners.delete(key) },
+    window: { clearTimeout() {}, setTimeout: (fn: () => void) => { timer = fn; return 1 } },
+    MutationObserver: class { observe() { observed = true } disconnect() { observed = false } },
+    installMobileEffect: (_ctx: object, _label: string, install: () => () => void) => { dispose = install() },
+  })
+  assert.equal(observed, false)
+  changed()
+  assert.equal(observed, false, 'list churn does not connect an observer')
+  current = 'B'; changed()
+  assert.equal(observed, true)
+  listeners.get('pointerdown')!({ target: editor })
+  assert.equal(observed, false)
+  assert.equal(Object.hasOwn(editor, 'focus'), false)
+  current = 'C'; changed(); timer()
+  assert.equal(observed, false, 'timeout disconnects')
+  current = 'D'; changed(); dispose()
+  assert.equal(observed, false)
+  assert.equal(listeners.size, 0)
 })
 
 test('the effect is wired into the client entry', () => {

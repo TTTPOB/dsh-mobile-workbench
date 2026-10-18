@@ -14,8 +14,8 @@ export const BASE_CSS = `@media (max-width: 1023px) and (pointer: coarse) {
     height: auto;
     max-height: min(800px, calc(var(--dsh-web-mobile-vh, 100dvh) - 24px - env(safe-area-inset-top, 0px)));
     flex-direction: column !important;
-    border-radius: 14px !important;
-    animation: dsh-web-mobile-sheet-in .22s var(--ds-ease-out, ease-in-out);
+    border-radius: var(--dsw-radius-panel) !important;
+    animation: dsh-web-mobile-modal-enter var(--ds-transition-duration, .2s) var(--ds-ease-in-out, ease-in-out);
   }
   ${SETTINGS} > :first-child {
     width: 100%;
@@ -78,7 +78,7 @@ export const BASE_CSS = `@media (max-width: 1023px) and (pointer: coarse) {
     width: calc(100vw - 16px) !important;
     max-height: min(760px, calc(var(--dsh-web-mobile-vh, 100dvh) - 24px - env(safe-area-inset-top, 0px))) !important;
     transform: none !important;
-    border-radius: 14px !important;
+    border-radius: var(--dsw-radius-panel) !important;
     animation: none !important;
   }
   :has(> [aria-modal="true"][data-shortcut-modal="shortcuts"]) > [class*="_mask"]::after {
@@ -88,9 +88,9 @@ export const BASE_CSS = `@media (max-width: 1023px) and (pointer: coarse) {
   @media (max-width: 767px) {
     [aria-modal="true"][data-shortcut-modal="shortcuts"] [class*="_searchRow"] { display: none !important; }
   }
-  @keyframes dsh-web-mobile-sheet-in {
-    from { transform: translateY(14px) scale(.98); }
-    to { transform: none; }
+  @keyframes dsh-web-mobile-modal-enter {
+    from { opacity: 0; }
+    to { opacity: 1; }
   }
   @media (prefers-reduced-motion: reduce) {
     ${SETTINGS} { animation: none !important; }

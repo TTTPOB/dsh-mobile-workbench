@@ -15,7 +15,13 @@ test('model seat resolves its own portal by aria-controls', () => {
     contains(node: Element) { return node === this }
     getAttribute(name: string) { return name === 'aria-controls' ? 'native-menu' : null }
     getBoundingClientRect() { return { left: 12, width: 246, height: 74 } }
-    style = { left: '12px' }
+    style = {
+      left: '12px',
+      getPropertyValue() { return this.left },
+      getPropertyPriority() { return '' },
+      setProperty(_key: string, value: string) { this.left = value },
+      removeProperty() { this.left = '' },
+    }
   }
   const trigger = new Element(true), menu = new Element(), unrelated = new Element()
   const card = { getBoundingClientRect: () => ({ left: 16, width: 326, height: 100 }) }
@@ -57,6 +63,7 @@ test('model seat resolves its own portal by aria-controls', () => {
   viewListeners.get('resize')!(); flush()
   assert.equal(scans, 2, 'viewport following does not rescan model seats')
   dispose()
+  assert.equal(menu.style.left, '12px', 'disposal restores the native inline anchor')
   assert.equal(listeners.size, 0)
   assert.equal(viewListeners.size, 0)
   assert.equal(frames.size, 0)

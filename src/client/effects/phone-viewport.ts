@@ -24,13 +24,10 @@ export const STABLE_VIEWPORT_VAR = '--dsh-web-mobile-vh'
 const findViewportMeta = (): HTMLMetaElement | null =>
   document.querySelector<HTMLMetaElement>('meta[name="viewport"]')
 
-/** Own viewport-fit, status-bar theme and keyboard-less modal height while mobile. */
+/** Own viewport-fit and keyboard-less modal height; the Host owns theme-color. */
 export function installPhoneChrome(ctx: ClientContext): void {
-  installMobileEffect(ctx, 'dsh-web-mobile: status bar theme + viewport + zoom guard', () => {
+  installMobileEffect(ctx, 'dsh-web-mobile: viewport + zoom guard', () => {
     const root = document.documentElement
-    const themeMeta = document.createElement('meta')
-    themeMeta.name = 'theme-color'
-    const bodyBg = (): string => getComputedStyle(document.body).backgroundColor
     let originalViewport: string | null = null
     let observedMeta: HTMLMetaElement | null = null
     const assertViewport = (): void => {
@@ -52,13 +49,9 @@ export function installPhoneChrome(ctx: ClientContext): void {
     headObserver.observe(document.head, { childList: true })
     attachMetaObserver()
     assertViewport()
-    const themeObserver = new MutationObserver(() => { themeMeta.content = bodyBg() })
-    themeObserver.observe(document.body, { attributes: true, attributeFilter: ['data-ds-dark-theme'] })
     const cssSupports = typeof CSS !== 'undefined' && typeof CSS.supports === 'function'
       ? (condition: string): boolean => CSS.supports(condition) : null
     if (detectIosWebKit(navigator, cssSupports)) root.setAttribute(IOS_MARKER, '')
-    themeMeta.content = bodyBg()
-    document.head.appendChild(themeMeta)
 
     // Android adjustResize changes all viewport units with the keyboard.
     // Keep modal height stable until growth or a real width/rotation change.
@@ -80,12 +73,10 @@ export function installPhoneChrome(ctx: ClientContext): void {
       root.style.removeProperty(STABLE_VIEWPORT_VAR)
       metaObserver.disconnect()
       headObserver.disconnect()
-      themeObserver.disconnect()
       const viewport = findViewportMeta()
       if (viewport !== null && originalViewport !== null && viewport.content === VIEWPORT_CONTENT) {
         viewport.content = originalViewport
       }
-      themeMeta.remove()
       root.removeAttribute(IOS_MARKER)
     }
   })

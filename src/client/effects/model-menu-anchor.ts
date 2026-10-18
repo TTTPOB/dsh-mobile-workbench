@@ -19,6 +19,14 @@ export function installModelMenuAnchor(ctx: ClientContext): void {
     const timers: number[] = []
     // Cache only the open portal for viewport updates.
     let active: HTMLElement | null = null
+    const originalLeft = new Map<HTMLElement, { value: string; priority: string }>()
+    const restoreLeft = (menu: HTMLElement): void => {
+      const original = originalLeft.get(menu)
+      if (!original) return
+      if (original.value) menu.style.setProperty('left', original.value, original.priority)
+      else menu.style.removeProperty('left')
+      originalLeft.delete(menu)
+    }
 
     const laidOut = (el: Element | null): DOMRect | null => {
       if (el === null) return null
@@ -54,12 +62,17 @@ export function installModelMenuAnchor(ctx: ClientContext): void {
       const left = Math.min(Math.max(center - width / 2, GUTTER), max)
       const next = `${Math.round(left)}px`
       // Do not rewrite an unchanged position.
-      if (menu.style.left !== next) menu.style.left = next
+      if (menu.style.left !== next) {
+        if (!originalLeft.has(menu)) originalLeft.set(menu, { value: menu.style.getPropertyValue('left'), priority: menu.style.getPropertyPriority('left') })
+        menu.style.left = next
+      }
     }
 
     // Refresh the cached portal after native activation.
     const refresh = (): void => {
-      active = findMenu()
+      const next = findMenu()
+      if (active !== null && active !== next) restoreLeft(active)
+      active = next
       if (active !== null) place(active)
     }
 
@@ -67,6 +80,7 @@ export function installModelMenuAnchor(ctx: ClientContext): void {
     const follow = (): void => {
       if (active === null) return
       if (laidOut(active) === null) {
+        restoreLeft(active)
         active = null
         return
       }
@@ -134,6 +148,7 @@ export function installModelMenuAnchor(ctx: ClientContext): void {
       if (raf !== 0) window.cancelAnimationFrame(raf)
       for (const timer of timers) window.clearTimeout(timer)
       timers.length = 0
+      for (const menu of originalLeft.keys()) restoreLeft(menu)
       active = null
     }
   })
