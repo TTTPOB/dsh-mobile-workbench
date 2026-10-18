@@ -26,7 +26,23 @@ await page.goto(url) // Authenticated demo URL from .demo-home/url.txt
 
 需要 CDP 时先启动支持远程调试的 Chromium，再用 `chromium.connectOverCDP(endpoint)` 获取 `browser`；应用端口 54076 不是 CDP 端口。已有 `scripts/cdp-probe.mjs` 可用 `DSH_PROBE_URL=http://127.0.0.1:54076/`、`DSH_PROBE_TOKEN`（URL 的 token 参数）、`DSH_PROBE_SESSION_ID`（新建会话 ID）和 `DSH_PROBE_CHROME` 运行；它是额外回归探针，不能替代真实 UI 审查。
 
-结束后 Ctrl-C；后台运行则停止对应 job，或向 `.demo-home/demo.pid` 中的 PID 发 SIGTERM，脚本会转发给隔离 Host。不得停止 53083 日用进程。
+结束后 Ctrl-C；后台运行则停止对应 job，或向 `.demo-home/demo.pid` 中的 PID 发 SIGTERM。脚本会同时停止隔离 Host 和可选的 cloudflared，任一子进程退出也会停止另一进程。不得停止 53083 日用进程。
+
+## 最后一步：人类真机验收
+
+agent 完成本机自动化验收后，由 lead 会话启动并持有后台 job：
+
+```sh
+node scripts/demo.mjs --port 54076 --tunnel
+```
+
+需要 `/usr/local/bin/cloudflared`。脚本先创建 quick tunnel（HTTP/2，继承现有 HTTP(S)_PROXY），拿到随机 `https://*.trycloudflare.com` 后将 hostname 传入 DSH `--trusted-host`。自有反代也可重复传 `--trusted-host phone.example --trusted-host other.example`；只添加明确使用的主机，不关闭 Host／Origin 门禁。
+
+把输出的 **Public demo URL** 发给用户，或读取权限为 0600 的 `.demo-home/public-url.txt`；它保留本机认证 URL 的 path/query，包括 token。URL 是临时凭据，不要外传。用户必测：iOS 键盘弹出／收起、中文 IME 组字中的回车／Escape、刘海安全区、Android 系统返回。浏览器仿真不能替代这些实机检查。
+
+当前 Host 的 `/api/` 拒绝未信任 Host（403）。HTTPS 隧道在 cloudflared 处终止 TLS，本机 HTTP Host 颁发 HttpOnly／SameSite=Strict cookie；Secure 仅由 Host 自身 TLS 决定，不由转发头决定。首次打开公网 token URL 后会 303 到同域干净 URL，用 cookie 继续认证，不需要关闭认证或放宽 SameSite。
+
+验收结束立即 Ctrl-C／停止对应 job，并确认端口释放和 cloudflared 无残留。后台 job 会随发起者回合结束回收，lead 须在用户测完前保持该回合；不能把运行中 job 当作跨回合交付。隧道连不上时检查日志中的代理／连接错误，报告给用户在 Windows 代理侧处理，不改系统网络配置。
 
 ## 演示场景
 
