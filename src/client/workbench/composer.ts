@@ -182,6 +182,8 @@ export function installWorkbenchComposer(ctx: ClientContext): void {
       if (!card || expanded) return
       const scroll = card.querySelector<HTMLElement>(SCROLL)
       if (!scroll) return
+      // Anchor the corner to writing, not the attachment rail above it.
+      if (button) setStyle(button, 'top', `${Math.max(0, scroll.offsetTop - 8)}px`)
       const seat = card.closest<HTMLElement>('[data-composer-seat]')
       const conversation = card.closest<HTMLElement>('[data-conversation-content]')
       const top = Math.max(0, (conversation?.getBoundingClientRect().top ?? 80) - (viewport?.offsetTop ?? 0))

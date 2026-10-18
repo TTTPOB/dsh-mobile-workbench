@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test'
-import { mkdirSync, writeFileSync } from 'node:fs'
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { demoUrl, fixtureSession } from './demo.ts'
@@ -178,4 +178,26 @@ test('safe-area remains navigation-owned and shrink keeps send above keyboard', 
   await expect(page.locator('[data-mobile-workbench="navigation"]')).toBeHidden()
   const send = (await page.locator(sendSelector).boundingBox())!
   expect(send.y + send.height).toBeLessThanOrEqual(520)
+})
+
+test('corner stays below the attachment rail and cannot block removal', async ({ page, isMobile }) => {
+  test.skip(!isMobile, 'Mobile corner placement')
+  await fixtureSession(page)
+  const png = readFileSync(new URL('../../assets/workbench-192.png', import.meta.url))
+  await page.locator('input[type=file]').setInputFiles(Array.from({ length: 6 }, (_, i) => ({ name: 'corner-' + i + '.png', mimeType: 'image/png', buffer: png })))
+  const removes = page.locator('[data-composer-card] button[class*="_remove"]')
+  await expect(removes).toHaveCount(6)
+  await expect.poll(async () => page.evaluate(() => {
+    const corner = document.querySelector('[data-mobile-compose-toggle]')!.getBoundingClientRect()
+    return [...document.querySelectorAll('[data-composer-card] button[class*="_remove"]')].some(button => {
+      const box = button.getBoundingClientRect()
+      return Math.min(corner.right, box.right) > Math.max(corner.left, box.left) && Math.min(corner.bottom, box.bottom) > Math.max(corner.top, box.top)
+    })
+  }), { message: 'The expand corner must not cover an attachment remove button' }).toBe(false)
+  mkdirSync(pictures, { recursive: true })
+  await page.screenshot({ path: resolve(pictures, 'B2-six-attachments-' + page.viewportSize()!.width + '.png') })
+  for (let remaining = 6; remaining > 0; remaining--) {
+    await removes.first().tap()
+    await expect(removes).toHaveCount(remaining - 1)
+  }
 })
