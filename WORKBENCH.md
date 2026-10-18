@@ -9,12 +9,22 @@ DSH Mobile Workbench 3.2.0 面向 DSH 0.2.1-rc.1。包名为 `dsh-web-mobile`，
 | 页面 | 内容与操作 |
 | --- | --- |
 | 会话列表 | 创建、选择和管理会话；底部提供插件与设置入口。 |
-| 会话 | 官方对话与轨迹；顶栏提供会话信息、下游智能体目录、view 切换和直接父会话返回。 |
+| 会话 | 官方对话与轨迹；两行顶栏提供标题／会话信息、统计、更多操作、view 切换、模式、下游目录和直接父返回。 |
 | 工作区 | 官方文件树、预览与终端；底部会话按钮返回会话页。 |
 
 下游计数包含当前会话的全部子孙，排除自身、父会话和兄弟会话。目录尚未加载或加载失败时显示对应状态；已知叶子显示 `0/0`。
 
-日常编辑器限高并内部滚动。“展开编辑”扩大同一个编辑器，保留草稿、选区和附件。模型、权限、发送／停止、提问与审批使用 DSH 的原生处理逻辑。轨迹和详情分别滚动，选择事件时保持选中行可见。
+日常编辑器限高并内部滚动，底部共用 48px 控制行；触控命中区保持 44px，权限标签按官方语言显示，模型触发标签通过公开 slot 显示短名。底部统计 dock 连同布局占位隐藏，统计改从顶栏按钮打开。“展开编辑”扩大同一个编辑器，保留草稿、选区和附件；展开区提供 dialog 语义与焦点范围，Escape 先关闭模型／命令菜单，再收起编辑。模型、权限、发送／停止、提问与审批使用 DSH 的原生处理逻辑。轨迹和详情分别滚动，选择事件时保持选中行可见。
+
+### 两行顶栏与统计
+
+第一行依次为直接父返回（仅子会话）、最多两行的会话标题／信息入口、可选任务入口、统计圆环与更多操作；第二行包含对话／轨迹 tab、弱化模式文字和下游图标／计数。根、子、孙会话使用同一结构，标题优先按词换行，长无空格串允许断开，超过两行省略。每个主要动作保留至少 44px 触区。
+
+统计入口显示 contextPressure 的百分比；未加载显示「—」，真实 0 才显示 0%。面板使用上游 MenuSurface，分上下文（已用 token、窗口与可选估算构成）、会话活动（轮／步）和 Token 用量三组，通过公开 useProjection 订阅。它与会话信息 Modal、子智能体目录互斥；外点、Escape 或再次点击关闭后回到触发按钮。底部旧统计文本反解析与 stats-line effect 已移除。
+
+### 系统返回
+
+从会话进入会话列表或工作区最多增加一层 page-history；二者互切只更新这一层。Back 先回会话，下一次才离站；点击底部「会话」也会消费这一层。全局 Automation tasks／Plugins fallback panel 的 panel-back 独立增加一层，通过公开 layout.panelInfo 订阅，使用 selectPanel(null) 退出。panel 返回先恢复其下方的会话列表／工作区，再由下一次 Back 返回会话，避免两层同时退出。设置、会话信息及插件管理器 Modal 不占用全局 panel 返回层。
 
 插件入口优先调用宿主公开的 `pluginNavigation.openModal`；宿主未提供该方法时使用原生插件页面。会话更多菜单提供复制当前会话 ID 和官方日志导出。
 
@@ -103,7 +113,7 @@ node scripts/demo.mjs --port 54076
 - **浏览器适配**：`src/client/effects/` 处理视口、安全区、焦点、会话列表触控和原生菜单定位。
 - **布局**：`src/client/styles/` 定义手机页面、输入区、工作区及弹层样式。
 
-官方服务拥有会话、草稿、附件和业务动作。插件拥有移动控件、编辑展开状态及可见区几何。宿主 React 节点保持在原父节点下；卸载时清理插件创建的节点、标记、监听器和观察者。
+官方服务拥有会话、草稿、附件和业务动作。插件拥有移动控件、编辑展开状态及可见区几何。标题／父关系读取公开 sessions.list，会话导航使用 uiWorkspace.openSession；统计读取投影。插件新增的信息弹窗与统计浮层仅使用上游 Modal／MenuSurface 及锚定工具，避免另建原生 dialog、遮罩或菜单状态；展开编辑因必须保留原生编辑器节点而在原 card 上设置焦点范围。宿主 React 节点保持在原父节点下；卸载时清理插件创建的节点、标记、监听器和观察者。
 
 下游目录仅补载当前会话可达且缺失的投影基线，通过公开的 `sessions.refreshProjections` 复用宿主缓存，最多两路并发，不打开历史会话。该接口返回注册投影，包含逐轮有界预览，长记录仍有首读成本；切换会话后按当前快照重新确定补载范围，失败与重连恢复由宿主投影状态驱动。
 
@@ -115,7 +125,7 @@ node scripts/demo.mjs --port 54076
 
 ## rc.1 宿主适配
 
-客户端使用 Cordis `Context` 和各服务包的公开声明，不依赖已删除的 `dsh-client-runtime`。统计栏按 `data-composer-stat="activity"` / `"usage"` 定位独立 pill；普通读数与按钮均可压缩显示，原始文字和无障碍名称保持不变。context meter 从独立 `data-composer-dock` 查找，统计为空仍可显示。模型菜单通过 `conversation.input.model` 触发器的 `aria-controls` 绑定 portal，不固定 CSS-module hash。
+客户端使用 Cordis `Context` 和各服务包的公开声明，不依赖已删除的 `dsh-client-runtime`。顶部统计直接读取 sessionStats、tokenUsage、contextPressure 与可选 contextBreakdown；不从底部 pill 文案反解析数据，也不按「数字%」查找 context meter。模型短名使用 conversation.input.model.label slot；加号菜单通过 inputTriggers.sessionOf 当前保留会话 scope 的 menu／dismiss 控制。模型菜单仍通过 conversation.input.model 触发器的 aria-controls 绑定 portal，不固定 CSS-module hash。未公开的呈现 API 及局部 DOM workaround 记录在[上游移动 API 缺口](<docs/upstream/mobile-api-gaps.md>)。
 
 第三方 dshmarket 的 `data-dsh-market-root`、`irow` 和 `cardShots` 样式是可选兼容层，不是 rc.1 官方插件管理器的 DOM。官方管理器由 F3 fork 的原生 modal 处理；不能用这些第三方选择器的存在来确认官方管理器验收通过。
 
