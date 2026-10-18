@@ -7,6 +7,7 @@ export interface WorkbenchSnapshot extends NavigationEvidence {
 }
 export interface WorkbenchInjected {
     tStats: StatsTranslate;
+    resolvePreset: (id: string | undefined) => Promise<string>;
     hooks: {
         workbench: {
             getSnapshot: () => WorkbenchSnapshot;
@@ -24,6 +25,6 @@ type AgentProps = PropsRuntime<'conversation.session.header.actions'> & InjectFa
 /** Render page navigation without owning the native page trees. */
 export declare function WorkbenchNav({ useWorkbench, activate, t }: Props): ReactElement | null;
 /** Header content uses public session summaries and session-bound projections. */
-export declare function WorkbenchAgents({ useWorkbench, useSessions, useProjection, sessionId, activate, selectView, returnParent, closeAgents, focusAgents, t, tStats }: AgentProps): ReactElement | null;
+export declare function WorkbenchAgents({ useWorkbench, useSessions, useProjection, sessionId, activate, selectView, returnParent, closeAgents, focusAgents, resolvePreset, t, tStats }: AgentProps): ReactElement | null;
 export {};
 //# sourceMappingURL=WorkbenchNav.d.ts.map

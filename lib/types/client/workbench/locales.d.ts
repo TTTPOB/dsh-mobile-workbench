@@ -4,6 +4,7 @@ export declare const zh: {
     backToSessions: string;
     backToPrevious: string;
     presetReadOnly: string;
+    modeUnavailable: string;
     viewSessionInfo: string;
     statistics: string;
     context: string;

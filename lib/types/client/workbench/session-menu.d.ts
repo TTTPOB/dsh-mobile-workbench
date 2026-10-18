@@ -5,5 +5,5 @@ export declare function copyCurrentSessionId(snapshot: unknown, clipboard: Pick<
 /** Read immutable preset metadata from the selected public summary. */
 export declare function currentSessionPreset(snapshot: SessionListState): string;
 /** Extend only the official, in-place Session Header menu; keep its native rows intact. */
-export declare function installWorkbenchSessionMenu(ctx: ClientContext): void;
+export declare function installWorkbenchSessionMenu(ctx: ClientContext, resolvePreset: (id: string | undefined) => Promise<string>): void;
 //# sourceMappingURL=session-menu.d.ts.map
