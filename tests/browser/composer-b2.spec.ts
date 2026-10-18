@@ -4,7 +4,7 @@ import { resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { demoUrl, fixtureSession } from './demo.ts'
 
-const pictures = fileURLToPath(new URL('../../.demo-home/review/b2/final/', import.meta.url))
+const pictures = fileURLToPath(new URL('../../.demo-home/review/b3/final/', import.meta.url))
 const editorSelector = '[data-composer-input]'
 const modelSelector = '[data-slot="conversation.input.model"] button[aria-haspopup="menu"]'
 const permissionSelector = '[data-slot="conversation.input.permission"] button'
@@ -31,6 +31,9 @@ function geometry({ modelSelector, permissionSelector, sendSelector, editorSelec
     edges: buttons.every((button, i) => [boxes[i]!.left + 2, boxes[i]!.right - 2].every(x => button.contains(document.elementFromPoint(x, boxes[i]!.top + boxes[i]!.height / 2)))),
     overlap: boxes.some((a, i) => boxes.some((b, j) => i !== j && Math.min(a.right, b.right) - Math.max(a.left, b.left) > .5 && Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top) > .5)),
     modelWidth: model.width,
+    icons: Object.fromEntries([['plus', '[data-mobile-compose-bar] button[class*="_add"] svg'], ['permission', permissionSelector + ' [class*="_triggerIcon"] svg'], ['send', sendSelector + ' svg'], ['corner', '[data-mobile-compose-toggle] svg'], ['chevron', modelSelector + ' [class*="_chevron"]']].map(([key, selector]) => [key, get(selector!).getBoundingClientRect().width])),
+    sendFace: send.width - parseFloat(getComputedStyle(get(sendSelector)).borderLeftWidth) - parseFloat(getComputedStyle(get(sendSelector)).borderRightWidth),
+    modelFont: getComputedStyle(get(modelSelector + ' [class*="_triggerLabel"]')).fontSize,
     axes: {
       textAndPlus: get(editorSelector).getBoundingClientRect().left + parseFloat(getComputedStyle(get(editorSelector)).paddingLeft) - (plus.left + plus.width / 2),
       cornerAndSend: corner.left + corner.width / 2 - send.left - send.width / 2,
@@ -41,7 +44,7 @@ function geometry({ modelSelector, permissionSelector, sendSelector, editorSelec
   }
 }
 
-test('B2 middle, outer gaps, placeholder and targets match in en/zh 320/360/390 light/dark', async ({ page, browser, isMobile }, info) => {
+test('B3 middle, outer gaps, placeholder and targets match in en/zh 320/360/390 light/dark', async ({ page, browser, isMobile }, info) => {
   test.skip(!isMobile, 'The desktop native composer is covered by composer-mobile.spec.ts')
   test.setTimeout(90_000)
   await fixtureSession(page)
@@ -66,7 +69,7 @@ test('B2 middle, outer gaps, placeholder and targets match in en/zh 320/360/390 
         await p.waitForFunction(dark => document.body.hasAttribute('data-ds-dark-theme') === dark, theme === 'dark')
         for (const width of [320, 360, 390]) {
           await p.setViewportSize({ width, height: 844 })
-          await expect(p.locator('[data-mobile-compose-bar]')).toHaveCSS('height', '40px')
+          await expect(p.locator('[data-mobile-compose-bar]')).toHaveCSS('height', '50px')
           await expect(p.locator('[data-composer-placeholder]')).toBeVisible()
           const sample = await p.evaluate(geometry, { modelSelector, permissionSelector, sendSelector, editorSelector })
           samples.push({ locale, theme, ...sample })
@@ -75,7 +78,11 @@ test('B2 middle, outer gaps, placeholder and targets match in en/zh 320/360/390 
           expect(sample.gaps.right).toBeGreaterThanOrEqual(7.5)
           expect(sample.gaps.right).toBeLessThanOrEqual(10.5)
           expect(sample.gaps.bottom).toBeCloseTo(8, 0)
-          expect(sample.hitSizes.every(size => size.width >= 40 && size.height >= 40)).toBe(true)
+          expect(sample.hitSizes.slice(0, 4).every(size => size.width >= 50 && size.height >= 50)).toBe(true)
+          expect(sample.hitSizes[4]).toEqual({ width: 40, height: 40 })
+          expect(sample.icons).toEqual({ plus: 22.5, permission: 20, send: 20, corner: 18, chevron: 15 })
+          expect(sample.sendFace).toBeCloseTo(38, 1)
+          expect(sample.modelFont).toBe('12px')
           expect(sample.edges).toBe(true)
           expect(sample.overlap).toBe(false)
           expect(sample.placeholder.bottom).toBeLessThanOrEqual(sample.scroll.bottom + .5)
@@ -86,7 +93,7 @@ test('B2 middle, outer gaps, placeholder and targets match in en/zh 320/360/390 
           expect(Math.abs(sample.axes.navRight)).toBeLessThan(2.5)
           expect(sample.border).toBe('rgba(0, 0, 0, 0)')
           expect(await p.locator(modelSelector).evaluate(e => parseFloat(getComputedStyle(e).maxWidth))).toBeNaN()
-          await p.screenshot({ path: resolve(pictures, 'B2-' + locale + '-' + theme + '-' + width + '-' + info.project.name + '.png') })
+          await p.screenshot({ path: resolve(pictures, 'B3-' + locale + '-' + theme + '-' + width + '-' + info.project.name + '.png') })
         }
       }
     } finally { await context.close() }
@@ -195,7 +202,7 @@ test('corner stays below the attachment rail and cannot block removal', async ({
     })
   }), { message: 'The expand corner must not cover an attachment remove button' }).toBe(false)
   mkdirSync(pictures, { recursive: true })
-  await page.screenshot({ path: resolve(pictures, 'B2-six-attachments-' + page.viewportSize()!.width + '.png') })
+  await page.screenshot({ path: resolve(pictures, 'B3-six-attachments-' + page.viewportSize()!.width + '.png') })
   for (let remaining = 6; remaining > 0; remaining--) {
     await removes.first().tap()
     await expect(removes).toHaveCount(remaining - 1)

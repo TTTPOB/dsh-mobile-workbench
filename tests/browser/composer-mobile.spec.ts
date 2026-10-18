@@ -5,7 +5,7 @@ import { resolve } from 'node:path'
 import { fixtureSession } from './demo.ts'
 
 const root = fileURLToPath(new URL('../../', import.meta.url))
-const pictures = resolve(root, '.demo-home/review/b2/final')
+const pictures = resolve(root, '.demo-home/review/b3/final')
 const cardSelector = '[data-composer-card]'
 const modelSelector = '[data-slot="conversation.input.model"] button[aria-haspopup="menu"]'
 
@@ -38,7 +38,7 @@ test('compact native controls stay inside the card at 320, 360 and 390; desktop 
   await expect(page.locator('[data-slot="conversation.input.permission"] [class*="_triggerLabel"]')).toHaveText('Workspace Write')
   for (const width of [320, 360, 390]) {
     await page.setViewportSize({ width, height: 844 })
-    await expect(page.locator('[data-mobile-compose-bar]')).toHaveCSS('height', '40px')
+    await expect(page.locator('[data-mobile-compose-bar]')).toHaveCSS('height', '50px')
     const geometry = await page.locator('[data-mobile-compose-bar]').evaluate(bar => {
       const card = bar.closest('[data-composer-card]')!.getBoundingClientRect()
       const buttons = Array.from(bar.querySelectorAll('button')).filter(button => button.getBoundingClientRect().width > 0)
@@ -57,8 +57,8 @@ test('compact native controls stay inside the card at 320, 360 and 390; desktop 
     expect(geometry.inside).toBe(true)
     expect(geometry.overlap).toBe(false)
     expect(geometry.edges).toBe(true)
-    expect((await card.boundingBox())!.height).toBeCloseTo(106, 0)
-    expect((await page.locator('[data-composer-seat]').boundingBox())!.height).toBeCloseTo(114, 0)
+    expect((await card.boundingBox())!.height).toBeCloseTo(116, 0)
+    expect((await page.locator('[data-composer-seat]').boundingBox())!.height).toBeCloseTo(124, 0)
     await screenshot(page, 'after-' + info.project.name + '-' + width)
   }
 })
