@@ -103,6 +103,23 @@ export const WORKBENCH_HEADER_CSS = `@media (max-width: 1023px) and (pointer: co
   ${H} [data-workbench-mode] { flex: 1 1 0; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 11px; color: var(--dsw-alias-label-secondary); }
   ${H} [data-mobile-workbench="agents"] { gap: 4px; margin-left: auto; }
   ${H} [data-workbench-count] { background: transparent; font-size: 11px; padding: 0; margin: 0; }
+  ${H} button[data-mobile-workbench="agents"] > svg { width: 16px; height: 16px; }
+  /* Touch feedback remains visible without permanently filling every control. */
+  ${H} :is(button[data-workbench-context-control], [class*="_headerUtilities"] button[aria-haspopup="menu"])[aria-expanded="true"]:not(:disabled) {
+    background: var(--dsw-alias-interactive-bg-hover);
+    color: var(--dsw-alias-label-primary);
+  }
+  @media (hover: hover) {
+    ${H} :is(button[data-workbench-context-control], [class*="_headerUtilities"] button[aria-haspopup="menu"]):hover:not(:disabled) {
+      background: var(--dsw-alias-interactive-bg-hover);
+      color: var(--dsw-alias-label-primary);
+    }
+  }
+  ${H} :is(button[data-workbench-context-control], [class*="_headerUtilities"] button[aria-haspopup="menu"]):active:not(:disabled) {
+    background: var(--dsw-alias-interactive-bg-active);
+    color: var(--dsw-alias-label-primary);
+  }
+  ${H} [class*="_headerUtilities"] button[aria-haspopup="menu"]:focus-visible { outline: 2px solid currentColor; outline-offset: -2px; }
   ${H} ${J} { position: absolute !important; top: 8px !important; right: 56px !important; width: 44px !important; height: 44px !important; margin: 0 !important; }
   ${H} ${J} > button { width: 44px !important; min-width: 44px !important; height: 44px !important; padding: 0 !important; justify-content: center; }
   ${H} ${J} > button > svg { width: 12px; flex: none; }
@@ -125,8 +142,8 @@ export const WORKBENCH_HEADER_CSS = `@media (max-width: 1023px) and (pointer: co
   [data-workbench-stats-panel] h2 { display: flex; justify-content: space-between; font-size: 14px; margin: 8px 0; }
   [data-workbench-stats-panel] dl { margin: 0 0 12px; font-size: 13px; }
   [data-workbench-stats-panel] dl > div { display: flex; justify-content: space-between; gap: 12px; padding: 4px 0; }
-  [data-workbench-stats-panel] dt { color: var(--dsw-alias-label-secondary); }
-  [data-workbench-stats-panel] dd { margin: 0; }
+  [data-workbench-stats-panel] dt { color: var(--dsw-alias-label-secondary); min-width: 0; }
+  [data-workbench-stats-panel] dd { margin: 0; flex: none; text-align: right; white-space: nowrap; }
   .mobile-workbench-session-info { width: min(400px, calc(100vw - 24px)); overflow-wrap: anywhere; }
   .mobile-workbench-session-info button { min-width: 44px; min-height: 44px; }
   /* Native catalog behaves as a readable sheet, not a tiny header popover. */
