@@ -137,7 +137,7 @@ export function installWorkbenchComposer(ctx: ClientContext): void {
       if (row) {
         decorate(row, 'data-mobile-compose-bar', 'true')
         // Reattach only plugin-owned children after a React lane replacement.
-        if (button.parentElement !== row) row.append(button)
+        if (button.parentElement !== card) card.append(button)
       } else button.remove()
       if (header.parentElement !== card) card.append(header)
     }

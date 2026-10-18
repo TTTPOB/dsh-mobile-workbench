@@ -20,6 +20,8 @@ import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
+import { stripTypeScriptTypes } from 'node:module'
+import { runInNewContext } from 'node:vm'
 
 const SOURCE = readFileSync(
   fileURLToPath(new URL('../src/client/effects/composer-keyboard-guard.ts', import.meta.url)),
@@ -83,4 +85,56 @@ test('the effect is wired into the client entry', () => {
     'utf8',
   )
   assert.match(entry, /installComposerKeyboardGuard\(ctx\)/)
+})
+
+test('trusted Tab in expanded editor releases touch autofocus shadow without weakening taps', () => {
+  const listeners = new Map<string, Function>()
+  let dispose: (() => void) | undefined
+  let expanded = true
+  class Element {
+    attributes = new Set<string>()
+    readonly editing: boolean
+    constructor(editing = false) { this.editing = editing }
+    closest(selector: string) {
+      if (selector === '[data-composer-input]') return this.editing ? this : null
+      if (selector.includes('data-mobile-compose-expanded')) return expanded ? card : null
+      return card
+    }
+    querySelector() { return editor }
+    setAttribute(name: string) { this.attributes.add(name) }
+    removeAttribute(name: string) { this.attributes.delete(name) }
+    focus() {}
+    blur() {}
+  }
+  const card = new Element()
+  const editor = new Element(true)
+  const button = new Element()
+  const code = stripTypeScriptTypes(SOURCE.split(String.fromCharCode(10)).filter(line => !line.startsWith('import ')).join(String.fromCharCode(10)).replaceAll('export ', ''))
+  const install = runInNewContext(code + '; installComposerKeyboardGuard', {
+    Element, HTMLElement: Element,
+    navigator: {}, detectIosWebKit: () => false, matchMedia: () => ({ matches: true }),
+    installMobileEffect: (_ctx: object, _name: string, setup: () => () => void) => { dispose = setup() },
+    window: { setTimeout: () => 1, clearTimeout() {} },
+    document: {
+      querySelector: () => editor,
+      addEventListener: (name: string, listener: Function) => listeners.set(name, listener),
+      removeEventListener: (name: string) => listeners.delete(name),
+    },
+  })
+  install({})
+  listeners.get('pointerdown')!({ target: button })
+  assert.equal(Object.hasOwn(editor, 'focus'), true)
+  listeners.get('keydown')!({ key: 'Tab', isTrusted: false, target: button })
+  assert.equal(Object.hasOwn(editor, 'focus'), true)
+  expanded = false
+  listeners.get('keydown')!({ key: 'Tab', isTrusted: true, target: button })
+  assert.equal(Object.hasOwn(editor, 'focus'), true)
+  expanded = true
+  listeners.get('keydown')!({ key: 'Tab', isTrusted: true, target: button })
+  assert.equal(Object.hasOwn(editor, 'focus'), false)
+  listeners.get('pointerdown')!({ target: button })
+  assert.equal(Object.hasOwn(editor, 'focus'), true)
+  dispose!()
+  assert.equal(listeners.size, 0)
+  assert.equal(Object.hasOwn(editor, 'focus'), false)
 })

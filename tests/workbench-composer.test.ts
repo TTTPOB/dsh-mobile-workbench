@@ -63,9 +63,13 @@ test('native editor and submit state are not copied; ownership is disposed', () 
   assert.match(source, /triggers.dismiss()/)
 })
 
-test('toolbar uses a 48px row with 44px targets and removes the entire native metrics dock', () => {
-  assert.match(WORKBENCH_COMPOSER_CSS, /height: 48px/)
-  assert.match(WORKBENCH_COMPOSER_CSS, /width: 44px !important/)
+test('toolbar uses a 40px row, independent corner and native metrics remain hidden', () => {
+  assert.match(WORKBENCH_COMPOSER_CSS, /height: 40px/)
+  assert.match(WORKBENCH_COMPOSER_CSS, /width: 40px !important/)
+  assert.ok(source.includes('card.append(button)'))
+  assert.ok(WORKBENCH_COMPOSER_CSS.includes('border: 5px solid transparent'))
+  assert.ok(WORKBENCH_COMPOSER_CSS.includes('grid-area: 1 / 1'))
+  assert.ok(WORKBENCH_COMPOSER_CSS.includes('max-width: none'))
   const rules = findRuleBlocks(WORKBENCH_COMPOSER_CSS)
   const dock = rules.find(rule => rule.selector.includes('[data-composer-dock]'))
   assert.match(dock!.body, /display: none !important/)

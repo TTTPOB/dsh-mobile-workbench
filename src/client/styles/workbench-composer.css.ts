@@ -2,6 +2,8 @@
 export const WORKBENCH_COMPOSER_CSS = `@media (max-width: 1023px) and (pointer: coarse) {
   html [data-mobile-nav="frame"] [data-phase] [data-composer-card][data-mobile-workbench-composer="true"] {
     max-height: var(--mobile-compose-card-max, 320px) !important;
+    margin: 0 !important;
+    width: 100% !important;
     gap: 6px !important;
     padding: 8px 0 0 !important;
     position: relative;
@@ -30,6 +32,34 @@ export const WORKBENCH_COMPOSER_CSS = `@media (max-width: 1023px) and (pointer: 
     overflow-y: auto !important;
     overscroll-behavior-y: contain;
   }
+  /* Remove the native 16px/4px inner wrapper padding before applying one outer gap. */
+  html [data-mobile-nav="frame"] [data-composer-seat] [class*="_root"]:has(> [data-composer-card]) {
+    padding: 0 !important;
+  }
+  /* The frame/navigation own safe-area insets; this is only the content gap. */
+  html [data-mobile-nav="frame"] [data-composer-seat] {
+    padding: 0 8px 8px !important;
+    box-sizing: border-box;
+  }
+  html [data-mobile-nav="frame"] [data-composer-card][data-mobile-workbench-composer="true"] [class*="_grow"]:has(> [data-composer-input]) {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+  }
+  html [data-mobile-nav="frame"] [data-composer-card][data-mobile-workbench-composer="true"] [class*="_grow"] > [data-composer-input],
+  html [data-mobile-nav="frame"] [data-composer-card][data-mobile-workbench-composer="true"] [class*="_grow"] > [data-composer-placeholder] {
+    grid-area: 1 / 1;
+    min-width: 0;
+    padding-left: 20px !important;
+    padding-right: 48px !important;
+  }
+  html [data-mobile-nav="frame"] [data-composer-card][data-mobile-workbench-composer="true"] [class*="_grow"] > [data-composer-placeholder] {
+    position: static !important;
+    inset: auto !important;
+    width: auto !important;
+    box-sizing: border-box;
+    padding-top: 4px;
+    pointer-events: none;
+  }
   /* Metrics live in the header. Hide the whole native row, not just its contents. */
   html [data-composer-dock] {
     display: none !important;
@@ -38,11 +68,11 @@ export const WORKBENCH_COMPOSER_CSS = `@media (max-width: 1023px) and (pointer: 
     display: flex !important;
     align-items: center;
     flex-wrap: nowrap !important;
-    flex: 0 0 48px;
-    height: 48px;
-    min-height: 48px;
+    flex: 0 0 40px;
+    height: 40px;
+    min-height: 40px;
     gap: 4px !important;
-    padding: 2px 8px !important;
+    padding: 0 !important;
     justify-content: flex-start !important;
     box-sizing: border-box;
     overflow: visible;
@@ -52,9 +82,10 @@ export const WORKBENCH_COMPOSER_CSS = `@media (max-width: 1023px) and (pointer: 
   /* Keep the native permission Menu's nonzero anchor rect. */
   html [data-mobile-nav="frame"] [data-phase] [data-composer-card][data-mobile-workbench-composer="true"] > [data-mobile-compose-bar] [data-slot="conversation.input.permission"] > span {
     display: inline-flex !important;
-    flex: 0 1 auto;
-    max-width: clamp(60px, 20vw, 76px);
-    min-width: 44px;
+    flex: 0 0 40px;
+    width: 40px;
+    max-width: 40px;
+    min-width: 40px;
     order: 10;
     position: relative;
   }
@@ -70,11 +101,11 @@ export const WORKBENCH_COMPOSER_CSS = `@media (max-width: 1023px) and (pointer: 
   }
   html [data-mobile-nav="frame"] [data-phase] [data-composer-card][data-mobile-workbench-composer="true"] > [data-mobile-compose-bar] > [class*="_tools"] > button[class*="_add"],
   html [data-mobile-nav="frame"] [data-phase] [data-composer-card][data-mobile-workbench-composer="true"] > [data-mobile-compose-bar] > [class*="_trailing"] > button[class*="_primary"],
-  html [data-mobile-nav="frame"] [data-phase] [data-composer-card][data-mobile-workbench-composer="true"] > [data-mobile-compose-bar] > [data-mobile-compose-toggle] {
-    flex: 0 0 44px !important;
-    width: 44px !important;
-    height: 44px !important;
-    min-height: 44px;
+  html [data-mobile-nav="frame"] [data-phase] [data-composer-card][data-mobile-workbench-composer="true"] > [data-mobile-compose-toggle] {
+    flex: 0 0 40px !important;
+    width: 40px !important;
+    height: 40px !important;
+    min-height: 40px;
     margin: 0 !important;
     padding: 0 !important;
     box-sizing: border-box;
@@ -83,7 +114,7 @@ export const WORKBENCH_COMPOSER_CSS = `@media (max-width: 1023px) and (pointer: 
     justify-content: center;
   }
   html [data-mobile-nav="frame"] [data-phase] [data-composer-card][data-mobile-workbench-composer="true"] > [data-mobile-compose-bar] > [class*="_tools"] > button[class*="_add"],
-  html [data-mobile-nav="frame"] [data-phase] [data-composer-card][data-mobile-workbench-composer="true"] > [data-mobile-compose-bar] > [data-mobile-compose-toggle] {
+  html [data-mobile-nav="frame"] [data-phase] [data-composer-card][data-mobile-workbench-composer="true"] > [data-mobile-compose-toggle] {
     appearance: none;
     border: 0 !important;
     background: transparent !important;
@@ -93,11 +124,11 @@ export const WORKBENCH_COMPOSER_CSS = `@media (max-width: 1023px) and (pointer: 
     cursor: pointer;
   }
   html [data-mobile-nav="frame"] [data-phase] [data-composer-card][data-mobile-workbench-composer="true"] > [data-mobile-compose-bar] > [class*="_tools"] > button[class*="_add"] svg,
-  html [data-mobile-nav="frame"] [data-phase] [data-composer-card][data-mobile-workbench-composer="true"] > [data-mobile-compose-bar] > [data-mobile-compose-toggle] svg {
-    width: 20px;
-    height: 20px;
+  html [data-mobile-nav="frame"] [data-phase] [data-composer-card][data-mobile-workbench-composer="true"] > [data-mobile-compose-toggle] svg {
+    width: 18px;
+    height: 18px;
   }
-  html [data-mobile-nav="frame"] [data-phase] [data-composer-card][data-mobile-workbench-composer="true"] > [data-mobile-compose-bar] > [data-mobile-compose-toggle] svg {
+  html [data-mobile-nav="frame"] [data-phase] [data-composer-card][data-mobile-workbench-composer="true"] > [data-mobile-compose-toggle] svg {
     fill: none;
     stroke: currentColor;
     stroke-width: 1.6;
@@ -106,7 +137,7 @@ export const WORKBENCH_COMPOSER_CSS = `@media (max-width: 1023px) and (pointer: 
   }
   html [data-mobile-nav="frame"] [data-phase] [data-composer-card][data-mobile-workbench-composer="true"] > [data-mobile-compose-bar] > [class*="_trailing"] > button[class*="_primary"] {
     order: 50;
-    border: 4px solid var(--dsw-alias-bg-base) !important;
+    border: 5px solid transparent !important;
     border-radius: 14px !important;
     background-clip: padding-box;
     transform: none !important;
@@ -114,13 +145,13 @@ export const WORKBENCH_COMPOSER_CSS = `@media (max-width: 1023px) and (pointer: 
   html [data-mobile-nav="frame"] [data-phase] [data-composer-card][data-mobile-workbench-composer="true"] > [data-mobile-compose-bar] [data-slot="conversation.input.permission"] button {
     display: inline-flex !important;
     align-items: center;
-    justify-content: flex-start;
+    justify-content: center;
     gap: 4px !important;
     width: 100%;
     min-width: 0;
-    height: 44px;
-    min-height: 44px;
-    padding: 0 2px !important;
+    height: 40px;
+    min-height: 40px;
+    padding: 0 !important;
     margin: 0;
     box-sizing: border-box;
     border: 0;
@@ -135,13 +166,7 @@ export const WORKBENCH_COMPOSER_CSS = `@media (max-width: 1023px) and (pointer: 
     height: 16px !important;
   }
   html [data-mobile-nav="frame"] [data-phase] [data-composer-card][data-mobile-workbench-composer="true"] > [data-mobile-compose-bar] [data-slot="conversation.input.permission"] button [class*="_triggerLabel"] {
-    display: block !important;
-    min-width: 0;
-    overflow: hidden;
-    white-space: nowrap !important;
-    text-overflow: ellipsis;
-    font-size: 12px;
-    line-height: 16px;
+    display: none !important;
   }
   html [data-mobile-nav="frame"] [data-phase] [data-composer-card][data-mobile-workbench-composer="true"] > [data-mobile-compose-bar] [data-slot="conversation.input.permission"] button [class*="_chevron"],
   html [data-mobile-nav="frame"] [data-phase] [data-composer-card][data-mobile-workbench-composer="true"] > [data-mobile-compose-bar] [data-slot="conversation.input.model"] button[aria-haspopup="menu"] > svg:not([class*="_chevron"]) {
@@ -176,9 +201,11 @@ export const WORKBENCH_COMPOSER_CSS = `@media (max-width: 1023px) and (pointer: 
     align-items: flex-start;
     justify-content: center;
     width: 100%;
-    height: 44px;
-    min-height: 44px;
+    height: 40px;
+    min-height: 40px;
     min-width: 0;
+    max-width: none;
+    text-align: left;
     padding: 0 14px 0 2px !important;
     gap: 0 !important;
     overflow: visible;
@@ -228,11 +255,13 @@ export const WORKBENCH_COMPOSER_CSS = `@media (max-width: 1023px) and (pointer: 
   html [data-mobile-nav="frame"] [data-phase] [data-composer-card][data-mobile-workbench-composer="true"] > [data-mobile-compose-bar] > [class*="_trailing"] > [class*="_activity"]:not([class*="_activityExpanded"]):has(> [data-slot="conversation.input.activity"]:only-child:empty) {
     display: none !important;
   }
-  html [data-mobile-nav="frame"] [data-phase] [data-composer-card][data-mobile-workbench-composer="true"] > [data-mobile-compose-bar] > [data-mobile-compose-toggle] {
-    order: 40;
-    margin-left: auto !important;
+  html [data-mobile-nav="frame"] [data-phase] [data-composer-card][data-mobile-workbench-composer="true"] > [data-mobile-compose-toggle] {
+    position: absolute;
+    top: 0;
+    right: 0;
+    z-index: 2;
   }
-  html [data-mobile-nav="frame"] [data-phase] [data-composer-card][data-mobile-workbench-composer="true"] > [data-mobile-compose-bar] > [data-mobile-compose-toggle]:active {
+  html [data-mobile-nav="frame"] [data-phase] [data-composer-card][data-mobile-workbench-composer="true"] > [data-mobile-compose-toggle]:active {
     background: var(--dsw-alias-interactive-bg-hover) !important;
   }
   html [data-mobile-nav="frame"] [data-phase] [data-composer-card][data-mobile-workbench-composer="true"] [data-mobile-compose-toggle]:focus-visible,
@@ -286,7 +315,7 @@ export const WORKBENCH_COMPOSER_CSS = `@media (max-width: 1023px) and (pointer: 
   html [data-composer-card][data-mobile-compose-expanded="true"] [data-trigger-menu] {
     position: fixed !important;
     top: auto !important;
-    bottom: calc(100dvh - var(--mobile-compose-vv-top, 0px) - var(--mobile-compose-vv-height, 100dvh) + 60px) !important;
+    bottom: calc(100dvh - var(--mobile-compose-vv-top, 0px) - var(--mobile-compose-vv-height, 100dvh) + 52px) !important;
     left: calc(var(--mobile-compose-vv-left, 0px) + 16px) !important;
     width: calc(var(--mobile-compose-vv-width, 100vw) - 32px) !important;
     max-width: calc(var(--mobile-compose-vv-width, 100vw) - 32px) !important;
@@ -370,7 +399,7 @@ export const WORKBENCH_COMPOSER_CSS = `@media (max-width: 1023px) and (pointer: 
     touch-action: manipulation;
     cursor: pointer;
   }
-  html [data-mobile-nav="frame"] [data-phase] [data-composer-card][data-mobile-workbench-composer="true"][data-mobile-compose-expanded="true"] > [data-mobile-compose-bar] > [data-mobile-compose-toggle] {
+  html [data-mobile-nav="frame"] [data-phase] [data-composer-card][data-mobile-workbench-composer="true"][data-mobile-compose-expanded="true"] > [data-mobile-compose-toggle] {
     display: none !important;
   }
   html [data-mobile-nav="frame"] [data-phase] [data-composer-card][data-mobile-workbench-composer="true"][data-mobile-compose-expanded="true"] > [data-input-scroll] {

@@ -157,11 +157,20 @@ export function installComposerKeyboardGuard(ctx: ClientContext): void {
       target.blur()
     }
 
+    // A deliberate Tab inside the expanded editor is not a touch-button autofocus.
+    const onKeyDown = (event: KeyboardEvent): void => {
+      if (event.key !== 'Tab' || !event.isTrusted || event.isComposing) return
+      const target = event.target
+      if (target instanceof Element && target.closest('[data-composer-card][data-mobile-compose-expanded="true"]')) restore()
+    }
+
+    document.addEventListener('keydown', onKeyDown, true)
     document.addEventListener('pointerdown', onPointerDown, true)
     document.addEventListener('touchstart', onPointerDown, true)
     document.addEventListener('mousedown', onPointerDown, true)
     document.addEventListener('focusin', onFocusIn, true)
     return () => {
+      document.removeEventListener('keydown', onKeyDown, true)
       document.removeEventListener('pointerdown', onPointerDown, true)
       document.removeEventListener('touchstart', onPointerDown, true)
       document.removeEventListener('mousedown', onPointerDown, true)

@@ -16,7 +16,7 @@ export const WORKBENCH_CSS = /* css */ `
     position: fixed;
     inset: auto 0 0;
     height: var(--mobile-workbench-nav-size);
-    padding: 4px 12px calc(4px + env(safe-area-inset-bottom, 0px));
+    padding: 4px 8px calc(4px + env(safe-area-inset-bottom, 0px));
     box-sizing: border-box;
     background: var(--dsw-alias-bg-base);
     color: var(--dsw-alias-label-secondary);
