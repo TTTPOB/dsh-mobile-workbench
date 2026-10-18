@@ -1,1 +1,1 @@
-{"version":3,"file":"composer.d.ts","sourceRoot":"","sources":["../../../../src/client/workbench/composer.ts"],"names":[],"mappings":"AAAA,OAAO,KAAK,EAAE,OAAO,IAAI,aAAa,EAAE,MAAM,qBAAqB,CAAA;AAiBnE,oFAAoF;AACpF,wBAAgB,wBAAwB,CAAC,GAAG,EAAE,aAAa,GAAG,IAAI,CAmQjE"}
+{"version":3,"file":"composer.d.ts","sourceRoot":"","sources":["../../../../src/client/workbench/composer.ts"],"names":[],"mappings":"AAAA,OAAO,KAAK,EAAE,OAAO,IAAI,aAAa,EAAE,MAAM,qBAAqB,CAAA;AAiBnE,oFAAoF;AACpF,wBAAgB,wBAAwB,CAAC,GAAG,EAAE,aAAa,GAAG,IAAI,CAuQjE"}
