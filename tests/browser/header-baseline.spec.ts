@@ -46,7 +46,7 @@ test('statistics uses a bounded dialog and all dismissal paths return focus', as
   await expect(stats).toHaveAttribute('aria-expanded', 'true')
   await expect(panel).toBeVisible()
   await expect(panel.getByRole('menuitem')).toHaveCount(0)
-  await expect(panel.locator('dt').first()).toHaveText('Used tokens')
+  await expect(panel.locator('dt').first()).toHaveText('Used tokens (reference)')
   for (const heading of ['Context occupancy', 'Session activity', 'Tokens']) await expect(panel.getByRole('heading', { name: heading, exact: heading !== 'Context occupancy' })).toBeVisible()
   const box = await panel.boundingBox()
   expect(box!.x).toBeGreaterThanOrEqual(12)

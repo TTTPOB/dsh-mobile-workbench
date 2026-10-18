@@ -2,7 +2,9 @@ import { useEffect, useId, useRef, useState, type ReactElement } from 'react'
 import { createPortal } from 'react-dom'
 import { MenuSurface, Modal, useAnchoredPosition } from '@deepseek-ai/dsh-client-ui-primitives'
 import type {} from '@deepseek-ai/dsh-client-ui-session/client'
-import { contextPercent, pressureLabel, statNumber } from './stats.ts'
+import { contextPercent, pressureLabel } from './stats.ts'
+import { WorkbenchStatsDetails } from './WorkbenchStatsDetails.tsx'
+import type { StatsTranslate } from './stats-locales.ts'
 import type { InjectFace, PropsLocale, PropsRuntime } from '@deepseek-ai/dsh-client-ui-slots'
 import { destinationAvailable, resolveDestination, type NavigationEvidence, type WorkbenchDestination, type WorkbenchView } from './navigation.ts'
 
@@ -10,6 +12,7 @@ export interface WorkbenchSnapshot extends NavigationEvidence {
   mobile: boolean
 }
 export interface WorkbenchInjected {
+  tStats: StatsTranslate
   hooks: {
     workbench: {
       getSnapshot: () => WorkbenchSnapshot
@@ -60,7 +63,7 @@ export function WorkbenchNav({ useWorkbench, activate, t }: Props): ReactElement
 }
 
 /** Header content uses public session summaries and session-bound projections. */
-export function WorkbenchAgents({ useWorkbench, useSessions, useProjection, sessionId, activate, selectView, returnParent, closeAgents, focusAgents, t }: AgentProps): ReactElement | null {
+export function WorkbenchAgents({ useWorkbench, useSessions, useProjection, sessionId, activate, selectView, returnParent, closeAgents, focusAgents, t, tStats }: AgentProps): ReactElement | null {
   const state = useWorkbench(value => value)
   const summary = useSessions(value => sessionId ? value.byId[sessionId] : undefined)
   const parent = useSessions(value => summary?.parentId ? value.byId[summary.parentId] : undefined)
@@ -101,7 +104,6 @@ export function WorkbenchAgents({ useWorkbench, useSessions, useProjection, sess
     ? state.agentActiveCount + '/' + state.agentTotalCount
     : t(state.agentCountsState === 'unavailable' ? 'unavailable' : 'loading')
   const percent = contextPercent(pressure)
-  const rows = (items: [string, number | undefined][]) => <dl>{items.map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{statNumber(value)}</dd></div>)}</dl>
   return <>
     <div data-workbench-header-main>
       {summary?.parentId && <button type="button" data-mobile-workbench="parent" data-workbench-context-control
@@ -151,11 +153,7 @@ export function WorkbenchAgents({ useWorkbench, useSessions, useProjection, sess
     </Modal>
     {statsOpen && createPortal(<MenuSurface ref={panelRef} id={panelId} role="dialog" aria-label={t('statistics')}
       data-workbench-stats-panel style={{ top: position?.top, right: 12, visibility: position ? 'visible' : 'hidden' }}>
-      <h2>{t('context')} <span>{pressureLabel(pressure)}</span></h2>
-      {rows([[t('usedTokens'), pressure?.projectedTokens ?? pressure?.pressureTokens], [t('capacity'), pressure?.contextWindow],
-        ...(breakdown ? [[t('system'), breakdown.systemTokens], [t('tools'), breakdown.toolsTokens], [t('messages'), breakdown.messageTokens]] as [string, number][] : [])])}
-      <h2>{t('activity')}</h2>{rows([[t('turns'), activity?.turns], [t('steps'), activity?.steps]])}
-      <h2>{t('tokens')}</h2>{rows([[t('input'), usage?.uncachedInputTokens], [t('output'), usage?.outputTokens], [t('cacheRead'), usage?.cacheReadTokens], [t('cacheWrite'), usage?.cacheWriteTokens]])}
+      <WorkbenchStatsDetails pressure={pressure} breakdown={breakdown} activity={activity} usage={usage} t={tStats} />
     </MenuSurface>, document.body)}
   </>
 }
