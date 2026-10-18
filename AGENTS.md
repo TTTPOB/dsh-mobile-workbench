@@ -33,6 +33,7 @@ pnpm build
 - 在打印的 workspace 新建会话，选择 Mobile Audit，发送「开始手机界面审计」，等到 `MOBILE_AUDIT_COMPLETE`；检查手机三页、编辑器、菜单／modal、工作区和桌面不变性，截图取稳定完成态。用完 Ctrl-C，或向 `.demo-home/demo.pid` 中的 PID 发 SIGTERM（agent 停对应后台 job）；只有明确要求留给审查员时才保持运行并交接 job／PID。
 - 给其他 agent 使用的 demo 必须由需要它的 agent 自己在其回合内启动和停止；后台 job 随发起者回合结束会被回收，不能把正在运行的 job 当作跨回合交付。
 - 测试最后一步是**人类真机验收**：agent 完成自动化验收后，由 lead 会话运行 `node scripts/demo.mjs --port 54076 --tunnel` 并持有后台 job，把 `Public demo URL`（也写入 `.demo-home/public-url.txt`）发给用户在手机上测。URL 含认证 token，不要外传；必测 iOS 键盘弹出／收起、中文 IME 组字中回车／Escape、刘海安全区、Android 系统返回。验收结束立即停止 job，脚本会同时关闭隔离 Host 和 cloudflared；lead 在用户测完前不要结束持有 job 的回合。隧道／代理故障只报告实际错误，不修改系统网络配置。
+- 人类验收链接直接发到聊天，由 lead 持有实例并等待用户主动反馈；不使用有时限的问答工具作为验收窗口。
 - 开发时不要启停日用 Host、修改真实 profile 或安装。隔离实例使用独立 DSH_HOME 和端口。push、PR、发布和日用部署分别需要授权。
 
 ## Deployment and update
