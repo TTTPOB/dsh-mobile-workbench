@@ -176,6 +176,7 @@ test('immutable preset is only a read-only sibling in the current Session menu',
 
 test('first Automation New after closing a management Modal is an outward action, not Back', async ({ page, isMobile }) => {
   test.skip(!isMobile)
+  await page.goto('data:text/html,previous-management-site')
   await openDemo(page)
   await page.getByRole('button', { name: 'Sessions', exact: true }).click()
   await page.getByRole('button', { name: 'Account menu', exact: true }).click()
@@ -188,4 +189,7 @@ test('first Automation New after closing a management Modal is an outward action
   await expect(page.locator('[data-mobile-management-surface]')).toHaveCount(0)
   await expect(page.locator('html')).toHaveAttribute('data-mobile-workbench-page', 'session')
   await expect.poll(() => page.evaluate(() => history.state?.mobilePanelExit)).not.toBe(true)
+  await expect.poll(() => page.evaluate(() => history.state?.mobileWorkbenchPage)).toBeUndefined()
+  await page.goBack()
+  await expect(page).toHaveURL('data:text/html,previous-management-site')
 })

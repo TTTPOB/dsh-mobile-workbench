@@ -135,12 +135,13 @@ test('selected and unselected text meets contrast after ancestor alpha compositi
   for (const theme of ['light', 'dark'] as const) {
     await page.emulateMedia({ colorScheme: theme })
     if (colors.length) await expect.poll(() => page.locator('[data-workbench-view="chat"]').evaluate(n => getComputedStyle(n).color)).not.toBe(colors[0])
-    // Measure the settled palette, not the page-entry fade or a theme color transition.
-    await page.locator('[data-mobile-nav="frame"]').evaluate(async node => {
-      await Promise.all(node.getAnimations({ subtree: true })
-        .filter(animation => animation.effect?.getTiming().iterations !== Infinity)
-        .map(async animation => { try { await animation.finished } catch { /* A replaced transition no longer affects this frame. */ } }))
-    })
+    // Measure the settled page-entry fade without waiting for unrelated native animations.
+    await expect.poll(() => page.locator('[data-workbench-view="chat"]').evaluate(node => {
+      for (let current: Element | null = node; current; current = current.parentElement) {
+        if (getComputedStyle(current).opacity !== '1') return false
+      }
+      return true
+    })).toBe(true)
     colors.push(await page.locator('[data-workbench-view="chat"]').evaluate(n => getComputedStyle(n).color))
     await page.screenshot({ path: '.demo-home/review/a/after-' + theme + '-' + page.viewportSize()!.width + '.png' })
     const ratios = await page.locator('[data-workbench-view], [data-workbench-destination]').evaluateAll(elements => {
