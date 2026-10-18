@@ -26,6 +26,7 @@ pnpm test:core
 pnpm build
 ```
 
+- 本机浏览器冒烟：先 `pnpm exec playwright install chromium`，构建并启动当前 worktree 的隔离 demo 后运行 `pnpm test:browser`（默认 390×844 触屏）；可用 `DSH_BROWSER_URL` 指定认证 URL，默认读取 `.demo-home/url.txt`。320px、桌面与 helper 用法见 [浏览器测试](<tests/browser/README.md>)；浏览器测试不加入 CI。
 - `lib/` 是提交的构建输出，不手工编辑。删除或重命名源码后执行 clean build，确认旧入口与声明文件已清除。
 - UI 审查和布局改动必须在隔离 demo 中实测当前构建，不能只凭源码推断：授权后在仓库根目录运行 `node scripts/demo.mjs --port 54076`（agent 用后台 bash 并记录 job id）。脚本仅使用仓库内 `.demo-home`，从相邻 `dsh-config/shared/dependencies.yaml` 的 `verifiedCompatibility` 授予并打印已验证的精确版本豁免。
 - 启动输出的 `Authenticated demo URL` 可直接认证；也可读取 `.demo-home/url.txt`，每次重启后重新获取。Playwright 新建独立 context，设 `viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true`，再 `page.goto(url)`；若用 CDP，以 `chromium.connectOverCDP(endpoint)` 连接自己开启远程调试的浏览器后新建上述 context（54076 是应用端口，不是 CDP）。现有探针使用 `DSH_PROBE_URL`、`DSH_PROBE_TOKEN` 和 `DSH_PROBE_SESSION_ID`，详见 [fixture 使用说明](<dev/fixture/README.md>)。

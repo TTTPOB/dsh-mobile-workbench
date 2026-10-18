@@ -27,7 +27,7 @@ dsh plugin --profile web add \
 
 更新已运行的实例后，按正常服务方式重启并刷新页面。
 
-## 开发
+## 开发与验证
 
 需要 Node.js 24+ 和 pnpm。
 
@@ -37,6 +37,8 @@ pnpm verify
 pnpm test:core
 pnpm build
 ```
+
+本机浏览器冒烟：先 `pnpm exec playwright install chromium`，构建并启动隔离 demo，再运行 `pnpm test:browser`（默认 390×844 触屏；从 `.demo-home/url.txt` 或 `DSH_BROWSER_URL` 连接）；其他视口和 helper 见[浏览器测试说明](<tests/browser/README.md>)。此测试只在本机手动运行，不加入 CI。
 
 构建输出位于 `lib/`。源码与构建输出一并提交；开发约定见 [AGENTS.md](AGENTS.md)。rc.1 逐项适配与最终浏览器检查点见[兼容性与验收参考](docs/compatibility.md)。
 
