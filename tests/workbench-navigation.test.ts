@@ -283,8 +283,9 @@ function historyFixture() {
     back() { index--; callback({ state: stack[index] ?? null }) },
   }
   const window = { history, addEventListener: (_: string, fn: typeof callback) => { callback = fn }, removeEventListener: () => { callback = () => {} } } as Parameters<typeof installPageHistory>[0]
-  const controller = installPageHistory(window, () => { returns++ }, () => panel)
-  return { controller, history, stack, index: () => index, returns: () => returns, panel: (value: boolean) => { panel = value } }
+  const restored: string[] = []
+  const controller = installPageHistory(window, page => { restored.push(page); if (page === 'session') returns++ }, () => panel)
+  return { controller, history, stack, restored, index: () => index, returns: () => returns, panel: (value: boolean) => { panel = value } }
 }
 
 test('page history uses one entry and explicit return consumes it before the next browser Back', () => {
@@ -312,6 +313,7 @@ test('global panel entries preserve the underlying page without double return', 
   f.panel(false)
   f.history.back()
   assert.equal(f.returns(), 0)
+  assert.deepEqual(f.restored, ['files'], 'panel Back restores its underlying workspace before another Back returns to session')
   f.history.back()
   assert.equal(f.returns(), 1)
   f.controller.dispose()

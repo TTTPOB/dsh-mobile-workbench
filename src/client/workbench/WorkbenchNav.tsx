@@ -153,7 +153,7 @@ export function WorkbenchAgents({ useWorkbench, useSessions, useProjection, sess
     {statsOpen && createPortal(<MenuSurface ref={panelRef} id={panelId} role="dialog" aria-label={t('statistics')}
       data-workbench-stats-panel style={{ top: position?.top, right: 12, visibility: position ? 'visible' : 'hidden' }}>
       <h2>{t('context')} <span>{pressureLabel(pressure)}</span></h2>
-      {rows([[t('context'), pressure?.projectedTokens ?? pressure?.pressureTokens], [t('capacity'), pressure?.contextWindow],
+      {rows([[t('usedTokens'), pressure?.projectedTokens ?? pressure?.pressureTokens], [t('capacity'), pressure?.contextWindow],
         ...(breakdown ? [[t('system'), breakdown.systemTokens], [t('tools'), breakdown.toolsTokens], [t('messages'), breakdown.messageTokens]] as [string, number][] : [])])}
       <h2>{t('activity')}</h2>{rows([[t('turns'), activity?.turns], [t('steps'), activity?.steps]])}
       <h2>{t('tokens')}</h2>{rows([[t('input'), usage?.uncachedInputTokens], [t('output'), usage?.outputTokens], [t('cacheRead'), usage?.cacheReadTokens], [t('cacheWrite'), usage?.cacheWriteTokens]])}

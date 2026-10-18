@@ -12,6 +12,8 @@ test('two-row header, touch boxes, native view and desktop invariance', async ({
     return
   }
   await expect(title).toBeVisible()
+  await expect(title.locator('span')).toHaveCSS('word-break', 'normal')
+  await expect(title.locator('span')).toHaveCSS('overflow-wrap', 'anywhere')
   await expect(page.locator('[data-workbench-view="chat"]')).toHaveAttribute('aria-selected', 'true')
   await page.locator('[data-workbench-view="trajectory"]').click()
   await expect(page.locator('[data-workbench-view="trajectory"]')).toHaveAttribute('aria-selected', 'true')
@@ -44,6 +46,7 @@ test('statistics uses a bounded dialog and all dismissal paths return focus', as
   await expect(stats).toHaveAttribute('aria-expanded', 'true')
   await expect(panel).toBeVisible()
   await expect(panel.getByRole('menuitem')).toHaveCount(0)
+  await expect(panel.locator('dt').first()).toHaveText('Used tokens')
   for (const heading of ['Context occupancy', 'Session activity', 'Tokens']) await expect(panel.getByRole('heading', { name: heading, exact: heading !== 'Context occupancy' })).toBeVisible()
   const box = await panel.boundingBox()
   expect(box!.x).toBeGreaterThanOrEqual(12)
@@ -120,9 +123,18 @@ test('page history pushes once, switches without stacking, and bottom return con
 test('selected and unselected text meets contrast after ancestor alpha composition in both themes', async ({ page, isMobile }) => {
   test.skip(!isMobile)
   await fixtureSession(page, { reuse: false })
+  // Settings persist on the isolated Host; an earlier spec may have explicitly selected Light.
+  // Restore System through the real UI so emulateMedia actually tests both palettes.
+  await page.locator('[data-workbench-destination="sessions"]').click()
+  await page.getByRole('button', { name: 'Account menu', exact: true }).click()
+  await page.getByRole('menuitem', { name: 'Settings', exact: true }).click()
+  await page.getByRole('button', { name: 'System', exact: true }).click()
+  await page.locator('[data-shortcut-modal="settings"]').getByRole('button', { name: 'Close', exact: true }).click()
+  await page.locator('[data-workbench-destination="session"]').click()
   const colors: string[] = []
   for (const theme of ['light', 'dark'] as const) {
     await page.emulateMedia({ colorScheme: theme })
+    if (colors.length) await expect.poll(() => page.locator('[data-workbench-view="chat"]').evaluate(n => getComputedStyle(n).color)).not.toBe(colors[0])
     colors.push(await page.locator('[data-workbench-view="chat"]').evaluate(n => getComputedStyle(n).color))
     await page.screenshot({ path: '.demo-home/review/a/after-' + theme + '-' + page.viewportSize()!.width + '.png' })
     const ratios = await page.locator('[data-workbench-view], [data-workbench-destination]').evaluateAll(elements => {

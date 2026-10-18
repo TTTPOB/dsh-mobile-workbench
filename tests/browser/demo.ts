@@ -43,11 +43,14 @@ export async function fixtureSession(page: Page, options: DemoSessionOptions = {
   await navigate('sessions')
   const sessionId = options.sessionId ?? process.env.DSH_BROWSER_SESSION_ID
   const existing = page.locator('[data-row-key^="session:"]').filter({ hasText: auditPrompt }).first()
+  let reused = false
   if (sessionId) {
-    await page.locator('[data-row-key="session:' + sessionId + '"]').click()
+    await page.locator('[data-row-key="session:' + sessionId + '"] [class*="_title"]').click()
+    reused = true
     await navigate('session')
   } else if (options.reuse !== false && await existing.count() > 0) {
-    await existing.click()
+    await existing.locator('[class*="_title"]').click()
+    reused = true
     await navigate('session')
   } else {
     await page.getByRole('button', { name: 'New session', exact: true }).first().click()
@@ -73,11 +76,30 @@ export async function fixtureSession(page: Page, options: DemoSessionOptions = {
     await editor.fill(auditPrompt)
     await page.getByRole('button', { name: 'Send message', exact: true }).click()
   }
-  await waitForAudit(page)
+  await waitForAudit(page, reused)
 }
 
-/** Use the final assistant marker instead of sleeps or a streaming screenshot. */
-export async function waitForAudit(page: Page): Promise<void> {
-  await expect(page.getByText(/MOBILE_AUDIT_COMPLETE —/)).toBeVisible({ timeout: 60_000 })
-  await expect(page.getByRole('button', { name: 'Send message', exact: true })).toBeVisible()
+/** Reveal historical audit turns through the native virtual scroller, then return to the tail. */
+export async function waitForAudit(page: Page, reused = false): Promise<void> {
+  const marker = page.getByText(/MOBILE_AUDIT_COMPLETE —/).first()
+  const send = page.getByRole('button', { name: 'Send message', exact: true })
+  if (reused) {
+    await expect(send).toBeVisible({ timeout: 60_000 })
+    const scroll = page.locator('[data-conversation-scroll]:visible')
+    await scroll.waitFor()
+    await scroll.evaluate(node => { node.scrollTop = 0 })
+    await expect.poll(async () => {
+      if (await marker.isVisible()) return true
+      // A frame lets the Host mount the newly revealed virtual window before the next check.
+      await scroll.evaluate(async node => {
+        node.scrollTop += Math.max(1, node.clientHeight * .75)
+        await new Promise<void>(resolve => requestAnimationFrame(() => { resolve() }))
+      })
+      return await marker.isVisible()
+    }, { timeout: 60_000, message: 'Historical fixture audit marker must exist in the virtual conversation' }).toBe(true)
+    await scroll.evaluate(node => { node.scrollTop = node.scrollHeight })
+  } else {
+    await expect(marker).toBeVisible({ timeout: 60_000 })
+  }
+  await expect(send).toBeVisible({ timeout: 60_000 })
 }

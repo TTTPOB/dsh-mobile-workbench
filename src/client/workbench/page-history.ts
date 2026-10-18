@@ -3,17 +3,20 @@ type Page = 'sessions' | 'session' | 'files'
 /** Own at most one same-document entry above the session page; panel history stays independent. */
 export function installPageHistory(
   window: Window,
-  returnSession: () => void,
+  restorePage: (page: Page) => void,
   panelActive: () => boolean,
 ): { enter: (page: Page) => void; sync: (page: Page) => void; dispose: () => void } {
   let owned = false
   let consuming = false
   const pop = (event: PopStateEvent): void => {
     if (event.state?.mobilePanelExit || panelActive()) return
-    if (owned && !event.state?.mobileWorkbenchPage) {
+    const page = event.state?.mobileWorkbenchPage
+    // Native global-panel navigation collapses its sidebar; restore the underlying page on pop.
+    if (owned && (page === 'sessions' || page === 'files')) { restorePage(page); return }
+    if (owned && !page) {
       owned = false
       consuming = false
-      returnSession()
+      restorePage('session')
     }
   }
   const sync = (page: Page): void => {

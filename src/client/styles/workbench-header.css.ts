@@ -82,6 +82,7 @@ export const WORKBENCH_HEADER_CSS = `@media (max-width: 1023px) and (pointer: co
     -webkit-box-orient: vertical;
     -webkit-line-clamp: 2;
     overflow: hidden;
+    word-break: normal;
     overflow-wrap: anywhere;
   }
   ${H} button[data-mobile-workbench="parent"] { width: 44px; }

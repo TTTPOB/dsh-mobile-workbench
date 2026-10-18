@@ -91,7 +91,7 @@ export function installWorkbench(ctx: ClientContext): void {
   })
   let activate = bridge.activate
   ctx.effect(() => {
-    const history = installPageHistory(window, () => { bridge.activate('session') }, () => ctx.layout.panelInfo.getSnapshot().activePanelId !== null)
+    const history = installPageHistory(window, page => { bridge.activate(page) }, () => ctx.layout.panelInfo.getSnapshot().activePanelId !== null)
     activate = (destination, pointerStartedOpen) => {
       if (mq.matches && destination !== 'agents') history.enter(destination)
       bridge.activate(destination, pointerStartedOpen)

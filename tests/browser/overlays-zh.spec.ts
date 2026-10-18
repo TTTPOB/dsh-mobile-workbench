@@ -23,4 +23,7 @@ test('Chinese navigation labels fit at 12px and information follows locale', asy
   await expect(dialog).toBeVisible()
   await expect(dialog.getByRole('button', { name: '关闭', exact: true }).last()).toBeVisible()
   await page.screenshot({ path: '.demo-home/review/a/after-info-zh-' + info.project.name + '.png' })
+  await dialog.getByRole('button', { name: '关闭', exact: true }).last().click()
+  await page.locator('[data-mobile-workbench="stats"]').click()
+  await expect(page.getByRole('dialog', { name: '会话统计', exact: true }).locator('dt').first()).toHaveText('已用 token')
 })
