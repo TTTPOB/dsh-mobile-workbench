@@ -1,6 +1,6 @@
 # DSH Mobile Workbench 使用与架构
 
-DSH Mobile Workbench 3.2.0 面向 DSH 0.2.1-rc.1。包名为 `dsh-web-mobile`，版本使用 `major.minor.patch`。
+DSH Mobile Workbench 3.3.0 面向 DSH 0.2.1-rc.1。包名为 `dsh-web-mobile`，版本使用 `major.minor.patch`。
 
 ## 页面与操作
 
@@ -48,7 +48,7 @@ DSH Mobile Workbench 3.2.0 面向 DSH 0.2.1-rc.1。包名为 `dsh-web-mobile`，
 
 ```sh
 DSH_HOME=/path/to/isolated-home dsh plugin --profile web add \
-  ./dsh-web-mobile-3.2.0.tgz \
+  ./dsh-web-mobile-3.3.0.tgz \
   --config.auto-install-peers=false
 ```
 

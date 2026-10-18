@@ -1,6 +1,6 @@
 # rc.1 兼容性与验收参考
 
-DSH Mobile Workbench 3.2.0 支持 DSH 0.2.1-rc.1。`engines.dsh` 与 DSH peers 均限定在 `>=0.2.1-rc.1 <0.3.0`，插件管理器 peer 精确要求 `0.2.1-rc.1-fork1`。没有继续声明旧 Host 兼容性。
+DSH Mobile Workbench 3.3.0 支持 DSH 0.2.1-rc.1。`engines.dsh` 与 DSH peers 均限定在 `>=0.2.1-rc.1 <0.3.0`，插件管理器 peer 精确要求 `0.2.1-rc.1-fork1`。没有继续声明旧 Host 兼容性。
 
 ## 源码与包验证
 
