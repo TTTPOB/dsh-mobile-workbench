@@ -19,6 +19,7 @@ import { WorkbenchAgents, WorkbenchNav, type WorkbenchSnapshot, type WorkbenchIn
 import { WORKBENCH_NS, en, zh } from './locales.ts'
 import { STATS_NS, statsEn, statsZh } from './stats-locales.ts'
 import { installWorkbenchSessionMenu } from './session-menu.ts'
+import { createPresetDisplayResolver } from './preset-display.ts'
 import { installWorkbenchUpdateNotice } from './update-notice.tsx'
 import { installManagement } from './management.ts'
 import { WORKBENCH_MANAGEMENT_CSS } from '../styles/workbench-management.css.ts'
@@ -27,7 +28,8 @@ import { WORKBENCH_MANAGEMENT_CSS } from '../styles/workbench-management.css.ts'
 export function installWorkbench(ctx: ClientContext): void {
   ctx.effect(() => ctx.locale.register(WORKBENCH_NS, { zh, en }), 'mobile-workbench: dictionaries')
   ctx.effect(() => ctx.locale.register(STATS_NS, { zh: statsZh, en: statsEn }), 'mobile-workbench: statistics dictionaries')
-  installWorkbenchSessionMenu(ctx)
+  const resolvePreset = createPresetDisplayResolver(ctx)
+  installWorkbenchSessionMenu(ctx, resolvePreset)
   installWorkbenchUpdateNotice(ctx)
   ctx.effect(() => {
     const tag = document.createElement('style')
@@ -187,13 +189,13 @@ export function installWorkbench(ctx: ClientContext): void {
     id: 'mobile-workbench-agents',
     order: 5,
     locale: WORKBENCH_NS,
-    inject: (): WorkbenchInjected => ({ tStats: ctx.locale.bind(STATS_NS), hooks: { workbench: source }, activate: (destination, pointerStartedOpen) => { activate(destination, pointerStartedOpen) }, selectView: bridge.selectView, returnParent: bridge.returnParent, closeAgents: bridge.closeAgents, focusAgents: bridge.focusAgents }),
+    inject: (): WorkbenchInjected => ({ resolvePreset, tStats: ctx.locale.bind(STATS_NS), hooks: { workbench: source }, activate: (destination, pointerStartedOpen) => { activate(destination, pointerStartedOpen) }, selectView: bridge.selectView, returnParent: bridge.returnParent, closeAgents: bridge.closeAgents, focusAgents: bridge.focusAgents }),
   }, WorkbenchAgents))
   ctx.slots.inject('shell.overlay', () => ctx.slots.register({
     name: 'shell.overlay',
     id: 'mobile-workbench-navigation',
     order: 20,
     locale: WORKBENCH_NS,
-    inject: (): WorkbenchInjected => ({ tStats: ctx.locale.bind(STATS_NS), hooks: { workbench: source }, activate: (destination, pointerStartedOpen) => { activate(destination, pointerStartedOpen) }, selectView: bridge.selectView, returnParent: bridge.returnParent, closeAgents: bridge.closeAgents, focusAgents: bridge.focusAgents }),
+    inject: (): WorkbenchInjected => ({ resolvePreset, tStats: ctx.locale.bind(STATS_NS), hooks: { workbench: source }, activate: (destination, pointerStartedOpen) => { activate(destination, pointerStartedOpen) }, selectView: bridge.selectView, returnParent: bridge.returnParent, closeAgents: bridge.closeAgents, focusAgents: bridge.focusAgents }),
   }, WorkbenchNav))
 }

@@ -57,3 +57,20 @@ pnpm exec playwright test                         # all three, one worker
 | token-meter/client | `SessionProjectionMap.tokenUsage`、`contextPressure` |
 
 projection 读取应保留未加载状态：contextPressure 的 pressureTokens、projectedTokens 和 contextWindow 均可缺省。开发包的未安装 Host-only peer 警告不等于这些浏览器 API 缺失；运行时业务仍由隔离 Host 提供。
+
+## 模式显示名验收
+
+[preset-display.spec.ts](<preset-display.spec.ts>) 通过原生模式选择器验证公开 roster 的内置／自定义名称、会话信息 Modal、中英和跨会话更新。自定义专题默认跳过；需要在启动前把以下声明合并到隔离 Home 的 profile patch（先初始化该 Home，不能修改真实 profile），再运行 `DSH_PRESET_CUSTOM_TEST=1 pnpm exec playwright test tests/browser/preset-display.spec.ts`：
+
+```yaml
+- insert:
+    - id: audit-named-preset
+      name: '@deepseek-ai/dsh-agent-preset'
+      config:
+        id: audit-custom-internal
+        name: 'Review & 审查'
+        description: 'Isolated preset display-name fixture'
+        plugins: []
+```
+
+测试只在隔离实例中通过原生 UI 创建会话，不改变真实用户预设。删除／不可用／无名称回退由 [preset-display.test.ts](<../preset-display.test.ts>) 覆盖；内置显示通过官方公开 display 工具和 Host 字典解析，自定义名称不做猜测翻译。

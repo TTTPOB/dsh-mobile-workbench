@@ -161,7 +161,7 @@ test('immutable preset is only a read-only sibling in the current Session menu',
   await expect(info).toBeVisible()
   await expect(info).toHaveAttribute('role', 'note')
   await expect(info).not.toHaveAttribute('tabindex')
-  await expect(info).toContainText('Preset (fixed for this session)')
+  await expect(info).toContainText('Mode: Standard mode')
   await expect(info.locator('button,[role="menuitem"]')).toHaveCount(0)
   expect(await info.evaluate(e => e.closest('[data-mobile-workbench-session-copy]') === null)).toBe(true)
   expect(await info.getAttribute('title')).toBe(await info.textContent())

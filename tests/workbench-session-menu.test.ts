@@ -79,7 +79,7 @@ test('native wrapper attachment reads latest ID, shows outcome, reinjects once a
     sessions: { list: { getSnapshot: () => ({ byId: { [current]: { id: current, retainedBy: { mainView: 1 } } } }), subscribe: (fn: () => void) => { sessionChanged = fn; return () => { sessionChanged = () => {} } } } },
     locale: { bind: (namespace: string) => (key: string) => namespace === 'mobileWorkbench' ? key : 'download', subscribe: () => () => {} },
   }
-  runInNewContext(`${executable}; installWorkbenchSessionMenu(ctx)`, {
+  runInNewContext(`${executable}; installWorkbenchSessionMenu(ctx, async () => "Display mode")`, {
     ctx, currentSessionIdOf, WORKBENCH_NS: 'mobileWorkbench', Element: Node,
     document: { body, createElement: () => new Node(), createElementNS: () => new Node(), querySelector: () => visibleTrigger ? trigger : null,
       addEventListener: (key: string, fn: (event: object) => void) => documentListeners.set(key, fn), removeEventListener: (key: string) => documentListeners.delete(key) },

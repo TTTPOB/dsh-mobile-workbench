@@ -34,7 +34,7 @@ test('DOM refresh never recounts descendants; store refresh never rescans presen
     installPageHistory: () => ({ enter() {}, sync() {}, dispose() {} }),
     resolveDestination: () => 'session',
     MOBILE_QUERY: '', WORKBENCH_NS: '',
-    installWorkbenchSessionMenu() {}, installWorkbenchUpdateNotice() {}, installManagement() {},
+    installWorkbenchSessionMenu() {}, installWorkbenchUpdateNotice() {}, installManagement() {}, createPresetDisplayResolver: () => async () => "Display mode",
     getFrame: () => ({}), panelSelectorOf: () => undefined,
     subagentCounts: () => { countsReads++; return count === undefined ? undefined : { agentCountsState: 'ready', agentTotalCount: count, agentActiveCount: 0 } },
     createHostBridge: (_ids: unknown, counts: () => object) => ({ evidence: () => { evidenceReads++; return { ...counts(), filesOpen: false } }, clear() {} }),

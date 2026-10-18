@@ -6,6 +6,8 @@
 import { mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises'
 import { dirname, join, posix } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { createRequire } from 'node:module'
+import ts from 'typescript'
 
 const root = dirname(fileURLToPath(new URL('../package.json', import.meta.url)))
 const buildDir = join(root, '.client-build')
@@ -34,6 +36,15 @@ async function collectSources(dir, { rel = '' } = {}) {
 }
 
 const sources = await collectSources(buildDir)
+// Inline the public, import-free display utility; it is not a Host module-table entry.
+const displaySpecifier = '@deepseek-ai/dsh-agent-preset-registry/display'
+const displayKey = 'shared/host-preset-display.js'
+const displaySource = await readFile(createRequire(import.meta.url).resolve(displaySpecifier), 'utf8')
+sources.set(displayKey, ts.transpileModule(displaySource, { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText)
+for (const [file, source] of sources) {
+  const relative = './' + posix.relative(posix.dirname(file), displayKey)
+  sources.set(file, source.replaceAll('require("' + displaySpecifier + '")', 'require("' + relative + '")'))
+}
 
 const REQUIRE_RE = /require\("(\.[^"]+\.js)"\)/g
 // Resolve a `./x.js` child relative to its parent module to the canonical

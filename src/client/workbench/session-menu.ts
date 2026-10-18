@@ -25,7 +25,7 @@ export function currentSessionPreset(snapshot: SessionListState): string {
 }
 
 /** Extend only the official, in-place Session Header menu; keep its native rows intact. */
-export function installWorkbenchSessionMenu(ctx: ClientContext): void {
+export function installWorkbenchSessionMenu(ctx: ClientContext, resolvePreset: (id: string | undefined) => Promise<string>): void {
   installMobileEffect(ctx, 'dsh-web-mobile: copy session id', () => {
     const t = ctx.locale.bind(WORKBENCH_NS)
     // The public raw-namespace overload reads the native download menu label.
@@ -36,6 +36,8 @@ export function installWorkbenchSessionMenu(ctx: ClientContext): void {
     let menu: HTMLElement | null = null
     let row: HTMLElement | null = null
     let presetInfo: HTMLElement | null = null
+    let presetRead: { menu: HTMLElement; session: string | undefined; preset: string; locale: string } | null = null
+    let presetName = '—'
     let removeClick: (() => void) | undefined
     let wrapper: Element | null = null
     const observer = new MutationObserver(() => schedule())
@@ -47,6 +49,7 @@ export function installWorkbenchSessionMenu(ctx: ClientContext): void {
       presetInfo?.remove()
       row = null
       presetInfo = null
+      presetRead = null
       menu = null
     }
     const ensure = (): void => {
@@ -63,12 +66,26 @@ export function installWorkbenchSessionMenu(ctx: ClientContext): void {
       const next = nextWrapper?.querySelector<HTMLElement>(':scope > [role="menu"]') ?? null
       const native = next ? Array.from(next.querySelectorAll<HTMLButtonElement>('button[role="menuitem"]')).find(item => item.textContent?.trim() === hostT('menu.download')) : undefined
       if (!next || !native) { release(); return }
-      const presetText = t('presetReadOnly') + ': ' + currentSessionPreset(ctx.sessions.list.getSnapshot())
+      const snapshot = ctx.sessions.list.getSnapshot()
+      const preset = currentSessionPreset(snapshot)
+      const session = currentSessionIdOf(snapshot)
+      const locale = t('modeUnavailable')
+      if (presetRead?.menu !== next || presetRead.session !== session || presetRead.preset !== preset || presetRead.locale !== locale) {
+        const read = { menu: next, session, preset, locale }
+        presetRead = read
+        presetName = '—'
+        void resolvePreset(preset).then(name => {
+          if (!disposed && presetRead === read) { presetName = name; schedule() }
+        })
+      }
+      const presetText = t('presetReadOnly', { name: presetName })
       if (menu === next && row && presetInfo && next.contains(row) && next.contains(presetInfo)) {
         if (presetInfo && presetInfo.textContent !== presetText) { presetInfo.textContent = presetText; presetInfo.setAttribute('title', presetText) }
         return
       }
-      release()
+      removeClick?.()
+      row?.remove()
+      presetInfo?.remove()
       menu = next
       const labelTemplate = native.querySelector<HTMLElement>('[class*="_itemLabel"]')
       row = document.createElement('div')

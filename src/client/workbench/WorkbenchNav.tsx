@@ -13,6 +13,7 @@ export interface WorkbenchSnapshot extends NavigationEvidence {
 }
 export interface WorkbenchInjected {
   tStats: StatsTranslate
+  resolvePreset: (id: string | undefined) => Promise<string>
   hooks: {
     workbench: {
       getSnapshot: () => WorkbenchSnapshot
@@ -63,7 +64,7 @@ export function WorkbenchNav({ useWorkbench, activate, t }: Props): ReactElement
 }
 
 /** Header content uses public session summaries and session-bound projections. */
-export function WorkbenchAgents({ useWorkbench, useSessions, useProjection, sessionId, activate, selectView, returnParent, closeAgents, focusAgents, t, tStats }: AgentProps): ReactElement | null {
+export function WorkbenchAgents({ useWorkbench, useSessions, useProjection, sessionId, activate, selectView, returnParent, closeAgents, focusAgents, resolvePreset, t, tStats }: AgentProps): ReactElement | null {
   const state = useWorkbench(value => value)
   const summary = useSessions(value => sessionId ? value.byId[sessionId] : undefined)
   const parent = useSessions(value => summary?.parentId ? value.byId[summary.parentId] : undefined)
@@ -73,8 +74,16 @@ export function WorkbenchAgents({ useWorkbench, useSessions, useProjection, sess
   const usage = useProjection('tokenUsage')
   const title = summary?.displayTitle ?? sessionId ?? ''
   const preset = (summary?.projectionValues as { agentPreset?: string } | undefined)?.agentPreset
-  const mode = preset ?? '—'
+  const unavailable = t('modeUnavailable')
+  const [resolvedMode, setResolvedMode] = useState<{ session: typeof sessionId; preset: typeof preset; locale: string; name: string }>()
+  const mode = resolvedMode?.session === sessionId && resolvedMode?.preset === preset && resolvedMode?.locale === unavailable ? resolvedMode.name : unavailable
   const [overlay, setOverlay] = useState<'info' | 'stats' | null>(null)
+  useEffect(() => {
+    if (overlay !== 'info') return
+    let active = true
+    void resolvePreset(preset).then(name => { if (active) setResolvedMode({ session: sessionId, preset, locale: unavailable, name }) })
+    return () => { active = false }
+  }, [overlay, sessionId, preset, unavailable, resolvePreset])
   const pointerStartedOpen = useRef(false)
   const statsRef = useRef<HTMLButtonElement>(null)
   const panelRef = useRef<HTMLDivElement>(null)
@@ -148,7 +157,7 @@ export function WorkbenchAgents({ useWorkbench, useSessions, useProjection, sess
     </div>
     <Modal open={overlay === 'info'} title={t('sessionInfo')} closeLabel={t('close')}
       className="mobile-workbench-session-info" onClose={() => { setOverlay(null) }}>
-      <p>{title}</p><p>{t('mode')}: {mode}</p>
+      <p>{title}</p><p>{t('presetReadOnly', { name: mode })}</p>
       <button type="button" data-modal-autofocus onClick={() => { setOverlay(null) }}>{t('close')}</button>
     </Modal>
     {statsOpen && createPortal(<MenuSurface ref={panelRef} id={panelId} role="dialog" aria-label={t('statistics')}
