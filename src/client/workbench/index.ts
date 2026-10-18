@@ -19,6 +19,8 @@ import { WorkbenchAgents, WorkbenchNav, type WorkbenchSnapshot, type WorkbenchIn
 import { WORKBENCH_NS, en, zh } from './locales.ts'
 import { installWorkbenchSessionMenu } from './session-menu.ts'
 import { installWorkbenchUpdateNotice } from './update-notice.tsx'
+import { installManagement } from './management.ts'
+import { WORKBENCH_MANAGEMENT_CSS } from '../styles/workbench-management.css.ts'
 
 /** Install reversible mobile navigation using the official shell overlay slot. */
 export function installWorkbench(ctx: ClientContext): void {
@@ -28,7 +30,7 @@ export function installWorkbench(ctx: ClientContext): void {
   ctx.effect(() => {
     const tag = document.createElement('style')
     tag.dataset.pluginCss = 'dsh-web-mobile/workbench.css'
-    tag.textContent = WORKBENCH_CSS + WORKBENCH_HEADER_CSS + WORKBENCH_TRAJECTORY_CSS
+    tag.textContent = WORKBENCH_CSS + WORKBENCH_HEADER_CSS + WORKBENCH_TRAJECTORY_CSS + WORKBENCH_MANAGEMENT_CSS
     document.head.appendChild(tag)
     return () => { tag.remove() }
   }, 'mobile-workbench: styles')
@@ -89,9 +91,12 @@ export function installWorkbench(ctx: ClientContext): void {
       return () => { stop?.(); refreshStatus() }
     }, 'mobile-workbench: live session status')
   })
+  let managementOpen = false
+  let refreshManagement = (): void => {}
   let activate = bridge.activate
+  installManagement(ctx, page => { bridge.activate(page) }, () => { activate('session') }, active => { managementOpen = active; refreshManagement() })
   ctx.effect(() => {
-    const history = installPageHistory(window, page => { bridge.activate(page) }, () => ctx.layout.panelInfo.getSnapshot().activePanelId !== null)
+    const history = installPageHistory(window, page => { bridge.activate(page) }, () => managementOpen || ctx.layout.panelInfo.getSnapshot().activePanelId !== null)
     activate = (destination, pointerStartedOpen) => {
       if (mq.matches && destination !== 'agents') history.enter(destination)
       bridge.activate(destination, pointerStartedOpen)
@@ -107,7 +112,7 @@ export function installWorkbench(ctx: ClientContext): void {
       }
       presentationDirty = false
       const next = mq.matches
-        ? { ...bridge.evidence(), mobile: true }
+        ? { ...bridge.evidence(), managementOpen, mobile: true }
         : { ...snapshot, mobile: false }
       if ([...Object.keys(snapshot), ...Object.keys(next)].some(key => next[key as keyof WorkbenchSnapshot] !== snapshot[key as keyof WorkbenchSnapshot])) {
         snapshot = next
@@ -126,6 +131,8 @@ export function installWorkbench(ctx: ClientContext): void {
     const schedule = (): void => {
       if (raf === undefined) raf = window.requestAnimationFrame(refresh)
     }
+    refreshManagement = schedule
+    const stopPanelInfo = ctx.layout.panelInfo.subscribe(schedule)
     const observer = new MutationObserver(records => {
       if (!mq.matches) return
       const changedPresentation = records.some(record => boundaryMutation(record, PRESENTATION_BOUNDARY, PRESENTATION_LOCAL))
@@ -158,6 +165,8 @@ export function installWorkbench(ctx: ClientContext): void {
     return () => {
       observer.disconnect()
       stopViews()
+      stopPanelInfo()
+      refreshManagement = () => {}
       stopSessions()
       refreshStatus = () => {}
       history.dispose()

@@ -1,6 +1,9 @@
 export const WORKBENCH_NS = 'mobileWorkbench'
 export const zh = {
   close: '关闭',
+  backToSessions: '返回会话列表',
+  backToPrevious: '返回上一页',
+  presetReadOnly: '预设（创建后不可修改）',
   viewSessionInfo: '查看会话信息',
   statistics: '会话统计',
   context: '上下文占用',
@@ -39,6 +42,9 @@ export const zh = {
 export type WorkbenchKey = keyof typeof zh
 export const en: Record<WorkbenchKey, string> = {
   close: 'Close',
+  backToSessions: 'Back to sessions',
+  backToPrevious: 'Back',
+  presetReadOnly: 'Preset (fixed for this session)',
   viewSessionInfo: 'View session information',
   statistics: 'Session statistics',
   context: 'Context occupancy',

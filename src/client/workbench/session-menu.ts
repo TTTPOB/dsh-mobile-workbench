@@ -1,4 +1,5 @@
 import type { Context as ClientContext } from '@deepseek-ai/cordis'
+import type { SessionListState } from '@deepseek-ai/dsh-api-session-controller/client'
 import { currentSessionIdOf } from '../core/sessions-compat.ts'
 import { installMobileEffect } from '../effects/phone-chrome.ts'
 import { WORKBENCH_NS } from './locales.ts'
@@ -16,6 +17,13 @@ export async function copyCurrentSessionId(snapshot: unknown, clipboard: Pick<Cl
   }
 }
 
+/** Read immutable preset metadata from the selected public summary. */
+export function currentSessionPreset(snapshot: SessionListState): string {
+  const id = currentSessionIdOf(snapshot)
+  const preset = id ? (snapshot.byId[id]?.projectionValues as { agentPreset?: string | null } | undefined)?.agentPreset : undefined
+  return typeof preset === 'string' ? preset : '—'
+}
+
 /** Extend only the official, in-place Session Header menu; keep its native rows intact. */
 export function installWorkbenchSessionMenu(ctx: ClientContext): void {
   installMobileEffect(ctx, 'dsh-web-mobile: copy session id', () => {
@@ -27,6 +35,7 @@ export function installWorkbenchSessionMenu(ctx: ClientContext): void {
     let disposed = false
     let menu: HTMLElement | null = null
     let row: HTMLElement | null = null
+    let presetInfo: HTMLElement | null = null
     let removeClick: (() => void) | undefined
     let wrapper: Element | null = null
     const observer = new MutationObserver(() => schedule())
@@ -35,7 +44,9 @@ export function installWorkbenchSessionMenu(ctx: ClientContext): void {
       removeClick?.()
       removeClick = undefined
       row?.remove()
+      presetInfo?.remove()
       row = null
+      presetInfo = null
       menu = null
     }
     const ensure = (): void => {
@@ -52,7 +63,11 @@ export function installWorkbenchSessionMenu(ctx: ClientContext): void {
       const next = nextWrapper?.querySelector<HTMLElement>(':scope > [role="menu"]') ?? null
       const native = next ? Array.from(next.querySelectorAll<HTMLButtonElement>('button[role="menuitem"]')).find(item => item.textContent?.trim() === hostT('menu.download')) : undefined
       if (!next || !native) { release(); return }
-      if (menu === next && row && next.contains(row)) return
+      const presetText = t('presetReadOnly') + ': ' + currentSessionPreset(ctx.sessions.list.getSnapshot())
+      if (menu === next && row && presetInfo && next.contains(row) && next.contains(presetInfo)) {
+        if (presetInfo && presetInfo.textContent !== presetText) { presetInfo.textContent = presetText; presetInfo.setAttribute('title', presetText) }
+        return
+      }
       release()
       menu = next
       const labelTemplate = native.querySelector<HTMLElement>('[class*="_itemLabel"]')
@@ -88,9 +103,14 @@ export function installWorkbenchSessionMenu(ctx: ClientContext): void {
       status.setAttribute('aria-live', 'polite')
       status.className = labelTemplate?.className ?? ''
       status.hidden = true
+      presetInfo = document.createElement('div')
+      presetInfo.setAttribute('data-mobile-workbench-session-preset', '')
+      presetInfo.setAttribute('role', 'note')
+      presetInfo.textContent = presetText
+      presetInfo.setAttribute('title', presetText)
       row.append(button, status)
       // Append to the native row's items container, not its React-owned row.
-      native.parentElement?.parentElement?.append(row)
+      native.parentElement?.parentElement?.append(row, presetInfo)
       let pending = false
       const onClick = async (): Promise<void> => {
         if (pending) return
@@ -122,6 +142,7 @@ export function installWorkbenchSessionMenu(ctx: ClientContext): void {
     document.addEventListener('click', onClick, true)
     document.addEventListener('keydown', onKey, true)
     const stopSessions = ctx.sessions.list.subscribe(schedule)
+    const stopLocale = ctx.locale.subscribe(schedule)
     schedule()
     return () => {
       disposed = true
@@ -129,6 +150,7 @@ export function installWorkbenchSessionMenu(ctx: ClientContext): void {
       document.removeEventListener('click', onClick, true)
       document.removeEventListener('keydown', onKey, true)
       stopSessions()
+      stopLocale()
       window.cancelAnimationFrame(frame)
       release()
     }

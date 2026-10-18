@@ -23,7 +23,7 @@ test('DOM refresh never recounts descendants; store refresh never rescans presen
     locale: { register() {} },
     get: () => statusAvailable ? ({ sessionStatus: { getSnapshot: () => new Map(), subscribe: (fn: () => void) => { statusChanged = fn; return () => {} } } }) : undefined,
     sessions: { list: { getSnapshot: () => ({}), subscribe: (fn: () => void) => { sessionsChanged = fn; return () => {} } } },
-    layout: {},
+    layout: { panelInfo: { subscribe: () => () => {} } },
     slots: { entriesOfSlot: () => [], inject() {}, subscribe: (_slot: string, fn: () => void) => { viewsChanged = fn; return () => {} } },
   }
   runInNewContext(`${executable}; installWorkbench(ctx)`, {
@@ -34,7 +34,7 @@ test('DOM refresh never recounts descendants; store refresh never rescans presen
     installPageHistory: () => ({ enter() {}, sync() {}, dispose() {} }),
     resolveDestination: () => 'session',
     MOBILE_QUERY: '', WORKBENCH_NS: '',
-    installWorkbenchSessionMenu() {}, installWorkbenchUpdateNotice() {},
+    installWorkbenchSessionMenu() {}, installWorkbenchUpdateNotice() {}, installManagement() {},
     getFrame: () => ({}), panelSelectorOf: () => undefined,
     subagentCounts: () => { countsReads++; return count === undefined ? undefined : { agentCountsState: 'ready', agentTotalCount: count, agentActiveCount: 0 } },
     createHostBridge: (_ids: unknown, counts: () => object) => ({ evidence: () => { evidenceReads++; return { ...counts(), filesOpen: false } }, clear() {} }),

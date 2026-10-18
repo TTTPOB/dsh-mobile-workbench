@@ -44,7 +44,7 @@ export function WorkbenchNav({ useWorkbench, activate, t }: Props): ReactElement
         const label = t(destination)
         return (
           <button key={destination} type="button" data-workbench-destination={destination}
-            aria-current={selected === destination ? 'page' : undefined}
+            aria-current={!state.managementOpen && selected === destination ? 'page' : undefined}
             aria-label={available ? label : label + ' · ' + t('unavailable')}
             title={available ? label : t('unavailable')} disabled={!available}
             onClick={() => { activate(destination) }}>
@@ -125,7 +125,6 @@ export function WorkbenchAgents({ useWorkbench, useSessions, useProjection, sess
           aria-selected={state.selectedView === view} disabled={view === 'chat' ? !state.hasChat : !state.hasTrajectory}
           onClick={() => { selectView(view) }}>{t(view)}</button>)}
       </div>
-      <span data-workbench-mode title={mode}>{t('mode')}: {mode}</span>
       <button type="button" data-mobile-workbench="agents" data-workbench-context-control
         aria-label={t('agentCatalog') + ' · ' + counts} title={state.agentTotalCount === 0 ? t('emptyAgents') : t('agentCatalog')}
         aria-haspopup="tree" aria-expanded={state.agentsOpen} disabled={!state.hasAgents || state.agentTotalCount === 0}

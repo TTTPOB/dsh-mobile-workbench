@@ -125,12 +125,15 @@ test('optional market overrides stay local and restore original inline styles on
 test('global central panels own one Back entry without intercepting modal history', async ({ page }, info) => {
   await fixtureSession(page)
   await sessions(page)
-  await page.getByRole('button', { name: 'Automation tasks', exact: true }).click()
+  if (info.project.name.startsWith('mobile')) {
+    await page.getByRole('button', { name: 'Account menu', exact: true }).click()
+    await page.getByRole('menuitem', { name: 'Automation tasks', exact: true }).click()
+  } else await page.getByRole('button', { name: 'Automation tasks', exact: true }).click()
   if (info.project.name.startsWith('mobile')) {
     await expect.poll(() => page.evaluate(() => history.state?.mobilePanelExit)).toBe(true)
     await page.evaluate(() => history.back())
     await expect.poll(() => page.evaluate(() => history.state?.mobilePanelExit)).not.toBe(true)
-    await expect(page.locator('[data-composer-input="true"]')).toBeVisible()
+    await expect(page.locator('html')).toHaveAttribute('data-mobile-workbench-page', 'sessions')
     await sessions(page)
     // Exercise the supported native Plugins fallback instead of the optional modal command.
     await page.evaluate(() => {
@@ -139,7 +142,7 @@ test('global central panels own one Back entry without intercepting modal histor
     })
     await expect.poll(() => page.evaluate(() => history.state?.mobilePanelExit)).toBe(true)
     await page.evaluate(() => history.back())
-    await expect(page.locator('[data-composer-input="true"]')).toBeVisible()
+    await expect(page.locator('html')).toHaveAttribute('data-mobile-workbench-page', 'sessions')
   } else {
     expect(await page.evaluate(() => history.state?.mobilePanelExit)).not.toBe(true)
   }

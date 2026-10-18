@@ -15,6 +15,8 @@
 | 原底部统计适配及后续主题消费者 | context meter 的稳定 data-context-meter 标记或渲染 slot | 当前隐藏整段 data-composer-dock，顶部通过公开 useProjection 重绘统计；stats-line effect 已删除，不再按百分比文本识别 meter。未来若需定制原生 meter，仍需稳定扩展点 |
 | [会话列表触控](<../../src/client/styles/layout.css.ts>)／[目录样式](<../../src/client/styles/workbench-header.css.ts>) | 行动作／目录 disclosure 的稳定 part 或 data 标记、最小触区 token | 优先 data-row-key、role 和所属区域；少量 class fragment 仅限区域内，视觉图标与触控盒分开 |
 
+| [管理菜单](<../../src/client/workbench/management-menu.ts>)／[管理呈现](<../../src/client/workbench/management.ts>) | settings.launcher 原生菜单 item slot、open observable 与管理 Modal 呈现标记；复杂 footer action 的显式菜单元数据 | 原生账户 anchor 只做手机 CSS 定位，限定其实际 portal 追加自有 panellist 行；设置／插件管理 Modal 由局部挂载观察标记，公开 layout.panelInfo 管理中央页面；复杂 footer 不隐藏、不自动转换 |
+
 ## 已可直接使用的契约
 
 - layout.panelInfo／selectPanel：全局 panel 状态和退出动作；panel-back 已使用订阅，不依赖 sidebar aria-current。

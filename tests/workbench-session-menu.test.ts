@@ -7,7 +7,7 @@ import { currentSessionIdOf } from '../src/client/core/sessions-compat.ts'
 
 const source = readFileSync(new URL('../src/client/workbench/session-menu.ts', import.meta.url), 'utf8')
 const executable = stripTypeScriptTypes(source.replace(/^import .*\n/gm, '').replaceAll('export function', 'function').replaceAll('export async function', 'async function'))
-const { copyCurrentSessionId } = runInNewContext(`${executable}; ({ copyCurrentSessionId })`, { currentSessionIdOf })
+const { copyCurrentSessionId, currentSessionPreset } = runInNewContext(`${executable}; ({ copyCurrentSessionId, currentSessionPreset })`, { currentSessionIdOf })
 
 test('copies the selected child ID and visibly reports unavailable/rejected clipboard as failure', async () => {
   const values: string[] = []
@@ -77,7 +77,7 @@ test('native wrapper attachment reads latest ID, shows outcome, reinjects once a
   let sessionChanged = () => {}
   const ctx = {
     sessions: { list: { getSnapshot: () => ({ byId: { [current]: { id: current, retainedBy: { mainView: 1 } } } }), subscribe: (fn: () => void) => { sessionChanged = fn; return () => { sessionChanged = () => {} } } } },
-    locale: { bind: (namespace: string) => (key: string) => namespace === 'mobileWorkbench' ? key : 'download' },
+    locale: { bind: (namespace: string) => (key: string) => namespace === 'mobileWorkbench' ? key : 'download', subscribe: () => () => {} },
   }
   runInNewContext(`${executable}; installWorkbenchSessionMenu(ctx)`, {
     ctx, currentSessionIdOf, WORKBENCH_NS: 'mobileWorkbench', Element: Node,
@@ -90,7 +90,12 @@ test('native wrapper attachment reads latest ID, shows outcome, reinjects once a
   })
   const flush = () => { const pending = [...frames.values()]; frames.clear(); pending.forEach(fn => fn()) }
   flush()
-  assert.equal(viewport.children.length, 2)
+  assert.equal(viewport.children.length, 3)
+  const info = viewport.children[2]
+  assert.equal(info.attrs.get('role'), 'note')
+  assert.equal(info.attrs.has('tabindex'), false)
+  assert.equal(info.listeners.size, 0)
+  assert.equal(info.parentElement, viewport)
   const owned = viewport.children[1]
   const [button, status] = owned.children
   assert.equal(button.attrs.get('role'), 'menuitem')
@@ -118,20 +123,20 @@ test('native wrapper attachment reads latest ID, shows outcome, reinjects once a
   assert.equal(button.attrs.get('aria-label'), 'copySessionId')
   assert.equal(button.disabled, false)
   mutate(); flush()
-  assert.equal(viewport.children.length, 2, 'same menu has exactly one added row')
+  assert.equal(viewport.children.length, 3, 'same menu has exactly one added row')
   visibleTrigger = false
   sessionChanged(); flush()
   assert.equal(viewport.children.length, 1, 'no header wrapper means no injection into an unrelated download menu')
   assert.equal(button.listeners.size, 0)
   visibleTrigger = true
   documentListeners.get('click')?.({ target: trigger }); flush()
-  assert.equal(viewport.children.length, 2)
+  assert.equal(viewport.children.length, 3)
   for (const key of ['Enter', 'ArrowDown']) {
     visibleTrigger = false
     mutate(); flush()
     visibleTrigger = true
     documentListeners.get('keydown')?.({ target: trigger, key }); flush()
-    assert.equal(viewport.children.length, 2, key + ' keeps native keyboard opening observable')
+    assert.equal(viewport.children.length, 3, key + ' keeps native keyboard opening observable')
   }
   const reopened = viewport.children[1].children[0]
   assert.equal(reopened.children[0].children[0].children[0].attrs.get('d'), copyPath)
@@ -150,4 +155,9 @@ test('mobile gating and native ownership need no copied nodes or independent key
   assert.match(source, /:scope > \[role="menu"\]/)
   assert.match(source, /currentSessionIdOf\(snapshot\)/)
   assert.doesNotMatch(source, /cloneNode|innerHTML|execCommand|location\.|dispatchEvent|preventDefault|stopPropagation/)
+})
+
+test('preset notes read only the selected public projection and keep missing values unknown', () => {
+  assert.equal(currentSessionPreset({ byId: { a: { id: 'a', retainedBy: { mainView: 1 }, projectionValues: { agentPreset: 'standard' } }, b: { id: 'b', retainedBy: {}, projectionValues: { agentPreset: 'other' } } } }), 'standard')
+  assert.equal(currentSessionPreset({ byId: { a: { id: 'a', retainedBy: { mainView: 1 }, projectionValues: {} } } }), '—')
 })

@@ -15,7 +15,10 @@ for (const destination of ['sessions', 'files'] as const) {
           if (name === 'Plugins') document.documentElement.removeAttribute('data-mobile-workbench-active')
           document.querySelector<HTMLButtonElement>('button[aria-label="' + name + '"]')!.click()
         }, panel)
-      } else await page.getByRole('button', { name: panel, exact: true }).click()
+      } else {
+        await page.getByRole('button', { name: 'Account menu', exact: true }).click()
+        await page.getByRole('menuitem', { name: panel, exact: true }).click()
+      }
       await expect.poll(() => page.evaluate(() => history.state?.mobilePanelExit)).toBe(true)
       await page.goBack()
       await expect.poll(() => page.evaluate(() => history.state?.mobilePanelExit)).not.toBe(true)

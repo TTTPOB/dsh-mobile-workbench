@@ -17,14 +17,14 @@ export const BASE_CSS = `@media (max-width: 1023px) and (pointer: coarse) {
     border-radius: var(--dsw-radius-panel) !important;
     animation: dsh-web-mobile-modal-enter var(--ds-transition-duration, .2s) var(--ds-ease-in-out, ease-in-out);
   }
-  ${SETTINGS} > :first-child {
+  ${SETTINGS} > nav {
     width: 100%;
     flex-direction: row !important;
     align-items: center;
     gap: 6px;
     padding: 10px 12px 8px;
   }
-  ${SETTINGS} > :first-child > :first-child { display: none !important; }
+  ${SETTINGS} > nav > :first-child { display: none !important; }
   ${SETTINGS} [class*="_navList"] {
     flex: 1 1 auto;
     min-width: 0;
@@ -42,8 +42,8 @@ export const BASE_CSS = `@media (max-width: 1023px) and (pointer: coarse) {
     padding: 6px 8px !important;
     font-size: 13px !important;
   }
-  ${SETTINGS} > :last-child { flex: 1 1 auto; min-height: 0; }
-  ${SETTINGS} > :last-child > [class*="_header"]:not([class*="_headerActions"]) {
+  ${SETTINGS} > [class*="_content"] { flex: 1 1 auto; min-height: 0; }
+  ${SETTINGS} > [class*="_content"] > [class*="_header"]:not([class*="_headerActions"]) {
     position: absolute;
     top: 10px;
     right: 12px;
@@ -52,15 +52,15 @@ export const BASE_CSS = `@media (max-width: 1023px) and (pointer: coarse) {
     height: 44px;
     min-height: 44px;
   }
-  ${SETTINGS} > :last-child > [class*="_header"] > :last-child {
+  ${SETTINGS} > [class*="_content"] > [class*="_header"] > :last-child {
     width: 44px;
     height: 44px;
     display: inline-flex !important;
     align-items: center;
     justify-content: center;
   }
-  ${SETTINGS} > :last-child > [class*="_header"] [class*="_actions"] { display: none !important; }
-  ${SETTINGS} > :last-child > :last-child { padding: 0 12px 24px; }
+  ${SETTINGS} > [class*="_content"] > [class*="_header"] [class*="_actions"] { display: none !important; }
+  ${SETTINGS} > [class*="_content"] > :last-child { padding: 0 12px 24px; }
   [aria-modal="true"] [class*="_tabs"],
   [role="dialog"][aria-modal="true"] [class*="_footer"] { flex-wrap: wrap !important; }
   [aria-modal="true"] details[class*="_customized"]:not([open]) > [class*="_customizedBody"] { display: none !important; }
