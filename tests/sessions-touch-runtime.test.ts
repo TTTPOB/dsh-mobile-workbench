@@ -71,7 +71,7 @@ function fixture(dsha = false, initialSession = 'old', rowKey = 'session:new') {
     get: () => undefined,
     layout: { toggleSidebar: () => { closed = !closed } },
     sessions: { list: {
-      getSnapshot: () => ({ current, byId: { old: { id: 'old' }, new: { id: 'new' } } }),
+      getSnapshot: () => ({ byId: { old: { id: 'old', retainedBy: { mainView: current === 'old' ? 1 : 0 } }, new: { id: 'new', retainedBy: { mainView: current === 'new' ? 1 : 0 } } } }),
       subscribe: (listener: () => void) => { storeListeners.add(listener); return () => { storeListeners.delete(listener) } },
     } },
   } as any)

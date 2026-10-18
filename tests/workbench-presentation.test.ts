@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
-import { createWorkbenchPresentation, workbenchStatLabel } from '../src/client/workbench/presentation.ts'
+import { createWorkbenchPresentation } from '../src/client/workbench/presentation.ts'
 import { WORKBENCH_CSS } from '../src/client/styles/workbench.css.ts'
 import { LAYOUT_CSS } from '../src/client/styles/layout.css.ts'
 import { WORKBENCH_HEADER_CSS } from '../src/client/styles/workbench-header.css.ts'
@@ -68,36 +68,6 @@ function fixture(t: { after: (fn: () => void) => void }) {
   return { header, root, scroll, split, body, count, countRoot, setMenus: (value: Node[]) => { menus = value }, setStats: (value: Node[]) => { stats = value } }
 }
 
-test('metric summaries preserve native values and leave unknown formats alone', () => {
-  assert.equal(workbenchStatLabel('2 轮 4 步 · 1913 tok/s'), '2 轮 · 4 步')
-  assert.equal(workbenchStatLabel('1.7K tok · 缓存命中 30%'), '1.7K tok')
-  assert.equal(workbenchStatLabel('2 turns 4 steps · 100 tok/s'), '2 turns · 4 steps')
-  assert.equal(workbenchStatLabel('unknown format'), null)
-})
-
-test('plain activity readings and usage buttons condense without changing host text or accessibility', t => {
-  const { setStats } = fixture(t)
-  const activity = new Node(), usage = new Node(), button = new Node()
-  const activityLabel = new Node(), usageLabel = new Node()
-  activity.textContent = '2 轮 4 步 · 100 tok/s'
-  button.setAttribute('aria-label', '1.7K tok · 缓存命中 30%')
-  usage.queries.set('button[aria-label]', button)
-  activity.queries.set('[class*="_label"]', activityLabel)
-  usage.queries.set('[class*="_label"]', usageLabel)
-  setStats([activity, usage])
-  const presentation = createWorkbenchPresentation()
-  presentation.update(['chat', 'trajectory'])
-  assert.equal(activityLabel.getAttribute('data-workbench-stat-label'), '2 轮 · 4 步')
-  assert.equal(usageLabel.getAttribute('data-workbench-stat-label'), '1.7K tok')
-  assert.equal(button.getAttribute('aria-label'), '1.7K tok · 缓存命中 30%')
-  assert.equal(activity.textContent, '2 轮 4 步 · 100 tok/s')
-  activity.textContent = '100 tok/s'
-  presentation.update(['chat', 'trajectory'])
-  assert.equal(activityLabel.hasAttribute('data-workbench-stat-label'), false, 'compact speed stays native')
-  presentation.clear()
-  assert.equal(usageLabel.attributes.size, 0)
-})
-
 test('remove duplicate native tabs only when the workbench represents every view', t => {
   const { header } = fixture(t)
   const presentation = createWorkbenchPresentation()
@@ -105,23 +75,6 @@ test('remove duplicate native tabs only when the workbench represents every view
   assert.equal(header.hasAttribute('data-workbench-tabs-owned'), true)
   presentation.update(['chat', 'trajectory', 'plugin-view'])
   assert.equal(header.hasAttribute('data-workbench-tabs-owned'), false)
-})
-
-test('child header uses nearest native ancestor and clears its markers on return', t => {
-  const { header } = fixture(t)
-  const grandparent = new Node()
-  grandparent.parentElement = new Node()
-  const parent = new Node()
-  parent.parentElement = new Node()
-  header.children = [grandparent, parent]
-  const presentation = createWorkbenchPresentation()
-  presentation.update(['chat', 'trajectory'])
-  assert.equal(parent.hasAttribute('data-workbench-parent'), true)
-  assert.equal(grandparent.parentElement.hasAttribute('data-workbench-ancestor'), true)
-  header.children = []
-  presentation.update(['chat', 'trajectory'])
-  assert.equal(parent.hasAttribute('data-workbench-parent'), false)
-  assert.equal(header.hasAttribute('data-workbench-child'), false)
 })
 
 test('native catalog and inspector markers are reversible without changing host attributes', t => {
@@ -172,15 +125,6 @@ test('catalog title owns a nonshrinking row outside the scrolling native tree', 
   assert.doesNotMatch(WORKBENCH_HEADER_CSS, /agent-menu\]::before/)
 })
 
-test('jobs and more have separate touch targets and matching title reservations', () => {
-  assert.match(WORKBENCH_HEADER_CSS, /--mobile-workbench-header-utilities-width: 44px/)
-  assert.match(WORKBENCH_HEADER_CSS, /:not\(\[aria-haspopup\]\) > \[class\*="_count"\][\s\S]*?--mobile-workbench-header-utilities-width: 96px/)
-  assert.match(WORKBENCH_HEADER_CSS, /padding: 0 var\(--mobile-workbench-header-utilities-width\) 0 0 !important/)
-  assert.match(WORKBENCH_HEADER_CSS, /right: 60px !important;[\s\S]*?width: 44px !important/)
-  assert.doesNotMatch(WORKBENCH_HEADER_CSS, /QsffPG/)
-  assert.match(WORKBENCH_HEADER_CSS, /button\[data-mobile-workbench="agents"\]\[aria-expanded\][\s\S]*?min-height: 44px !important/)
-})
-
 test('opening or changing inspector selection reveals once inside the native vertical scrollport', t => {
   const { scroll, split } = fixture(t)
   const row = new Node()
@@ -227,92 +171,9 @@ test('native fullscreen file panels subtract navigation height once from the vie
   assert.match(panel, /padding-top: env\(safe-area-inset-top, 0px\)/)
 })
 
-test('title always opens information even when a native descendant catalog exists', t => {
-  const { header, count, body, setMenus } = fixture(t)
-  const title = new Node()
-  title.textContent = 'Current session title'
-  title.parentElement = header
-  count.textContent = 'Standard mode'
-  header.queries.set('span[class*="_crumbCurrent"], [class*="_crumbSeg"]:last-child span[class*="_switcherTitle"]', title)
-  const menu = new Node()
-  const tree = new Node()
-  tree.parentElement = menu
-  setMenus([tree])
-  const presentation = createWorkbenchPresentation()
-  presentation.update(['chat', 'trajectory'])
-  presentation.openInfo()
-  title.listeners.get('click')?.(new Event('click'))
-  assert.equal(body.children.length, 1)
-  assert.equal(body.children[0].shown, true)
-  assert.equal(menu.children[0].children[0].textContent, 'Current session title')
-  assert.equal(menu.children[0].children[1].textContent, 'Standard mode')
-  assert.equal(tree.parentElement, menu)
-  presentation.clear()
-  assert.equal(title.listeners.size, 0)
-})
-
-test('a leaf title retains its information dialog independently of catalog availability', t => {
-  const { header, body } = fixture(t)
-  const title = new Node()
-  title.textContent = 'Session without children'
-  title.parentElement = header
-  header.queries.set('span[class*="_crumbCurrent"], [class*="_crumbSeg"]:last-child span[class*="_switcherTitle"]', title)
-  const presentation = createWorkbenchPresentation()
-  presentation.update(['chat', 'trajectory'])
-  presentation.openInfo()
-  assert.equal(body.children.length, 1)
-  assert.equal(body.children[0].shown, true)
-  assert.equal(body.children[0].children[1].textContent, title.textContent)
-  presentation.clear()
-  assert.equal(body.children.length, 0)
-})
-
 test('bottom Plugins and Settings controls have one 44px baseline without trigger-row margins', () => {
   assert.match(WORKBENCH_CSS, /\[class\*="_settingsArea"\] \[class\*="_triggerRow"\] \{ margin: 0 !important; width: 100% !important/)
   assert.match(WORKBENCH_CSS, /button\[class\*="_panelRow"\],[\s\S]*?button\[class\*="_trigger"\] \{[\s\S]*?height: 44px !important;[\s\S]*?padding: 0 8px !important/)
-})
-
-test('root directory stays hidden while group follows mode and parent return remains available', () => {
-  assert.match(WORKBENCH_HEADER_CSS, /\[data-mobile-nav="toggle"\],[\s\S]*?display: none !important/)
-  assert.doesNotMatch(WORKBENCH_HEADER_CSS, /button\[data-mobile-nav="toggle"\],\s*[^{}]*button\[data-workbench-parent\] \{[^}]*display: flex !important/)
-  assert.match(WORKBENCH_HEADER_CSS, /button\[data-mobile-workbench="agents"\]\[aria-expanded\][\s\S]*?order: 1;/)
-  assert.doesNotMatch(WORKBENCH_HEADER_CSS, /padding-left: 44px/)
-  assert.match(WORKBENCH_HEADER_CSS, /\[data-mobile-workbench="views"\] \{[^}]*order: 2/)
-  assert.match(WORKBENCH_HEADER_CSS, /\[data-mobile-workbench="parent"\] \{[^}]*order: 3/)
-})
-
-test('Jobs pressed and expanded feedback is scoped to its native trigger, not the popup', () => {
-  assert.match(WORKBENCH_HEADER_CSS, /> button\[aria-expanded="true"\] \{[^}]*background: var\(--dsw-alias-interactive-bg-hover\)/)
-  assert.match(WORKBENCH_HEADER_CSS, /> button:active \{[^}]*background: var\(--dsw-alias-interactive-bg-active\)/)
-  assert.doesNotMatch(WORKBENCH_CSS, /\[class\*="_triggerRow"\] > button\[class\*="_trigger"\]/)
-  assert.match(WORKBENCH_CSS, /\[class\*="_triggerRow"\] button\[class\*="_trigger"\] \{[^}]*height: 44px !important/)
-})
-
-test('current-title sibling switcher becomes information-only and restores native metadata/listeners', t => {
-  const { header, body } = fixture(t)
-  const title = new Node()
-  title.textContent = 'Child title'
-  const switcher = new Node()
-  switcher.setAttribute('class', 'native_switcherTrigger')
-  switcher.setAttribute('aria-haspopup', 'tree')
-  switcher.setAttribute('aria-expanded', 'false')
-  title.parentElement = switcher
-  title.nearest.set('header', header)
-  header.queries.set('span[class*="_crumbCurrent"], [class*="_crumbSeg"]:last-child span[class*="_switcherTitle"]', title)
-  const presentation = createWorkbenchPresentation()
-  presentation.update(['chat', 'trajectory'])
-  assert.equal(switcher.getAttribute('aria-haspopup'), 'dialog')
-  let stopped = 0
-  switcher.listeners.get('mouseover')?.({ stopPropagation: () => { stopped++ } } as Event)
-  switcher.listeners.get('keydown')?.({ key: 'ArrowDown', stopPropagation: () => { stopped++ } } as KeyboardEvent)
-  assert.equal(stopped, 2)
-  assert.equal(body.children.length, 0, 'hover/ArrowDown does not open either sibling catalog or info')
-  switcher.listeners.get('click')?.(new Event('click'))
-  assert.equal(body.children[0].shown, true)
-  presentation.clear()
-  assert.equal(switcher.listeners.size, 0)
-  assert.equal(switcher.getAttribute('aria-haspopup'), 'tree')
-  assert.equal(switcher.getAttribute('aria-expanded'), 'false')
 })
 
 test('three pages fade only their content, reduced motion skips it, and Workspace collapse alone is hidden', () => {

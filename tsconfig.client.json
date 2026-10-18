@@ -323,6 +323,15 @@
       ],
       "@deepseek-ai/dsh-client-shortcuts/protocol": [
         "./node_modules/@deepseek-ai/dsh-client-shortcuts/lib/types/protocol.d.ts"
+      ],
+      "@deepseek-ai/dsh-session-stats/client": [
+        "./node_modules/@deepseek-ai/dsh-session-stats/lib/types/client.d.ts"
+      ],
+      "@deepseek-ai/dsh-token-meter/client": [
+        "./node_modules/@deepseek-ai/dsh-token-meter/lib/types/client.d.ts"
+      ],
+      "@deepseek-ai/dsh-client-ui-workspace/client": [
+        "./node_modules/@deepseek-ai/dsh-client-ui-workspace/lib/types/client/index.d.ts"
       ]
     },
     "allowImportingTsExtensions": true,

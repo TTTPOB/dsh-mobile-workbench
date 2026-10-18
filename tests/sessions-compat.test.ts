@@ -1,4 +1,4 @@
-// Released retained-main-view state with the older development snapshot fallback.
+// Only released retained-main-view state selects the current session.
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
@@ -9,8 +9,8 @@ import { currentSessionIdOf } from '../src/client/core/sessions-compat.ts'
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..')
 const TOUCH = readFileSync(join(ROOT, 'src/client/effects/sessions-touch.ts'), 'utf8')
 
-test('currentSessionIdOf supports the older development snapshot fallback', () => {
-  assert.equal(currentSessionIdOf({ current: 's1', byId: {} }), 's1')
+test('currentSessionIdOf does not accept the removed development snapshot field', () => {
+  assert.equal(currentSessionIdOf({ current: 's1', byId: {} }), undefined)
 })
 
 test('currentSessionIdOf reads the released retainedBy.mainView selection', () => {

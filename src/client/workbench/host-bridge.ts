@@ -1,3 +1,4 @@
+import type { SessionId } from '@deepseek-ai/dsh-session/types'
 import { getFrame } from '../effects/phone-chrome.ts'
 import { HOST_FILES_CLOSER, HOST_FILES_OPENER, openFilesPanel } from '../components/open-files-panel.ts'
 import { viewIndex, type NavigationEvidence, type WorkbenchDestination, type WorkbenchView } from './navigation.ts'
@@ -8,15 +9,31 @@ export function createHostBridge(
   agentCounts: () => Pick<NavigationEvidence, 'agentActiveCount' | 'agentTotalCount' | 'agentCountsState'> = () => ({}),
   closeDrawer: () => void = () => {},
   openSessions: () => void = () => {},
-  conversation: { show: () => void; hasSession: () => boolean } = { show: () => {}, hasSession: () => true },
+  conversation: { show: () => void; hasSession: () => boolean; parentId?: () => SessionId | undefined; openSession?: (id: SessionId) => void } = { show: () => {}, hasSession: () => true },
 ) {
   let pendingFrame: number | undefined
+  let focusObserver: MutationObserver | undefined
+  const ownedTrigger = (): HTMLButtonElement | null => document.querySelector('[data-mobile-workbench="agents"]')
+  const focusAgents = (): void => {
+    focusObserver?.disconnect()
+    const focus = (): boolean => {
+      const item = document.querySelector<HTMLElement>('[role="tree"][class*="_menuBody"] [role="treeitem"]:not([aria-disabled="true"])')
+      if (!item) return false
+      item.focus({ preventScroll: true })
+      focusObserver?.disconnect()
+      return true
+    }
+    if (focus()) return
+    focusObserver = new MutationObserver(() => { focus() })
+    focusObserver.observe(document.body, { childList: true, subtree: true })
+  }
   const clear = (): void => {
     if (pendingFrame !== undefined) window.cancelAnimationFrame(pendingFrame)
     pendingFrame = undefined
+    focusObserver?.disconnect()
   }
   const header = (): HTMLElement | null => getFrame()?.querySelector('header:has([role="tablist"]), header:has(button[aria-haspopup="tree"])') ?? null
-  const tabs = (): HTMLButtonElement[] => Array.from(header()?.querySelectorAll<HTMLButtonElement>('[role="tablist"] > button[role="tab"]') ?? [])
+  const tabs = (): HTMLButtonElement[] => Array.from(header()?.querySelectorAll<HTMLButtonElement>('[data-conversation-tabs] > button[role="tab"]') ?? [])
   const agentTrigger = (): HTMLButtonElement | null => {
     const buttons = Array.from(header()?.querySelectorAll<HTMLButtonElement>('button[aria-haspopup="tree"]:not([class*="_switcherTrigger"]):not([data-mobile-workbench="agents"])') ?? [])
     // Own count only; switchers are rooted at the parent and include siblings.
@@ -37,7 +54,7 @@ export function createHostBridge(
       sessionsOpen: getFrame() !== null && getFrame()?.hasAttribute('data-sidebar-collapsed') === false,
       hasSessions: getFrame() !== null,
       hasSessionPage: getFrame() !== null,
-      hasParent: header()?.querySelector('[data-workbench-parent]') != null,
+      hasParent: conversation.parentId?.() !== undefined,
       selectedView: ids.length === buttons.length ? ids[selected] : undefined,
       filesOpen: filesOpen(),
       agentsOpen: trigger?.getAttribute('aria-expanded') === 'true',
@@ -51,17 +68,21 @@ export function createHostBridge(
   const closeFiles = (): void => {
     if (officialFilesOpen()) document.querySelector<HTMLButtonElement>(HOST_FILES_CLOSER)?.click()
   }
-  const closeAgents = (): void => {
+  const closeAgents = (restoreFocus = true): void => {
+    focusObserver?.disconnect()
     if (agentTrigger()?.getAttribute('aria-expanded') !== 'true') return
-    // Official catalog Escape handling owns close and focus restoration.
+    const previous = document.activeElement
     document.querySelector('[role="tree"][class*="_menuBody"]')?.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))
+    if (restoreFocus) ownedTrigger()?.focus({ preventScroll: true })
+    else if (previous instanceof HTMLElement) previous.focus({ preventScroll: true })
   }
   const selectView = (view: WorkbenchView): void => {
     const buttons = tabs()
     buttons[viewIndex(viewIds(), view, buttons.length)]?.click()
   }
   const returnParent = (): void => {
-    header()?.querySelector<HTMLButtonElement>('[data-workbench-parent]')?.click()
+    const id = conversation.parentId?.()
+    if (id) conversation.openSession?.(id)
   }
   const activate = (destination: WorkbenchDestination, pointerStartedOpen = false): void => {
     clear()
@@ -94,5 +115,5 @@ export function createHostBridge(
     if (destination === 'session' || header()) enter()
     else pendingFrame = window.requestAnimationFrame(() => { pendingFrame = undefined; enter() })
   }
-  return { evidence, activate, selectView, returnParent, clear }
+  return { evidence, activate, selectView, returnParent, closeAgents, focusAgents, clear }
 }

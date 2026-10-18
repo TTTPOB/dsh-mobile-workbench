@@ -45,6 +45,26 @@ export const LAYOUT_CSS = `@media (max-width: 1023px) and (pointer: coarse) {
     content-visibility: auto;
     contain-intrinsic-size: auto 600px;
   }
+  [data-workbench-agent-menu] :is([class*="_disclosure"], [class*="_disclosureSpace"], [class*="_aside"]) {
+    width: 44px !important;
+    min-width: 44px !important;
+    height: 44px !important;
+    flex: 0 0 44px !important;
+    box-sizing: border-box;
+  }
+  [data-workbench-agent-menu] :is([class*="_disclosure"], [class*="_sidebarButton"]) svg { width: 12px; height: 12px; }
+  [data-workbench-agent-menu] [class*="_clickarea"] { margin-left: 0 !important; }
+  [data-mobile-nav="frame"] [data-row-key^="session:"] { min-height: 44px !important; }
+  /* Keep destructive inline actions in the native More menu on touch screens. */
+  [data-mobile-nav="frame"] [data-row-key^="session:"] [data-slot="sidebar.workspaces.session.row.action"] { display: none !important; }
+  [data-mobile-nav="frame"] [data-row-key^="session:"] [class*="_rowActions"] button {
+    width: 44px !important;
+    min-width: 44px !important;
+    height: 44px !important;
+    min-height: 44px !important;
+    padding: 0 !important;
+  }
+  [data-mobile-nav="frame"] [data-row-key^="session:"] [class*="_rowActions"] button svg { width: 16px; height: 16px; }
   [data-conversation-scroll] {
     scrollbar-gutter: auto !important;
     scroll-padding-bottom: 24px;

@@ -1,4 +1,8 @@
-import { useRef } from 'react'
+import { useEffect, useId, useRef, useState, type ReactElement } from 'react'
+import { createPortal } from 'react-dom'
+import { MenuSurface, Modal, useAnchoredPosition } from '@deepseek-ai/dsh-client-ui-primitives'
+import type {} from '@deepseek-ai/dsh-client-ui-session/client'
+import { contextPercent, pressureLabel, statNumber } from './stats.ts'
 import type { InjectFace, PropsLocale, PropsRuntime } from '@deepseek-ai/dsh-client-ui-slots'
 import { destinationAvailable, resolveDestination, type NavigationEvidence, type WorkbenchDestination, type WorkbenchView } from './navigation.ts'
 
@@ -15,6 +19,8 @@ export interface WorkbenchInjected {
   activate: (destination: WorkbenchDestination, pointerStartedOpen?: boolean) => void
   selectView: (view: WorkbenchView) => void
   returnParent: () => void
+  closeAgents: (restoreFocus?: boolean) => void
+  focusAgents: () => void
 }
 type Props = PropsRuntime<'shell.overlay'> & InjectFace<WorkbenchInjected> & PropsLocale<'mobileWorkbench'>
 type AgentProps = PropsRuntime<'conversation.session.header.actions'> & InjectFace<WorkbenchInjected> & PropsLocale<'mobileWorkbench'>
@@ -27,7 +33,7 @@ const paths: Record<Exclude<WorkbenchDestination, 'agents'>, string> = {
 }
 
 /** Render page navigation without owning the native page trees. */
-export function WorkbenchNav({ useWorkbench, activate, t }: Props) {
+export function WorkbenchNav({ useWorkbench, activate, t }: Props): ReactElement | null {
   const state = useWorkbench(value => value)
   if (!state.mobile) return null
   const selected = resolveDestination(state)
@@ -53,39 +59,104 @@ export function WorkbenchNav({ useWorkbench, activate, t }: Props) {
   )
 }
 
-/** Independent descendant catalog, native view selection, and direct-parent return. */
-export function WorkbenchAgents({ useWorkbench, activate, selectView, returnParent, t }: AgentProps) {
+/** Header content uses public session summaries and session-bound projections. */
+export function WorkbenchAgents({ useWorkbench, useSessions, useProjection, sessionId, activate, selectView, returnParent, closeAgents, focusAgents, t }: AgentProps): ReactElement | null {
   const state = useWorkbench(value => value)
+  const summary = useSessions(value => sessionId ? value.byId[sessionId] : undefined)
+  const parent = useSessions(value => summary?.parentId ? value.byId[summary.parentId] : undefined)
+  const pressure = useProjection('contextPressure')
+  const breakdown = useProjection('contextBreakdown')
+  const activity = useProjection('sessionStats')
+  const usage = useProjection('tokenUsage')
+  const title = summary?.displayTitle ?? sessionId ?? ''
+  const preset = (summary?.projectionValues as { agentPreset?: string } | undefined)?.agentPreset
+  const mode = preset ?? '—'
+  const [overlay, setOverlay] = useState<'info' | 'stats' | null>(null)
   const pointerStartedOpen = useRef(false)
+  const statsRef = useRef<HTMLButtonElement>(null)
+  const panelRef = useRef<HTMLDivElement>(null)
+  const panelId = useId()
+  const statsOpen = overlay === 'stats' && state.mobile
+  const position = useAnchoredPosition({ open: statsOpen, anchorRef: statsRef, panelRef, align: 'end', gap: 4, margin: 12 })
+  const closeStats = (): void => { setOverlay(null); statsRef.current?.focus({ preventScroll: true }) }
+  useEffect(() => { setOverlay(null) }, [sessionId, state.mobile])
+  useEffect(() => { if (state.agentsOpen) setOverlay(null) }, [state.agentsOpen])
+  useEffect(() => {
+    if (!statsOpen) return
+    const outside = (event: PointerEvent): void => {
+      if (event.target instanceof Node && !panelRef.current?.contains(event.target) && !statsRef.current?.contains(event.target)) { event.preventDefault(); closeStats() }
+    }
+    const escape = (event: KeyboardEvent): void => {
+      if (event.key === 'Escape') { event.preventDefault(); event.stopImmediatePropagation(); closeStats() }
+    }
+    document.addEventListener('pointerdown', outside, true)
+    document.addEventListener('keydown', escape, true)
+    return () => {
+      document.removeEventListener('pointerdown', outside, true)
+      document.removeEventListener('keydown', escape, true)
+    }
+  }, [statsOpen])
   if (!state.mobile) return null
   const counts = state.agentCountsState === 'ready'
     ? state.agentActiveCount + '/' + state.agentTotalCount
     : t(state.agentCountsState === 'unavailable' ? 'unavailable' : 'loading')
-  return (
-    <>
+  const percent = contextPercent(pressure)
+  const rows = (items: [string, number | undefined][]) => <dl>{items.map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{statNumber(value)}</dd></div>)}</dl>
+  return <>
+    <div data-workbench-header-main>
+      {summary?.parentId && <button type="button" data-mobile-workbench="parent" data-workbench-context-control
+        aria-label={t('parentSession') + ' · ' + (parent?.displayTitle ?? summary.parentId)} onClick={returnParent}>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden="true"><path d="m10 5-7 7 7 7M3 12h18" /></svg>
+      </button>}
+      <button type="button" data-workbench-title-info data-workbench-context-control
+        aria-label={title + ' · ' + t('viewSessionInfo')} aria-haspopup="dialog" aria-expanded={overlay === 'info'}
+        onClick={event => { event.currentTarget.focus({ preventScroll: true }); closeAgents(false); setOverlay('info') }}><span>{title}</span></button>
+      <button ref={statsRef} type="button" data-mobile-workbench="stats" data-workbench-context-control
+        aria-label={t('statistics') + ' · ' + pressureLabel(pressure)} aria-haspopup="dialog" aria-expanded={statsOpen} aria-controls={statsOpen ? panelId : undefined}
+        onClick={() => { if (statsOpen) closeStats(); else { closeAgents(false); setOverlay('stats') } }}>
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="9" stroke="currentColor" opacity=".2" strokeWidth="2" />
+          {percent !== undefined && <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="2" pathLength="100" strokeDasharray={Math.min(100, Math.max(0, percent)) + ' 100'} transform="rotate(-90 12 12)" />}</svg>
+        <span>{pressureLabel(pressure)}</span>
+      </button>
+    </div>
+    <div data-workbench-header-secondary>
+      <div data-mobile-workbench="views" role="tablist" aria-label={t('sessionView')}>
+        {views.map(view => <button key={view} type="button" role="tab" data-workbench-context-control data-workbench-view={view}
+          aria-selected={state.selectedView === view} disabled={view === 'chat' ? !state.hasChat : !state.hasTrajectory}
+          onClick={() => { selectView(view) }}>{t(view)}</button>)}
+      </div>
+      <span data-workbench-mode title={mode}>{t('mode')}: {mode}</span>
       <button type="button" data-mobile-workbench="agents" data-workbench-context-control
         aria-label={t('agentCatalog') + ' · ' + counts} title={state.agentTotalCount === 0 ? t('emptyAgents') : t('agentCatalog')}
         aria-haspopup="tree" aria-expanded={state.agentsOpen} disabled={!state.hasAgents || state.agentTotalCount === 0}
+        onMouseDown={event => { event.preventDefault() }}
         onPointerDownCapture={() => { pointerStartedOpen.current = state.agentsOpen }}
         onPointerCancel={() => { pointerStartedOpen.current = false }}
-        onClick={event => { activate('agents', event.detail > 0 && pointerStartedOpen.current); pointerStartedOpen.current = false }}>
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-          <path d="M8 9a3 3 0 1 0 0-6 3 3 0 0 0 0 6Zm8 2a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM2 20v-3a6 6 0 0 1 12 0v3m1-6a5 5 0 0 1 7 4v2" />
-        </svg>
-        <small data-workbench-count data-workbench-running={(state.agentActiveCount ?? 0) > 0 ? 'true' : undefined}>{counts}</small>
+        onKeyDown={event => {
+          if (event.key === 'Escape') { event.preventDefault(); closeAgents(); return }
+          if (['Enter', ' ', 'ArrowDown'].includes(event.key)) {
+            event.preventDefault(); setOverlay(null)
+            if (!state.agentsOpen) activate('agents')
+            focusAgents()
+          }
+        }}
+        onClick={event => { setOverlay(null); activate('agents', event.detail > 0 && pointerStartedOpen.current); pointerStartedOpen.current = false }}>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M8 9a3 3 0 1 0 0-6 3 3 0 0 0 0 6Zm8 2a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM2 20v-3a6 6 0 0 1 12 0v3m1-6a5 5 0 0 1 7 4v2" /></svg>
+        <small data-workbench-count>{counts}</small>
       </button>
-      <div data-mobile-workbench="views" role="group" aria-label={t('sessionView')}>
-        {views.map(view => (
-          <button key={view} type="button" data-workbench-context-control data-workbench-view={view}
-            aria-pressed={state.selectedView === view} disabled={view === 'chat' ? !state.hasChat : !state.hasTrajectory}
-            onClick={() => { selectView(view) }}>{t(view)}</button>
-        ))}
-      </div>
-      {state.hasParent && (
-        <button type="button" data-mobile-workbench="parent" data-workbench-context-control onClick={returnParent}>
-          {t('parentSession')}
-        </button>
-      )}
-    </>
-  )
+    </div>
+    <Modal open={overlay === 'info'} title={t('sessionInfo')} closeLabel={t('close')}
+      className="mobile-workbench-session-info" onClose={() => { setOverlay(null) }}>
+      <p>{title}</p><p>{t('mode')}: {mode}</p>
+      <button type="button" data-modal-autofocus onClick={() => { setOverlay(null) }}>{t('close')}</button>
+    </Modal>
+    {statsOpen && createPortal(<MenuSurface ref={panelRef} id={panelId} role="dialog" aria-label={t('statistics')}
+      data-workbench-stats-panel style={{ top: position?.top, right: 12, visibility: position ? 'visible' : 'hidden' }}>
+      <h2>{t('context')} <span>{pressureLabel(pressure)}</span></h2>
+      {rows([[t('context'), pressure?.projectedTokens ?? pressure?.pressureTokens], [t('capacity'), pressure?.contextWindow],
+        ...(breakdown ? [[t('system'), breakdown.systemTokens], [t('tools'), breakdown.toolsTokens], [t('messages'), breakdown.messageTokens]] as [string, number][] : [])])}
+      <h2>{t('activity')}</h2>{rows([[t('turns'), activity?.turns], [t('steps'), activity?.steps]])}
+      <h2>{t('tokens')}</h2>{rows([[t('input'), usage?.uncachedInputTokens], [t('output'), usage?.outputTokens], [t('cacheRead'), usage?.cacheReadTokens], [t('cacheWrite'), usage?.cacheWriteTokens]])}
+    </MenuSurface>, document.body)}
+  </>
 }

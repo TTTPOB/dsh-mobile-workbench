@@ -68,9 +68,9 @@ export const WORKBENCH_CSS = /* css */ `
     background: var(--dsw-static-deepseek-500);
     flex: none;
   }
-  [data-mobile-workbench="navigation"] button > span { white-space: nowrap; font-size: 10px; }
+  [data-mobile-workbench="navigation"] button > span { white-space: nowrap; font-size: 12px; line-height: 16px; }
   [data-mobile-workbench="navigation"] button[aria-current="page"] {
-    color: var(--dsw-static-deepseek-500);
+    color: var(--dsw-alias-label-primary);
     background: var(--dsw-alias-interactive-bg-hover);
     font-weight: 600;
   }
@@ -78,25 +78,6 @@ export const WORKBENCH_CSS = /* css */ `
   [data-mobile-workbench="navigation"] button:focus-visible {
     outline: 2px solid var(--dsw-static-deepseek-500);
     outline-offset: -2px;
-  }
-  /* Secondary metrics are summaries; tapping opens the unchanged native details. */
-  html[data-mobile-workbench-active="true"] [data-composer-stat],
-  html[data-mobile-workbench-active="true"] [data-composer-stat] > :is(button, span) {
-    min-height: 28px !important;
-    height: 28px !important;
-    align-items: center;
-  }
-  html[data-mobile-workbench-active="true"] [data-composer-stat] [data-workbench-stat-label] {
-    font-size: 0 !important;
-    white-space: nowrap !important;
-    overflow: visible !important;
-    text-overflow: clip !important;
-  }
-  [data-workbench-stat-label] > span { display: none; }
-  [data-workbench-stat-label]::after {
-    content: attr(data-workbench-stat-label);
-    font-size: 11px;
-    line-height: 16px;
   }
   /* Native sessions content fills the page; bottom tools share one grid row. */
   html[data-mobile-workbench-active="true"] [data-mobile-nav="frame"] > :first-child [class*="_root"]:has(> [class*="_regionArea"]) {

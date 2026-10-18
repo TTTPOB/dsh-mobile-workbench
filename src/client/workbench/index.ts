@@ -1,6 +1,8 @@
 import type { Context as ClientContext } from '@deepseek-ai/cordis'
 import type {} from '@deepseek-ai/dsh-client-ui-layout/client'
 import type {} from '@deepseek-ai/dsh-client-locale/client'
+import type {} from '@deepseek-ai/dsh-client-ui-workspace/client'
+import { installPageHistory } from './page-history.ts'
 import { panelSelectorOf } from '../core/layout-compat.ts'
 import { currentSessionIdOf } from '../core/sessions-compat.ts'
 import { getFrame, MOBILE_QUERY, toggleDrawer } from '../effects/phone-chrome.ts'
@@ -13,7 +15,7 @@ import { installAgentCatalogLoader } from './agent-catalog-loader.ts'
 import { createWorkbenchPresentation } from './presentation.ts'
 import { createHostBridge } from './host-bridge.ts'
 import { subagentCounts, type AgentStatusSource } from './agent-counts.ts'
-import { WorkbenchAgents, WorkbenchNav, type WorkbenchSnapshot } from './WorkbenchNav.tsx'
+import { WorkbenchAgents, WorkbenchNav, type WorkbenchSnapshot, type WorkbenchInjected } from './WorkbenchNav.tsx'
 import { WORKBENCH_NS, en, zh } from './locales.ts'
 import { installWorkbenchSessionMenu } from './session-menu.ts'
 import { installWorkbenchUpdateNotice } from './update-notice.tsx'
@@ -45,6 +47,13 @@ export function installWorkbench(ctx: ClientContext): void {
   const statusSource = (): AgentStatusSource | undefined =>
     (ctx.get('uiSession') as { sessionStatus?: AgentStatusSource } | undefined)?.sessionStatus
   let counts = subagentCounts(ctx.sessions.list.getSnapshot(), statusSource()?.getSnapshot()) ?? {}
+  let openSession: (id: NonNullable<ReturnType<typeof currentSessionIdOf>>) => void = () => {}
+  ctx.inject(['uiWorkspace'], child => {
+    child.effect(() => {
+      openSession = id => { child.uiWorkspace.openSession(id) }
+      return () => { openSession = () => {} }
+    }, 'mobile-workbench: session navigation service')
+  })
   const bridge = createHostBridge(viewIds, () => counts, () => {
     const frame = getFrame()
     if (frame && !frame.hasAttribute('data-sidebar-collapsed')) toggleDrawer(ctx)
@@ -54,6 +63,12 @@ export function installWorkbench(ctx: ClientContext): void {
   }, {
     show: panelSelectorOf(ctx.layout) ?? (() => {}),
     hasSession: () => currentSessionIdOf(ctx.sessions.list.getSnapshot()) !== undefined,
+    parentId: () => {
+      const list = ctx.sessions.list.getSnapshot()
+      const id = currentSessionIdOf(list)
+      return id ? list.byId[id]?.parentId : undefined
+    },
+    openSession: id => { openSession(id) },
   })
   const presentation = createWorkbenchPresentation()
   let snapshot: WorkbenchSnapshot = { ...bridge.evidence(), mobile: mq.matches }
@@ -65,7 +80,22 @@ export function installWorkbench(ctx: ClientContext): void {
       return () => { listeners.delete(listener) }
     },
   }
+  let refreshStatus: () => void = () => {}
+  ctx.inject(['uiSession'], child => {
+    child.effect(() => {
+      const update = (): void => { refreshStatus() }
+      update()
+      const stop = statusSource()?.subscribe(update)
+      return () => { stop?.(); refreshStatus() }
+    }, 'mobile-workbench: live session status')
+  })
+  let activate = bridge.activate
   ctx.effect(() => {
+    const history = installPageHistory(window, () => { bridge.activate('session') }, () => ctx.layout.panelInfo.getSnapshot().activePanelId !== null)
+    activate = (destination, pointerStartedOpen) => {
+      if (mq.matches && destination !== 'agents') history.enter(destination)
+      bridge.activate(destination, pointerStartedOpen)
+    }
     let raf: number | undefined
     let presentationDirty = true
     const refresh = (): void => {
@@ -83,6 +113,7 @@ export function installWorkbench(ctx: ClientContext): void {
         snapshot = next
         for (const listener of listeners) listener()
       }
+      if (mq.matches) history.sync(resolveDestination(next))
       if (mq.matches && document.querySelector('[data-mobile-workbench="navigation"]') !== null) {
         document.documentElement.setAttribute('data-mobile-workbench-active', 'true')
         document.documentElement.setAttribute('data-mobile-workbench-page', resolveDestination(next))
@@ -113,14 +144,24 @@ export function installWorkbench(ctx: ClientContext): void {
     }
     const stopViews = ctx.slots.subscribe('conversation.view', refreshPresentation)
     const stopSessions = ctx.sessions.list.subscribe(refreshCounts)
-    const stopStatus = statusSource()?.subscribe(refreshCounts)
+    refreshStatus = refreshCounts
+    const escape = (event: KeyboardEvent): void => {
+      if (!mq.matches || event.key !== 'Escape' || !event.isTrusted || !(event.target instanceof Element)) return
+      if (!event.target.closest('[role="tree"][class*="_menuBody"], [data-mobile-workbench="agents"]')) return
+      event.preventDefault()
+      event.stopImmediatePropagation()
+      bridge.closeAgents()
+    }
+    document.addEventListener('keydown', escape, true)
     mq.addEventListener('change', refreshPresentation)
     refresh()
     return () => {
       observer.disconnect()
       stopViews()
       stopSessions()
-      stopStatus?.()
+      refreshStatus = () => {}
+      history.dispose()
+      document.removeEventListener('keydown', escape, true)
       bridge.clear()
       mq.removeEventListener('change', refreshPresentation)
       if (raf !== undefined) window.cancelAnimationFrame(raf)
@@ -135,13 +176,13 @@ export function installWorkbench(ctx: ClientContext): void {
     id: 'mobile-workbench-agents',
     order: 5,
     locale: WORKBENCH_NS,
-    inject: () => ({ hooks: { workbench: source }, activate: bridge.activate, selectView: bridge.selectView, returnParent: bridge.returnParent }),
+    inject: (): WorkbenchInjected => ({ hooks: { workbench: source }, activate: (destination, pointerStartedOpen) => { activate(destination, pointerStartedOpen) }, selectView: bridge.selectView, returnParent: bridge.returnParent, closeAgents: bridge.closeAgents, focusAgents: bridge.focusAgents }),
   }, WorkbenchAgents))
   ctx.slots.inject('shell.overlay', () => ctx.slots.register({
     name: 'shell.overlay',
     id: 'mobile-workbench-navigation',
     order: 20,
     locale: WORKBENCH_NS,
-    inject: () => ({ hooks: { workbench: source }, activate: bridge.activate, selectView: bridge.selectView, returnParent: bridge.returnParent }),
+    inject: (): WorkbenchInjected => ({ hooks: { workbench: source }, activate: (destination, pointerStartedOpen) => { activate(destination, pointerStartedOpen) }, selectView: bridge.selectView, returnParent: bridge.returnParent, closeAgents: bridge.closeAgents, focusAgents: bridge.focusAgents }),
   }, WorkbenchNav))
 }

@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
 import { setImmediate as nextTurn } from 'node:timers/promises'
+import { installPageHistory } from '../src/client/workbench/page-history.ts'
 import { openPluginsModal } from '../src/client/workbench/plugin-modal.ts'
 import { createHostBridge } from '../src/client/workbench/host-bridge.ts'
 import { toggleDrawer } from '../src/client/effects/phone-chrome.ts'
@@ -12,6 +13,7 @@ const base: NavigationEvidence = {
   selectedView: 'chat', filesOpen: false, agentsOpen: false,
   hasChat: true, hasTrajectory: true, hasSessionPage: true, hasAgents: false, hasFiles: true,
 }
+const retained = (id: string) => ({ id, retainedBy: { mainView: 1 } })
 const ready = (ids: string[] = []) => ({ state: 'ready', values: { subagentCatalog: ids.map(id => ({ id })) } })
 
 function replaceGlobal(t: { after: (fn: () => void) => void }, key: string, value: object) {
@@ -46,20 +48,20 @@ test('official view indices never click a different view when ledger and DOM dis
 })
 
 test('A -> B,C and B -> D counts all and only the selected root descendants', () => {
-  const snapshot = { current: 'A', byId: {}, projectionsBySession: { A: ready(['B', 'C']), B: ready(['D']), C: ready(), D: ready(), unrelated: ready(['other']) } }
+  const snapshot = { byId: { A: retained('A') }, projectionsBySession: { A: ready(['B', 'C']), B: ready(['D']), C: ready(), D: ready(), unrelated: ready(['other']) } }
   const statuses = new Map(['A', 'B', 'D', 'unrelated'].map(id => [id, { running: true }]))
   assert.deepEqual(subagentCounts(snapshot, statuses), { agentCountsState: 'ready', agentActiveCount: 2, agentTotalCount: 3 })
-  snapshot.current = 'B'
+  snapshot.byId = { B: retained('B') }
   assert.deepEqual(subagentCounts(snapshot, statuses), { agentCountsState: 'ready', agentActiveCount: 1, agentTotalCount: 1 })
   for (const id of ['C', 'D']) {
-    snapshot.current = id
+    snapshot.byId = { [id]: retained(id) }
     assert.deepEqual(subagentCounts(snapshot, statuses), { agentCountsState: 'ready', agentActiveCount: 0, agentTotalCount: 0 })
   }
 })
 
 test('live running status changes do not change a fully loaded descendant total', () => {
   const entries = Array.from({ length: 9 }, (_, i) => 'child-' + i)
-  const snapshot = { current: 'root', byId: { 'child-0': { running: true } }, projectionsBySession: { root: ready(entries), ...Object.fromEntries(entries.map(id => [id, ready()])) } }
+  const snapshot = { byId: { root: retained('root'), 'child-0': { running: true } }, projectionsBySession: { root: ready(entries), ...Object.fromEntries(entries.map(id => [id, ready()])) } }
   assert.equal(subagentCounts(snapshot)?.agentActiveCount, 1)
   const statuses = new Map(entries.map(id => [id, { running: false }]))
   assert.equal(subagentCounts(snapshot, statuses)?.agentTotalCount, 9)
@@ -70,16 +72,16 @@ test('live running status changes do not change a fully loaded descendant total'
 
 test('missing or failed catalogs are not leaves and never fall back to parent/sibling totals', () => {
   assert.equal(subagentCounts({ byId: {} }), undefined)
-  assert.deepEqual(subagentCounts({ current: 'child', byId: { child: { parentId: 'parent' } }, projectionsBySession: { parent: ready(['child', 'sibling']) } }), { agentCountsState: 'loading' })
-  assert.deepEqual(subagentCounts({ current: 'child', projectionsBySession: { child: { state: 'ready', values: {} } } }), { agentCountsState: 'unavailable' })
-  assert.deepEqual(subagentCounts({ current: 'child', projectionsBySession: { child: { state: 'error', values: { subagentCatalog: [] } } } }), { agentCountsState: 'unavailable' })
-  assert.deepEqual(subagentCounts({ current: 'child', projectionsBySession: { child: ready() } }), { agentCountsState: 'ready', agentActiveCount: 0, agentTotalCount: 0 })
-  assert.deepEqual(subagentCounts({ current: 'A', projectionsBySession: { A: ready(['B']) } }), { agentCountsState: 'loading' })
+  assert.deepEqual(subagentCounts({ byId: { child: { ...retained('child'), parentId: 'parent' } }, projectionsBySession: { parent: ready(['child', 'sibling']) } }), { agentCountsState: 'loading' })
+  assert.deepEqual(subagentCounts({ byId: { 'child': retained('child') }, projectionsBySession: { child: { state: 'ready', values: {} } } }), { agentCountsState: 'unavailable' })
+  assert.deepEqual(subagentCounts({ byId: { 'child': retained('child') }, projectionsBySession: { child: { state: 'error', values: { subagentCatalog: [] } } } }), { agentCountsState: 'unavailable' })
+  assert.deepEqual(subagentCounts({ byId: { 'child': retained('child') }, projectionsBySession: { child: ready() } }), { agentCountsState: 'ready', agentActiveCount: 0, agentTotalCount: 0 })
+  assert.deepEqual(subagentCounts({ byId: { 'A': retained('A') }, projectionsBySession: { A: ready(['B']) } }), { agentCountsState: 'loading' })
 })
 
 test('missing discovery follows only current reachable branches and leaves loading/failure to the owner', () => {
-  assert.deepEqual(missingDescendantCatalogs({ current: 'A', projectionsBySession: { A: ready(['B', 'C']), C: { state: 'loading', values: {} }, X: ready(['Y']) } }), ['B'])
-  assert.deepEqual(missingDescendantCatalogs({ current: 'A', projectionsBySession: { A: { state: 'error', values: {} } } }), [])
+  assert.deepEqual(missingDescendantCatalogs({ byId: { 'A': retained('A') }, projectionsBySession: { A: ready(['B', 'C']), C: { state: 'loading', values: {} }, X: ready(['Y']) } }), ['B'])
+  assert.deepEqual(missingDescendantCatalogs({ byId: { 'A': retained('A') }, projectionsBySession: { A: { state: 'error', values: {} } } }), [])
 })
 
 test('session page returns through formal default panel without forcing chat; top views do not change pages', t => {
@@ -87,13 +89,13 @@ test('session page returns through formal default panel without forcing chat; to
   const attributes = new Set(['data-sidebar-collapsed'])
   const tabs = ['chat', 'trajectory'].map(id => ({ getAttribute: () => id === 'trajectory' ? 'true' : 'false', click: () => { events.push(id) } }))
   const parent = { click: () => { events.push('direct-parent') } }
-  const header = { querySelector: () => parent, querySelectorAll: (s: string) => s.includes('role="tablist"') ? tabs : [] }
+  const header = { querySelector: () => parent, querySelectorAll: (s: string) => s.includes('data-conversation-tabs') ? tabs : [] }
   const frame = { hasAttribute: (key: string) => attributes.has(key), removeAttribute: () => {}, querySelector: () => header }
   replaceGlobal(t, 'document', { querySelector: (s: string) => s === '[data-mobile-nav="frame"]' ? frame : null, documentElement: { getAttribute: () => 'true' } })
   const bridge = createHostBridge(() => ['chat', 'trajectory'], () => ({}),
     () => { attributes.add('data-sidebar-collapsed'); events.push('close') },
     () => { attributes.delete('data-sidebar-collapsed'); events.push('sessions') },
-    { show: () => { events.push('default-panel') }, hasSession: () => true })
+    { show: () => { events.push('default-panel') }, hasSession: () => true, parentId: () => 'parent', openSession: () => { events.push('direct-parent') } })
   bridge.activate('sessions')
   bridge.activate('session')
   assert.deepEqual(events, ['sessions', 'close', 'default-panel'])
@@ -135,7 +137,7 @@ test('native sibling switchers are excluded when the current descendant catalog 
 })
 
 function loaderFixture(t: { after: (fn: () => void) => void }) {
-  const snapshot: { current: string; projectionsBySession: Record<string, { state: string; values: { subagentCatalog?: { id: string }[] } }> } = { current: 'A', projectionsBySession: { A: ready(['B', 'C', 'E']) } }
+  const snapshot: { byId: Record<string, ReturnType<typeof retained>>; projectionsBySession: Record<string, { state: string; values: { subagentCatalog?: { id: string }[] } }> } = { byId: { 'A': retained('A') }, projectionsBySession: { A: ready(['B', 'C', 'E']) } }
   const listeners = new Set<() => void>()
   const calls: string[] = []
   const resolve = new Map<string, (ids: string[] | Error) => void>()
@@ -172,7 +174,7 @@ test('owner baseline reads have two concurrency slots; source/status updates do 
 
 test('switching roots drops old queued branches and old completion cannot change the new root count', async t => {
   const f = loaderFixture(t)
-  f.snapshot.current = 'X'; f.snapshot.projectionsBySession.X = ready(['Y']); f.publish()
+  f.snapshot.byId = { X: retained('X') }; f.snapshot.projectionsBySession.X = ready(['Y']); f.publish()
   f.resolve.get('B')?.(['D'])
   await nextTurn()
   assert.deepEqual(f.calls, ['B', 'C', 'Y'])
@@ -268,4 +270,49 @@ test('own descendant catalog opens by the native pinned click, while second acti
   bridge.activate('agents', true)
   assert.equal(open, false)
   assert.equal(events.length, 2, 'the second touch must not reopen the already dismissed catalog')
+})
+
+function historyFixture() {
+  let callback: (event: { state: object | null }) => void = () => {}
+  const stack: (object | null)[] = [null]
+  let index = 0, returns = 0, panel = false
+  const history = {
+    get state() { return stack[index] },
+    pushState(state: object) { stack.splice(++index); stack[index] = state },
+    replaceState(state: object) { stack[index] = state },
+    back() { index--; callback({ state: stack[index] ?? null }) },
+  }
+  const window = { history, addEventListener: (_: string, fn: typeof callback) => { callback = fn }, removeEventListener: () => { callback = () => {} } } as Parameters<typeof installPageHistory>[0]
+  const controller = installPageHistory(window, () => { returns++ }, () => panel)
+  return { controller, history, stack, index: () => index, returns: () => returns, panel: (value: boolean) => { panel = value } }
+}
+
+test('page history uses one entry and explicit return consumes it before the next browser Back', () => {
+  const f = historyFixture()
+  f.controller.enter('sessions'); f.controller.enter('files'); f.controller.enter('sessions')
+  assert.equal(f.stack.length, 2)
+  assert.equal(f.index(), 1)
+  f.history.back()
+  assert.equal(f.returns(), 1)
+  f.controller.enter('files'); f.controller.enter('session')
+  assert.equal(f.index(), 0)
+  assert.equal(f.returns(), 2)
+  f.history.back()
+  assert.equal(f.index(), -1, 'the next Back leaves rather than consuming another plugin entry')
+  f.controller.dispose()
+})
+
+test('global panel entries preserve the underlying page without double return', () => {
+  const f = historyFixture()
+  f.controller.enter('files')
+  f.panel(true)
+  f.history.pushState({ ...f.history.state, mobilePanelExit: true })
+  f.controller.enter('sessions')
+  assert.equal(f.stack.length, 3)
+  f.panel(false)
+  f.history.back()
+  assert.equal(f.returns(), 0)
+  f.history.back()
+  assert.equal(f.returns(), 1)
+  f.controller.dispose()
 })

@@ -12,12 +12,12 @@ const { copyCurrentSessionId } = runInNewContext(`${executable}; ({ copyCurrentS
 test('copies the selected child ID and visibly reports unavailable/rejected clipboard as failure', async () => {
   const values: string[] = []
   const clipboard = { writeText: async (id: string) => { values.push(id) } }
-  assert.equal(await copyCurrentSessionId({ current: 'parent' }, clipboard), true)
+  assert.equal(await copyCurrentSessionId({ byId: { parent: { id: 'parent', retainedBy: { mainView: 1 } } } }, clipboard), true)
   assert.equal(await copyCurrentSessionId({ byId: { child: { id: 'child', retainedBy: { mainView: 1 } }, parent: { id: 'parent', retainedBy: {} } } }, clipboard), true)
   assert.deepEqual(values, ['parent', 'child'])
   assert.equal(await copyCurrentSessionId({}, clipboard), false)
-  assert.equal(await copyCurrentSessionId({ current: 'child' }, undefined), false)
-  assert.equal(await copyCurrentSessionId({ current: 'child' }, { writeText: async () => { throw new Error('denied') } }), false)
+  assert.equal(await copyCurrentSessionId({ byId: { child: { id: 'child', retainedBy: { mainView: 1 } } } }, undefined), false)
+  assert.equal(await copyCurrentSessionId({ byId: { child: { id: 'child', retainedBy: { mainView: 1 } } } }, { writeText: async () => { throw new Error('denied') } }), false)
 })
 
 test('native wrapper attachment reads latest ID, shows outcome, reinjects once and disposes owned resources', async () => {
@@ -76,7 +76,7 @@ test('native wrapper attachment reads latest ID, shows outcome, reinjects once a
   const documentListeners = new Map<string, (event: object) => void>()
   let sessionChanged = () => {}
   const ctx = {
-    sessions: { list: { getSnapshot: () => ({ current }), subscribe: (fn: () => void) => { sessionChanged = fn; return () => { sessionChanged = () => {} } } } },
+    sessions: { list: { getSnapshot: () => ({ byId: { [current]: { id: current, retainedBy: { mainView: 1 } } } }), subscribe: (fn: () => void) => { sessionChanged = fn; return () => { sessionChanged = () => {} } } } },
     locale: { bind: (namespace: string) => (key: string) => namespace === 'mobileWorkbench' ? key : 'download' },
   }
   runInNewContext(`${executable}; installWorkbenchSessionMenu(ctx)`, {

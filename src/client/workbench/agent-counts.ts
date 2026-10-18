@@ -1,3 +1,4 @@
+import type { SessionListState } from '@deepseek-ai/dsh-api-session-controller/client'
 import { currentSessionIdOf } from '../core/sessions-compat.ts'
 
 /** Public catalog and status fields needed for descendant counts. */
@@ -17,7 +18,7 @@ interface Counts {
 
 /** Discover only missing baselines reachable from the current session's own catalog. */
 export function missingDescendantCatalogs(snapshot: unknown): string[] {
-  const root = currentSessionIdOf(snapshot)
+  const root = currentSessionIdOf(snapshot as SessionListState)
   if (root === undefined) return []
   const list = snapshot as CatalogList
   const missing: string[] = []
@@ -37,7 +38,7 @@ export function missingDescendantCatalogs(snapshot: unknown): string[] {
 
 /** Count only this session's descendants, never substituting a parent's sibling catalog. */
 export function subagentCounts(snapshot: unknown, statuses?: ReadonlyMap<string, { running?: boolean }>): Counts | undefined {
-  const root = currentSessionIdOf(snapshot)
+  const root = currentSessionIdOf(snapshot as SessionListState)
   if (root === undefined) return undefined
   const list = snapshot as CatalogList
   const visit = (id: string): Counts => {

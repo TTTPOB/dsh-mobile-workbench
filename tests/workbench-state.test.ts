@@ -12,23 +12,27 @@ test('DOM refresh never recounts descendants; store refresh never rescans presen
   let count: number | undefined = 1
   let sessionsChanged = () => {}, statusChanged = () => {}, viewsChanged = () => {}
   let mutations: (records: object[]) => void = () => {}
-  let dispose = () => {}
+  let dispose = () => {}, mountStatus = () => {}
+  let statusAvailable = false
   const frames = new Map<number, () => void>()
   let sequence = 0
   const mq = { matches: true, addEventListener() {}, removeEventListener() {} }
   const ctx = {
     effect: (install: () => () => void, label: string) => { if (label === 'mobile-workbench: host navigation evidence') dispose = install() },
+    inject: (_keys: string[], run: (ctx: object) => void) => { mountStatus = () => { statusAvailable = true; run({ effect: (install: () => () => void) => install() }) } },
     locale: { register() {} },
-    get: () => ({ sessionStatus: { getSnapshot: () => new Map(), subscribe: (fn: () => void) => { statusChanged = fn; return () => {} } } }),
+    get: () => statusAvailable ? ({ sessionStatus: { getSnapshot: () => new Map(), subscribe: (fn: () => void) => { statusChanged = fn; return () => {} } } }) : undefined,
     sessions: { list: { getSnapshot: () => ({}), subscribe: (fn: () => void) => { sessionsChanged = fn; return () => {} } } },
     layout: {},
     slots: { entriesOfSlot: () => [], inject() {}, subscribe: (_slot: string, fn: () => void) => { viewsChanged = fn; return () => {} } },
   }
   runInNewContext(`${executable}; installWorkbench(ctx)`, {
     ctx,
-    document: { querySelector: () => null, documentElement: { removeAttribute() {} }, body: {} },
+    document: { addEventListener() {}, removeEventListener() {}, querySelector: () => null, documentElement: { removeAttribute() {} }, body: {} },
     window: { matchMedia: () => mq, requestAnimationFrame: (fn: () => void) => { frames.set(++sequence, fn); return sequence }, cancelAnimationFrame: (id: number) => frames.delete(id) },
     MutationObserver: class { constructor(fn: (records: object[]) => void) { mutations = fn } observe() {} disconnect() {} },
+    installPageHistory: () => ({ enter() {}, sync() {}, dispose() {} }),
+    resolveDestination: () => 'session',
     MOBILE_QUERY: '', WORKBENCH_NS: '',
     installWorkbenchSessionMenu() {}, installWorkbenchUpdateNotice() {},
     getFrame: () => ({}), panelSelectorOf: () => undefined,
@@ -41,6 +45,8 @@ test('DOM refresh never recounts descendants; store refresh never rescans presen
   const flush = () => { const pending = [...frames.values()]; frames.clear(); pending.forEach(fn => fn()) }
   assert.equal(countsReads, 1)
   assert.equal(presentationReads, 1)
+  mountStatus(); flush()
+  assert.equal(countsReads, 2, 'late uiSession availability subscribes and immediately refreshes counts')
   const initialEvidenceReads = evidenceReads
   mutations([{ boundary: 'stream' }]); flush()
   assert.equal(evidenceReads, initialEvidenceReads)
@@ -48,12 +54,12 @@ test('DOM refresh never recounts descendants; store refresh never rescans presen
   assert.equal(presentationReads, 1)
   mutations([{ boundary: 'presentation' }]); flush()
   assert.equal(presentationReads, 2)
-  assert.equal(countsReads, 1)
+  assert.equal(countsReads, 2)
   count = 2
   statusChanged(); flush()
   count = undefined
   sessionsChanged(); flush()
-  assert.equal(countsReads, 3)
+  assert.equal(countsReads, 4)
   assert.equal(presentationReads, 2)
   viewsChanged(); flush()
   assert.equal(presentationReads, 3)

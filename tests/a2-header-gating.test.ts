@@ -11,7 +11,8 @@ test('rc.2 header uses the workbench marker, not historical generation branches'
 
 test('title and native utilities retain 44px targets with readable context', () => {
   assert.match(WORKBENCH_HEADER_CSS, /min-height: 44px !important/)
-  assert.match(WORKBENCH_HEADER_CSS, /flex-wrap: wrap !important/)
+  assert.match(WORKBENCH_HEADER_CSS, /data-workbench-header-secondary/)
+  assert.match(WORKBENCH_HEADER_CSS, /margin-top: 4px/)
   assert.match(WORKBENCH_HEADER_CSS, /data-workbench-title-info/)
   assert.match(WORKBENCH_HEADER_CSS, /data-mobile-workbench="parent"/)
 })

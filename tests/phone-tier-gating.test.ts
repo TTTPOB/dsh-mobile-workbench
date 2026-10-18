@@ -3,9 +3,10 @@ import assert from 'node:assert/strict'
 import { BASE_CSS } from '../src/client/styles/base.css.ts'
 import { WORKBENCH_HEADER_CSS } from '../src/client/styles/workbench-header.css.ts'
 
-test('phone and tablet share wrapping header geometry, not device-specific offsets', () => {
+test('phone and tablet share two-row header geometry, not device-specific offsets', () => {
   assert.match(WORKBENCH_HEADER_CSS, /^@media \(max-width: 1023px\) and \(pointer: coarse\)/)
-  assert.match(WORKBENCH_HEADER_CSS, /flex-wrap: wrap !important/)
+  assert.match(WORKBENCH_HEADER_CSS, /data-workbench-header-main/)
+  assert.match(WORKBENCH_HEADER_CSS, /data-workbench-header-secondary/)
   assert.doesNotMatch(WORKBENCH_HEADER_CSS, /top: 42px|margin-top: -4px|min-height: 26px/)
 })
 
