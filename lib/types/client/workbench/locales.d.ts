@@ -1,5 +1,23 @@
 export declare const WORKBENCH_NS = "mobileWorkbench";
 export declare const zh: {
+    close: string;
+    viewSessionInfo: string;
+    statistics: string;
+    context: string;
+    usedTokens: string;
+    activity: string;
+    turns: string;
+    steps: string;
+    tokens: string;
+    input: string;
+    output: string;
+    cacheRead: string;
+    cacheWrite: string;
+    mode: string;
+    capacity: string;
+    system: string;
+    tools: string;
+    messages: string;
     navigation: string;
     sessions: string;
     session: string;

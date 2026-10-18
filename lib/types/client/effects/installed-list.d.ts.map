@@ -1,1 +1,1 @@
-{"version":3,"file":"installed-list.d.ts","sourceRoot":"","sources":["../../../../src/client/effects/installed-list.ts"],"names":[],"mappings":"AAAA,OAAO,KAAK,EAAE,OAAO,IAAI,aAAa,EAAE,MAAM,qBAAqB,CAAA;AAInE;;;;;;GAMG;AACH,wBAAgB,0BAA0B,CAAC,GAAG,EAAE,aAAa,GAAG,IAAI,CA+FnE"}
+{"version":3,"file":"installed-list.d.ts","sourceRoot":"","sources":["../../../../src/client/effects/installed-list.ts"],"names":[],"mappings":"AAAA,OAAO,KAAK,EAAE,OAAO,IAAI,aAAa,EAAE,MAAM,qBAAqB,CAAA;AAOnE,qFAAqF;AACrF,wBAAgB,0BAA0B,CAAC,GAAG,EAAE,aAAa,GAAG,IAAI,CAoEnE"}

@@ -1,4 +1,4 @@
 import type { Context as ClientContext } from '@deepseek-ai/cordis';
-/** Presentation only: frame discovery plus composer-local decoration. */
+/** Mark the native frame without observing its streamed content. */
 export declare function installWorkbenchDecoration(ctx: ClientContext): void;
 //# sourceMappingURL=workbench-decoration.d.ts.map

@@ -5,6 +5,6 @@ export declare function detectIosWebKit(nav: {
     maxTouchPoints: number;
 }, supports: ((condition: string) => boolean) | null): boolean;
 export declare const STABLE_VIEWPORT_VAR = "--dsh-web-mobile-vh";
-/** Own viewport-fit, status-bar theme and keyboard-less modal height while mobile. */
+/** Own viewport-fit and keyboard-less modal height; the Host owns theme-color. */
 export declare function installPhoneChrome(ctx: ClientContext): void;
 //# sourceMappingURL=phone-viewport.d.ts.map

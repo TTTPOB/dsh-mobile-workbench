@@ -1,3 +1,4 @@
-/** Read the retained main-view session, accepting legacy snapshots used by fixtures. */
-export declare function currentSessionIdOf(list: unknown): string | undefined;
+import type { SessionListState } from '@deepseek-ai/dsh-api-session-controller/client';
+/** The public main-view retain count identifies the visible session. */
+export declare function currentSessionIdOf(list: unknown): SessionListState['ids'][number] | undefined;
 //# sourceMappingURL=sessions-compat.d.ts.map

@@ -1,10 +1,4 @@
 import type { Context as ClientContext } from '@deepseek-ai/cordis';
-/**
- * Hard-fix the installed-plugins list text layout: the host market UI
- * injects its own CSS after this plugin's stylesheet, so CSS overrides can
- * be beaten. Inline !important styles win over every external rule. Keep
- * the selector on outer rows only; irowActions/irowTrailing are nested
- * flex containers and must retain the market's own action geometry.
- */
+/** Keep optional market overrides local and restore the inline values we replace. */
 export declare function installInstalledListStyles(ctx: ClientContext): void;
 //# sourceMappingURL=installed-list.d.ts.map

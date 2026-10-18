@@ -1,0 +1,1 @@
+{"version":3,"file":"composer-focus.d.ts","sourceRoot":"","sources":["../../../../src/client/workbench/composer-focus.ts"],"names":[],"mappings":"AAAA,MAAM,WAAW,aAAa;IAC5B,KAAK,CAAC,QAAQ,EAAE,OAAO,GAAG,IAAI,CAAA;IAC9B,IAAI,IAAI,IAAI,CAAA;CACb;AAED,gFAAgF;AAChF,wBAAgB,mBAAmB,CAAC,IAAI,EAAE,WAAW,EAAE,OAAO,EAAE,WAAW,EAAE,IAAI,EAAE,iBAAiB,GAAG,aAAa,CA2EnH"}

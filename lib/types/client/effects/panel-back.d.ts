@@ -1,5 +1,6 @@
-/** Keep system Back inside a native global panel, without an exit animation. */
-export declare function createPanelBack(layout: unknown): {
+import type { ILayout } from '@deepseek-ai/dsh-client-ui-layout/client';
+/** Own one global-panel entry above any workbench page entry. */
+export declare function createPanelBack(layout: Pick<ILayout, 'panelInfo' | 'selectPanel'>): {
     update: () => void;
     dispose: () => void;
 };
