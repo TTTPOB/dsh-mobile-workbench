@@ -8,6 +8,7 @@
 | [workbench](<../../src/client/workbench/index.ts>) 的会话列表页 | 左栏 collapsed observable 与显式 setCollapsed；现有 toggleSidebar 是动作而无公开读面 | 读取 frame 的 data-sidebar-collapsed，调用公开 toggleSidebar；局部属性观察刷新导航证据 |
 | [host-bridge](<../../src/client/workbench/host-bridge.ts>)／[工作区入口](<../../src/client/components/open-files-panel.ts>) | 右栏 expanded、fullscreen 的订阅和显式 open/close；layout.openRightbar 是布局报告接口，不等于业务展开动作 | 读取 data-sidebar-right-panel/open 标记，点击 data-sidebar-right-expand/toggle 原生控件 |
 | [host-bridge](<../../src/client/workbench/host-bridge.ts>) 的子智能体目录 | 目录 open/close、打开来源（键盘／pointer）、首次焦点与关闭返回焦点 API | 点击限定 header 内的原生自身计数触发器；树挂载后聚焦可用 treeitem，关闭走原生树 Escape，再回插件触发器；不复制目录业务状态 |
+| [轨迹详情样式](<../../src/client/styles/workbench-trajectory.css.ts>) | Summary 重复跳转按钮与预览内容的稳定 part／渲染选项；detail 是否建返回历史的公开策略 | 仅在手机所属 aside 隐藏 overviewTitle 跳转按钮，保留实际内容和原生 tab；原生关闭按钮退回列表，不增添 detail history |
 | [session-menu](<../../src/client/workbench/session-menu.ts>) | 会话 header 更多菜单 item slot，拥有当前 sessionId 与原生关闭动作 | 仅观察实际打开的 header menu wrapper，沿官方日志导出项确认归属，追加并清理插件自己的复制 ID 行 |
 | [ComposerFileButton](<../../src/client/components/ComposerFileButton.tsx>) | 当前 composer 打开文件选择器命令与 attachment intake 可用性，复用官方校验／上传 | session-scoped slot 插入按钮，点击同 card 的原生隐藏 input[type=file]；busy／子会话用公开状态禁用 |
 | [输入区样式](<../../src/client/styles/workbench-composer.css.ts>) | 权限 trigger 的纯呈现 label slot／紧凑格式（与模型 label slot 对等），菜单全文保持官方 | 保留官方本地化文字，仅 CSS 限宽省略；不解析 aria／文本，不重写权限 picker |

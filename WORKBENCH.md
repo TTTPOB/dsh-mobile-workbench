@@ -22,6 +22,12 @@ DSH Mobile Workbench 3.2.0 面向 DSH 0.2.1-rc.1。包名为 `dsh-web-mobile`，
 
 统计入口显示 contextPressure 的百分比；未加载显示「—」，真实 0 才显示 0%。面板使用上游 MenuSurface，分上下文（已用 token 参考值、窗口与可选估算构成）、会话活动（轮／步、会话平均输出速率、平均首 token 等待、模型／工具用时）和 Token（总计、缓存命中率与四类用量）三组，通过公开 useProjection 订阅。输出速率只使用成对 decodeTokens／decodeMs 样本，不以总耗时除 token；Token 总计累加互斥计费桶，不重复计入 reasoning，缓存命中率只计算输入。它与会话信息 Modal、子智能体目录互斥；外点、Escape 或再次点击关闭后回到触发按钮。底部旧统计文本反解析与 stats-line effect 已移除。
 
+### 手机轨迹详情
+
+轨迹保留上方列表与下方详情的 40:60 分屏；选择其他请求或工具行时不必先关闭详情。详情的原生 tabs 保持完整，Summary 隐藏重复的跳转按钮而保留消息、JSON／Schema 预览、usage 与 timing 内容。两区独立滚动，详情的原生关闭按钮返回纯列表；宿主未为 detail 建 history，因此系统 Back 不承担关闭详情。
+
+手机 Trace 隐藏整段 composer seat 并释放底部 clearance，底部三页导航仍可用；回 Chat 保留同一原生编辑器、草稿和附件。外部 view 切换即使发生在展开编辑时，也会解除展开焦点范围与 inert，避免不可见编辑器继续拦截交互。桌面保持官方横向分屏与输入区。
+
 ### 系统返回
 
 从会话进入会话列表或工作区最多增加一层 page-history；二者互切只更新这一层。Back 先回会话，下一次才离站；点击底部「会话」也会消费这一层。全局 Automation tasks／Plugins fallback panel 的 panel-back 独立增加一层，通过公开 layout.panelInfo 订阅，使用 selectPanel(null) 退出。panel 返回先恢复其下方的会话列表／工作区，再由下一次 Back 返回会话，避免两层同时退出。会话信息 Modal 不占用全局 panel 返回层。设置和插件管理 Modal 在来源列表上增加一层管理返回；Back／关闭返回同一列表，二级菜单或确认先消费返回。
