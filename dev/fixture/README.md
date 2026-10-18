@@ -10,7 +10,23 @@ Mobile Audit 为界面验收生成确定性内容，不需要 API Key。它通�
 node scripts/demo.mjs --port 54076
 ```
 
-需要 Node.js 24+、pnpm，以及本机已安装的 DSH 0.1.7-rc.2。脚本创建仓库内的 `.demo-home`，不会使用日用 DSH Home。根据终端输出打开本地 URL，并选择打印出的 workspace 目录。
+需要 Node.js 24+、pnpm、本机已安装的 DSH 0.2.1-rc.1，以及相邻的 `dsh-config` checkout。脚本链接当前仓库的构建输出，创建独立 `.demo-home`；复用 `dsh-config` 的兼容授权逻辑，只为 `shared/dependencies.yaml` 中 `verifiedCompatibility` 已验证的已安装全局 fork 组合写入精确版本豁免，并逐项打印。不修改日用 Host、真实 profile 或全局安装；当前兼容的移动端包和 fixture 不需要豁免。
+
+打开终端的 **Authenticated demo URL**（带 `?token=`），或读取 `.demo-home/url.txt`；重启后 URL 会更新。选择打印的 workspace 目录，新建 Mobile Audit 会话，发送「开始手机界面审计」，等待 `MOBILE_AUDIT_COMPLETE`。
+
+Playwright 使用独立 context：
+
+```js
+const context = await browser.newContext({
+  viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true,
+})
+const page = await context.newPage()
+await page.goto(url) // Authenticated demo URL from .demo-home/url.txt
+```
+
+需要 CDP 时先启动支持远程调试的 Chromium，再用 `chromium.connectOverCDP(endpoint)` 获取 `browser`；应用端口 54076 不是 CDP 端口。已有 `scripts/cdp-probe.mjs` 可用 `DSH_PROBE_URL=http://127.0.0.1:54076/`、`DSH_PROBE_TOKEN`（URL 的 token 参数）、`DSH_PROBE_SESSION_ID`（新建会话 ID）和 `DSH_PROBE_CHROME` 运行；它是额外回归探针，不能替代真实 UI 审查。
+
+结束后 Ctrl-C；后台运行则停止对应 job，或向 `.demo-home/demo.pid` 中的 PID 发 SIGTERM，脚本会转发给隔离 Host。不得停止 53083 日用进程。
 
 ## 演示场景
 

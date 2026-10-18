@@ -49,6 +49,8 @@ if (!process.argv.includes('--source')) {
 }
 const ctx = new Context()
 await ctx.plugin(LlmRuntime)
+// This unit probe only resolves depth; it does not execute workspace operations.
+ctx.provide('workingDirectory', {})
 await ctx.plugin(SubagentRuntime, depthConfig)
 assert.equal(ctx.subagents.resolveMaxDepth(toolConfig.maxDepth), 2)
 try {

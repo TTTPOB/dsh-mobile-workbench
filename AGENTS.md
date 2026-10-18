@@ -27,7 +27,9 @@ pnpm build
 ```
 
 - `lib/` 是提交的构建输出，不手工编辑。删除或重命名源码后执行 clean build，确认旧入口与声明文件已清除。
-- 布局改动在授权的隔离实例中验证实际构建，检查手机三页、编辑器、菜单／modal、工作区和桌面不变性。截图取稳定完成态。
+- UI 审查和布局改动必须在隔离 demo 中实测当前构建，不能只凭源码推断：授权后在仓库根目录运行 `node scripts/demo.mjs --port 54076`（agent 用后台 bash 并记录 job id）。脚本仅使用仓库内 `.demo-home`，从相邻 `dsh-config/shared/dependencies.yaml` 的 `verifiedCompatibility` 授予并打印已验证的精确版本豁免。
+- 启动输出的 `Authenticated demo URL` 可直接认证；也可读取 `.demo-home/url.txt`，每次重启后重新获取。Playwright 新建独立 context，设 `viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true`，再 `page.goto(url)`；若用 CDP，以 `chromium.connectOverCDP(endpoint)` 连接自己开启远程调试的浏览器后新建上述 context（54076 是应用端口，不是 CDP）。现有探针使用 `DSH_PROBE_URL`、`DSH_PROBE_TOKEN` 和 `DSH_PROBE_SESSION_ID`，详见 [fixture 使用说明](<dev/fixture/README.md>)。
+- 在打印的 workspace 新建会话，选择 Mobile Audit，发送「开始手机界面审计」，等到 `MOBILE_AUDIT_COMPLETE`；检查手机三页、编辑器、菜单／modal、工作区和桌面不变性，截图取稳定完成态。用完 Ctrl-C，或向 `.demo-home/demo.pid` 中的 PID 发 SIGTERM（agent 停对应后台 job）；只有明确要求留给审查员时才保持运行并交接 job／PID。
 - 开发时不要启停日用 Host、修改真实 profile 或安装。隔离实例使用独立 DSH_HOME 和端口。push、PR、发布和日用部署分别需要授权。
 
 ## Deployment and update
