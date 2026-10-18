@@ -1,7 +1,12 @@
 export const WORKBENCH_TRAJECTORY_CSS = `@media (max-width: 1023px) and (pointer: coarse) {
+  /* Trace uses its own scrollers; hide only the resident composer, not its React tree. */
+  html[data-mobile-workbench-active="true"] [data-conversation-scroll]:has([data-workbench-trajectory]) > [data-composer-seat] {
+    display: none !important;
+  }
+  [data-workbench-trajectory] { --dsh-trajectory-bottom-clearance: 0px; }
   /* Keep virtual ledger row geometry intact. Make the native inspector readable. */
   html[data-mobile-workbench-active="true"] [data-workbench-trajectory]:has(aside[class*="_details"]) {
-    /* Reserve the floating composer once, outside both scrolling panes. */
+    /* Match the zero clearance used by the resident ledger and inspector. */
     padding-bottom: var(--dsh-trajectory-bottom-clearance) !important;
     box-sizing: border-box;
   }
@@ -9,7 +14,6 @@ export const WORKBENCH_TRAJECTORY_CSS = `@media (max-width: 1023px) and (pointer
     display: grid !important;
     grid-template-columns: minmax(0, 1fr);
     grid-template-rows: minmax(0, 2fr) minmax(0, 3fr);
-    --dsh-trajectory-bottom-clearance: 0px;
   }
   [data-workbench-trajectory] [class*="_split"]:has(> aside[class*="_details"]) > [data-trajectory-scroll] {
     min-height: 0 !important;
@@ -60,6 +64,28 @@ export const WORKBENCH_TRAJECTORY_CSS = `@media (max-width: 1023px) and (pointer
     min-height: 44px;
     font-size: 13px;
     white-space: nowrap;
+  }
+  /* Keep previews in document flow instead of squeezing them between tab jumps. */
+  [data-workbench-trajectory] aside[class*="_details"] [role="tabpanel"][aria-labelledby="trajectory-detail-overview"] {
+    display: block !important;
+    overflow-y: auto !important;
+  }
+  [data-workbench-trajectory] aside[class*="_details"] [role="tabpanel"][aria-labelledby="trajectory-detail-overview"] > dl,
+  [data-workbench-trajectory] aside[class*="_details"] [class*="_overviewSections"],
+  [data-workbench-trajectory] aside[class*="_details"] section[class*="_overviewSection"] {
+    display: block !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+  [data-workbench-trajectory] aside[class*="_details"] [class*="_overviewPreview"] {
+    overflow: visible !important;
+    mask-image: none !important;
+  }
+  /* Other heading actions, including copy and source controls, remain available. */
+  [data-workbench-trajectory] aside[class*="_details"] [class*="_overviewHeading"] > button[class*="_overviewTitle"],
+  [data-workbench-trajectory] aside[class*="_details"] [class*="_overviewHeading"]:has(> button[class*="_overviewTitle"]:only-child) {
+    display: none !important;
   }
   /* Schema intro is a payload header, never the conversation chrome. */
   html[data-mobile-workbench-active="true"] [data-workbench-trajectory] aside[class*="_details"] header[class*="_schemaIntro"] {
