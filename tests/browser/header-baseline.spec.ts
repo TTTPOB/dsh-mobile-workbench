@@ -76,7 +76,7 @@ test('localized public information Modal keeps card clicks and restores title fo
   for (const close of ['button', 'escape', 'mask']) {
     await title.click()
     await expect(dialog).toBeVisible()
-    await expect(dialog).toContainText('Mode: standard')
+    await expect(dialog).toContainText('Mode: Standard mode')
     await expect(dialog).not.toContainText('关闭')
     await dialog.click({ position: { x: 8, y: 80 } })
     await expect(dialog).toBeVisible()
