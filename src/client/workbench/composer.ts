@@ -210,6 +210,8 @@ export function installWorkbenchComposer(ctx: ClientContext): void {
     // Idempotent CSS writes settle after one extra observer pass.
     const observer = new MutationObserver(records => {
       if (records.some(record => boundaryMutation(record, COMPOSER_BOUNDARY)
+        || record.attributeName === 'data-workbench-trajectory'
+        || (record.type === 'childList' && boundaryMutation(record, '[data-workbench-trajectory], [data-trajectory-scroll]', COMPOSER_BOUNDARY))
         || (record.type === 'attributes' && record.target instanceof Element
           && (record.target.contains(card) || record.attributeName === 'aria-modal'
             || (record.attributeName === 'data-phase' && record.target.querySelector(CARD) !== null))))) schedule()
@@ -219,7 +221,7 @@ export function installWorkbenchComposer(ctx: ClientContext): void {
     probeNode.setAttribute('aria-hidden', 'true')
     probeNode.style.cssText = 'position:absolute;visibility:hidden;pointer-events:none;width:0'
     root.append(probeNode)
-    observer.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['style', 'data-phase', 'aria-modal', 'class'] })
+    observer.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['style', 'data-phase', 'aria-modal', 'class', 'data-workbench-trajectory'] })
     window.addEventListener('resize', schedule)
     viewport?.addEventListener('resize', schedule)
     viewport?.addEventListener('scroll', schedule)
