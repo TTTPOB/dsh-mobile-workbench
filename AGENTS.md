@@ -38,3 +38,11 @@ pnpm build
 - 运维任务负责停服、安装、启动、失败恢复和结果反馈。验收包括安装版本、服务恢复、服务器实际客户端与浏览器应用状态；向用户报告已确认的结果。
 - 部署成功且 profile 已改用 Release URL 后，清理无引用的本地安装包、解压副本、临时脚本和过渡备份；保留提交、公开 Release 和必要截图；依赖与缓存由包管理器管理。
 - 具体命令和重启约束见 [部署与更新指南](docs/deployment.md)。
+
+## 分支与发布
+
+- 长期发布分支为 `main`，位于 TTTPOB remote `origin`（github.com/TTTPOB/dsh-mobile-workbench）；本地长期分支必须跟踪 `origin/main`，不跟踪第三方上游。
+- 开发和测试使用独立分支或 worktree。
+- 发布前先合并到长期分支并 push，等待分支 CI（`.github/workflows/ci.yml`）通过。
+- 仅从长期分支上的提交，通过 GitHub Actions Release workflow（`.github/workflows/release.yml`）发布；tag 和 Release 资产不可变，不上传本地构建。
+- 本机约 13 GB 内存，本地只跑本仓库相关的 scoped 检查；重型全仓检查交给 CI。
