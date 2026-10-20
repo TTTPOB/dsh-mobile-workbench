@@ -151,7 +151,12 @@ export function WorkbenchAgents({ useWorkbench, useSessions, useProjection, sess
           }
         }}
         onClick={event => { setOverlay(null); activate('agents', event.detail > 0 && pointerStartedOpen.current); pointerStartedOpen.current = false }}>
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M8 9a3 3 0 1 0 0-6 3 3 0 0 0 0 6Zm8 2a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM2 20v-3a6 6 0 0 1 12 0v3m1-6a5 5 0 0 1 7 4v2" /></svg>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <rect x="9" y="3" width="6" height="4" rx="1" />
+          <rect x="3" y="17" width="6" height="4" rx="1" />
+          <rect x="15" y="17" width="6" height="4" rx="1" />
+          <path d="M12 7v6M5 17v-4h14v4" />
+        </svg>
         <small data-workbench-count>{counts}</small>
       </button>
     </div>

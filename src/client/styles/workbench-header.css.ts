@@ -1,9 +1,12 @@
 const H = 'html[data-mobile-workbench-active="true"] [data-mobile-nav="frame"] [data-phase] header[data-mobile-workbench-header]'
-const J = '[class*="_headerActions"] [class*="_root"]:has(> button[class*="_trigger"][aria-expanded]:not([aria-haspopup]) > [class*="_count"])'
+// The host background-task chip is a class-less wrapper directly under the header
+// actions slot; the old `_root` arm stopped matching when the host dropped that
+// wrapper class, so the chip fell out of the first row. Anchor on the slot and on
+// the count inside the trigger instead, and keep the team chip out of the match.
+const TASKS = '[data-slot="conversation.session.header.actions"] > div:has(> button[class*="_trigger"] > [class*="_count"])'
 
 export const WORKBENCH_HEADER_CSS = `@media (max-width: 1023px) and (pointer: coarse) {
   ${H} {
-    --workbench-first-row-reserve: 44px;
     position: relative !important;
     display: block !important;
     padding: 8px 12px !important;
@@ -12,7 +15,6 @@ export const WORKBENCH_HEADER_CSS = `@media (max-width: 1023px) and (pointer: co
     box-sizing: border-box !important;
     flex-shrink: 0;
   }
-  ${H}:has(${J}) { --workbench-first-row-reserve: 88px; }
   ${H} [data-mobile-nav="toggle"],
   ${H} [data-conversation-header-leading],
   ${H} [data-conversation-header-corner],
@@ -22,7 +24,6 @@ export const WORKBENCH_HEADER_CSS = `@media (max-width: 1023px) and (pointer: co
   ${H} [data-slot="conversation.session.header.actions"] > span[title],
   ${H} [data-slot="conversation.session.header.utilities"] > :has([data-open-target]) { display: none !important; }
   ${H} [class*="_titleRow"], ${H} [class*="_titleCluster"], ${H} [class*="_headerActions"] {
-    display: block !important;
     width: 100% !important;
     max-width: none !important;
     min-width: 0 !important;
@@ -30,21 +31,33 @@ export const WORKBENCH_HEADER_CSS = `@media (max-width: 1023px) and (pointer: co
     margin: 0 !important;
     overflow: visible !important;
   }
+  ${H} [class*="_titleRow"], ${H} [class*="_titleCluster"] { display: block !important; }
+  /* Host nodes and the plugin nodes are siblings under the display:contents slot,
+     so the actions row is a grid: row one keeps the title and the reserve for the
+     absolutely positioned native utilities, row two holds the view tabs, the
+     background-task chip, the host team chip and the downstream directory. */
+  ${H} [class*="_headerActions"] {
+    display: grid !important;
+    grid-template-columns: auto minmax(0, 1fr) auto auto;
+    grid-template-rows: 44px 44px;
+    grid-template-areas:
+      "main main main main"
+      "views tasks team agents";
+    column-gap: 4px;
+    row-gap: 4px;
+    align-items: center;
+  }
   ${H} [data-workbench-header-main] {
+    grid-area: main;
     display: flex;
     align-items: center;
     min-width: 0;
     height: 44px;
-    padding-right: var(--workbench-first-row-reserve);
+    padding-right: 44px;
   }
-  ${H} [data-workbench-header-secondary] {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    height: 44px;
-    margin-top: 4px;
-    min-width: 0;
-  }
+  /* The plugin owns this wrapper, so it can dissolve into the grid without
+     touching either host node or the plugin controls inside it. */
+  ${H} [data-workbench-header-secondary] { display: contents !important; }
   ${H} button[data-workbench-context-control] {
     appearance: none;
     box-sizing: border-box;
@@ -88,7 +101,7 @@ export const WORKBENCH_HEADER_CSS = `@media (max-width: 1023px) and (pointer: co
   ${H} button[data-mobile-workbench="parent"] { width: 44px; }
   ${H} button[data-mobile-workbench="stats"] { width: 56px; min-width: 56px !important; gap: 3px; font-size: 11px; }
   ${H} button[data-mobile-workbench="stats"] > svg { width: 16px; height: 16px; }
-  ${H} [data-mobile-workbench="views"] { display: flex; flex: none; }
+  ${H} [data-mobile-workbench="views"] { grid-area: views; display: flex; flex: none; }
   ${H} [data-workbench-view] { position: relative; border-radius: 0 !important; padding: 0 8px !important; }
   ${H} [data-workbench-view][aria-selected="true"] { color: var(--dsw-alias-label-primary); font-weight: 600; }
   ${H} [data-workbench-view][aria-selected="true"]::after {
@@ -101,7 +114,41 @@ export const WORKBENCH_HEADER_CSS = `@media (max-width: 1023px) and (pointer: co
     background: var(--dsw-static-deepseek-500);
   }
   ${H} [data-workbench-mode] { flex: 1 1 0; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 11px; color: var(--dsw-alias-label-secondary); }
-  ${H} [data-mobile-workbench="agents"] { gap: 4px; margin-left: auto; }
+  ${H} [data-mobile-workbench="agents"] { grid-area: agents; justify-self: end; gap: 4px; }
+  ${H} [data-team-action] { grid-area: team; justify-self: end; }
+  /* The host hides the team label below 480px, so the icon-only phone trigger
+     reaches 44px through min-width while tablets keep the visible label. */
+  ${H} [data-team-action] > button {
+    box-sizing: border-box;
+    min-width: 44px !important;
+    height: 44px !important;
+    min-height: 44px !important;
+    padding: 0 6px !important;
+    justify-content: center;
+    touch-action: manipulation;
+  }
+  ${H} ${TASKS} {
+    grid-area: tasks;
+    justify-self: start;
+    align-items: center;
+    min-width: 0;
+    max-width: 100%;
+    overflow: hidden;
+  }
+  ${H} ${TASKS} > button {
+    box-sizing: border-box;
+    height: 44px !important;
+    min-height: 44px !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    touch-action: manipulation;
+  }
+  ${H} ${TASKS} > button [class*="_count"] {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
   ${H} [data-workbench-count] { background: transparent; font-size: 11px; padding: 0; margin: 0; }
   ${H} button[data-mobile-workbench="agents"] > svg { width: 16px; height: 16px; }
   /* Touch feedback remains visible without permanently filling every control. */
@@ -120,10 +167,6 @@ export const WORKBENCH_HEADER_CSS = `@media (max-width: 1023px) and (pointer: co
     color: var(--dsw-alias-label-primary);
   }
   ${H} [class*="_headerUtilities"] button[aria-haspopup="menu"]:focus-visible { outline: 2px solid currentColor; outline-offset: -2px; }
-  ${H} ${J} { position: absolute !important; top: 8px !important; right: 56px !important; width: 44px !important; height: 44px !important; margin: 0 !important; }
-  ${H} ${J} > button { width: 44px !important; min-width: 44px !important; height: 44px !important; padding: 0 !important; justify-content: center; }
-  ${H} ${J} > button > svg { width: 12px; flex: none; }
-  ${H} ${J} > button [class*="_count"] { font-size: 12px; }
   ${H} [class*="_headerUtilities"] { display: flex !important; position: absolute !important; top: 8px !important; right: 12px !important; width: 44px !important; height: 44px !important; padding: 0 !important; margin: 0 !important; }
   ${H} [class*="_headerUtilities"] button[aria-haspopup="menu"] { display: flex !important; align-items: center; justify-content: center; width: 44px !important; min-width: 44px !important; height: 44px !important; min-height: 44px !important; padding: 0 !important; }
   [data-workbench-stats-panel] {
