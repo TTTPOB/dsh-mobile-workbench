@@ -3,10 +3,11 @@ import type { MainPanelId } from '@deepseek-ai/dsh-client-ui-layout/client'
 import { closeTopModal, modalSelector } from '@deepseek-ai/dsh-client-ui-primitives'
 import { getFrame, installMobileEffect } from '../effects/phone-chrome.ts'
 import { decorateManagementMenu, managementEntries } from './management-menu.ts'
+import { INSTALL_NAME_ENTRY_ID } from './install-name.ts'
 import { WORKBENCH_NS } from './locales.ts'
 
 /** Mobile-only presentation of native account, plugin, settings and global-panel owners. */
-export function installManagement(ctx: Context, restorePage: (page: 'sessions' | 'session' | 'files') => void, openSession: () => void, changed: (active: boolean) => void): void {
+export function installManagement(ctx: Context, restorePage: (page: 'sessions' | 'session' | 'files') => void, openSession: () => void, changed: (active: boolean) => void, openInstallName: () => void): void {
   installMobileEffect(ctx, 'mobile-workbench: management navigation', () => {
     const t = ctx.locale.bind(WORKBENCH_NS)
     let anchor: HTMLElement | null = null
@@ -27,6 +28,11 @@ export function installManagement(ctx: Context, restorePage: (page: 'sessions' |
     const marked = new Set<HTMLElement>()
     const mark = (node: HTMLElement | null, name: string): void => { if (node) { node.setAttribute(name, ''); marked.add(node) } }
     const launcher = (): HTMLButtonElement | null => getFrame()?.querySelector('[data-slot="settings.launcher"] button[aria-haspopup="menu"]') ?? null
+    // The install-name editor is owned by this plugin, so it appends its own row to the ledger.
+    const entries = (): { id: string; label: string }[] => [
+      ...managementEntries(ctx),
+      { id: INSTALL_NAME_ENTRY_ID, label: t('installName') },
+    ]
     const captureList = (): void => {
       const page = document.documentElement.getAttribute('data-mobile-workbench-page')
       origin = page === 'files' || page === 'session' ? page : 'sessions'
@@ -120,6 +126,12 @@ export function installManagement(ctx: Context, restorePage: (page: 'sessions' |
     function schedule(): void { if (frame === undefined) frame = requestAnimationFrame(update) }
     const activate = (id: string): void => {
       menu?.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))
+      if (id === INSTALL_NAME_ENTRY_ID) {
+        // Hand focus back to the account trigger so the modal's layer restores it on close.
+        launcher()?.focus({ preventScroll: true })
+        openInstallName()
+        return
+      }
       captureList()
       const native = ctx.get('pluginNavigation') as { openModal?: () => void } | undefined
       if (id === 'plugins' && native?.openModal) native.openModal()
@@ -139,7 +151,7 @@ export function installManagement(ctx: Context, restorePage: (page: 'sessions' |
         const added = records.flatMap(record => Array.from(record.addedNodes)).filter((node): node is HTMLElement => node instanceof HTMLElement)
         menu = added.find(node => node.matches('[role="menu"]')) ?? null
         if (menu) {
-          releaseMenu = decorateManagementMenu(menu, managementEntries(ctx), activate)
+          releaseMenu = decorateManagementMenu(menu, entries(), activate)
           // Native autofocus may have targeted its first row before owned rows mounted.
           if (keyboardOpen || menu.contains(document.activeElement)) menu.querySelector<HTMLButtonElement>('[data-mobile-management-entry]')?.focus({ preventScroll: true })
           keyboardOpen = false
@@ -163,7 +175,7 @@ export function installManagement(ctx: Context, restorePage: (page: 'sessions' |
       if (!menu) return
       const focused = document.activeElement?.getAttribute('data-mobile-management-entry')
       releaseMenu()
-      releaseMenu = decorateManagementMenu(menu, managementEntries(ctx), activate)
+      releaseMenu = decorateManagementMenu(menu, entries(), activate)
       if (focused) {
         const rows = Array.from(menu.querySelectorAll<HTMLButtonElement>('[data-mobile-management-entry]'))
         ;(rows.find(row => row.dataset.mobileManagementEntry === focused) ?? rows[0])?.focus({ preventScroll: true })

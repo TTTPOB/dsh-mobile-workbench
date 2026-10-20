@@ -39,6 +39,12 @@ export const zh = {
   copySessionId: '复制会话ID',
   copySessionIdSuccess: '已复制会话ID',
   copySessionIdFailure: '复制失败，请检查浏览器剪贴板权限',
+  installName: '安装名称…',
+  installNameTitle: '安装名称',
+  installNameDescription: '设置添加到主屏幕后显示的名称，仅保存在此浏览器。',
+  installNameLimit: '最多 {max} 个字符。已安装的应用不一定跟随改名。',
+  installNameSave: '保存',
+  installNameRestore: '恢复默认',
 }
 export type WorkbenchKey = keyof typeof zh
 export const en: Record<WorkbenchKey, string> = {
@@ -81,6 +87,12 @@ export const en: Record<WorkbenchKey, string> = {
   copySessionId: 'Copy session ID',
   copySessionIdSuccess: 'Session ID copied',
   copySessionIdFailure: 'Copy failed; check browser clipboard permissions',
+  installName: 'Install name…',
+  installNameTitle: 'Install name',
+  installNameDescription: 'Choose the name shown after adding to the home screen; it is saved in this browser only.',
+  installNameLimit: 'Up to {max} characters. An installed app may keep its current name.',
+  installNameSave: 'Save',
+  installNameRestore: 'Restore default',
 }
 
 declare module '@deepseek-ai/dsh-client-ui-slots' {

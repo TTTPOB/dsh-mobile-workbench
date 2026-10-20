@@ -17,6 +17,10 @@ export interface HostContext {
     }) => void): void;
 }
 export declare const name = "dsh-web-mobile";
+/** Maximum page-supplied install name, in Unicode code points; the client mirrors this bound. */
+export declare const INSTALL_NAME_LIMIT = 40;
+/** Index meta carrying the configured manifest name to the client-side name editor. */
+export declare const INSTALL_NAME_META = "dsh-mobile-install-name";
 export declare const MANIFEST: {
     id: string;
     name: string;
@@ -41,6 +45,23 @@ export interface Config {
     cloudflareAccess: boolean;
 }
 export declare const Config: Schema<Config>;
+/**
+ * Read the installer-supplied name from a manifest request URL.
+ * @param url - raw request URL; a missing URL keeps the configured labels.
+ * @returns the trimmed name bounded to {@link INSTALL_NAME_LIMIT} code points, or undefined.
+ */
+export declare function installNameFromQuery(url: string | undefined): string | undefined;
+/**
+ * Resolve manifest labels for one request; a page-supplied name replaces both configured labels.
+ * @param name - configured full application name.
+ * @param shortName - configured short name.
+ * @param installName - page-supplied override.
+ * @returns the manifest name and short_name pair.
+ */
+export declare function manifestLabels(name: string, shortName: string, installName?: string): {
+    name: string;
+    short_name: string;
+};
 /** Register installable metadata without caching dynamic APIs or patching HTTP prototypes. */
 export declare function apply(ctx: HostContext, config: Config): void;
 export {};
