@@ -1,6 +1,6 @@
 # DSH Mobile Workbench
 
-面向 **DSH 0.2.1-rc.1** 的手机工作台。当前版本 **3.3.0**，使用独立的语义化版本号，安装包名为 `dsh-web-mobile`。
+面向 **DSH 0.2.1-rc.1** 的手机工作台。当前版本 **3.4.0**，使用独立的语义化版本号，安装包名为 `dsh-web-mobile`。
 
 ## 使用方式
 
@@ -21,7 +21,7 @@ PWA 使用深色几何终端图标；通过插件 `name` / `shortName` 配置可
 
 ```sh
 dsh plugin --profile web add \
-  ./dsh-web-mobile-3.3.0.tgz \
+  ./dsh-web-mobile-3.4.0.tgz \
   --config.auto-install-peers=false
 ```
 
