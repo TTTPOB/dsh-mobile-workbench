@@ -29,7 +29,7 @@ pnpm exec playwright test                         # all three, one worker
 
 ## Fixture helper
 
-[demo.ts](<demo.ts>) 导出 `openDemo(page)`、`fixtureSession(page, options)` 和 `waitForAudit(page)`。它通过原生 UI 选择工作区／会话、发送「开始手机界面审计」，等待最终 assistant 文本中的 `MOBILE_AUDIT_COMPLETE` 及空闲发送按钮，不使用固定 sleep。
+[demo.ts](<demo.ts>) 导出 `openDemo(page)`、`fixtureSession(page, options)`、`freshSession(page, prompt, options)` 和 `waitForAudit(page)`。`fixtureSession` 通过原生 UI 选择工作区／会话、发送「开始手机界面审计」，等待最终 assistant 文本中的 `MOBILE_AUDIT_COMPLETE` 及空闲发送按钮，不使用固定 sleep；`freshSession` 走同一套新建流程但不等待审计标记，供「演示后台任务」等会先产生运行中状态的场景使用。
 
 - 默认复用列表中已有的审计会话；没有时新建，并使用本 worktree 的 fixture 工作区。选中行内标题而非 action 区；复用时扫描原生虚拟滚动窗口查找旧审计标记，验证后回到消息尾部，避免旧 turn 被卸载而超时。
 - `{ reuse: false }` 强制新建；`{ sessionId }` 或 `DSH_BROWSER_SESSION_ID` 复用指定会话（它应已运行审计并完成）。
