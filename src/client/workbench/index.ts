@@ -22,6 +22,8 @@ import { installWorkbenchSessionMenu } from './session-menu.ts'
 import { createPresetDisplayResolver } from './preset-display.ts'
 import { installWorkbenchUpdateNotice } from './update-notice.tsx'
 import { installManagement } from './management.ts'
+import { createInstallNameController } from './install-name.ts'
+import { InstallNameModal, type InstallNameInjected } from './InstallNameModal.tsx'
 import { WORKBENCH_MANAGEMENT_CSS } from '../styles/workbench-management.css.ts'
 
 /** Install reversible mobile navigation using the official shell overlay slot. */
@@ -38,6 +40,20 @@ export function installWorkbench(ctx: ClientContext): void {
     document.head.appendChild(tag)
     return () => { tag.remove() }
   }, 'mobile-workbench: styles')
+
+  // The saved install name applies before any install prompt reads the manifest.
+  const storage = ((): Storage | undefined => {
+    try {
+      return window.localStorage
+    } catch {
+      return undefined
+    }
+  })()
+  const installName = createInstallNameController(document, storage)
+  ctx.effect(() => {
+    installName.install()
+    return () => { installName.dispose() }
+  }, 'mobile-workbench: install name')
 
   const mq = window.matchMedia(MOBILE_QUERY)
   const viewIds = (): string[] => ctx.slots.entriesOfSlot('conversation.view')
@@ -98,7 +114,7 @@ export function installWorkbench(ctx: ClientContext): void {
   let managementOpen = false
   let refreshManagement = (): void => {}
   let activate = bridge.activate
-  installManagement(ctx, page => { bridge.activate(page) }, () => { activate('session') }, active => { managementOpen = active; refreshManagement() })
+  installManagement(ctx, page => { bridge.activate(page) }, () => { activate('session') }, active => { managementOpen = active; refreshManagement() }, () => { installName.open() })
   ctx.effect(() => {
     const history = installPageHistory(window, page => { bridge.activate(page) }, () => managementOpen || ctx.layout.panelInfo.getSnapshot().activePanelId !== null)
     activate = (destination, pointerStartedOpen) => {
@@ -198,4 +214,17 @@ export function installWorkbench(ctx: ClientContext): void {
     locale: WORKBENCH_NS,
     inject: (): WorkbenchInjected => ({ resolvePreset, tStats: ctx.locale.bind(STATS_NS), hooks: { workbench: source }, activate: (destination, pointerStartedOpen) => { activate(destination, pointerStartedOpen) }, selectView: bridge.selectView, returnParent: bridge.returnParent, closeAgents: bridge.closeAgents, focusAgents: bridge.focusAgents }),
   }, WorkbenchNav))
+  // The editor lives beside the navigation entry and is opened from the management menu.
+  ctx.slots.inject('shell.overlay', () => ctx.slots.register({
+    name: 'shell.overlay',
+    id: 'mobile-workbench-install-name',
+    order: 21,
+    locale: WORKBENCH_NS,
+    inject: (): InstallNameInjected => ({
+      hooks: { installName },
+      closeInstallName: () => { installName.close() },
+      saveInstallName: name => { installName.save(name) },
+      restoreInstallName: () => { installName.restore() },
+    }),
+  }, InstallNameModal))
 }

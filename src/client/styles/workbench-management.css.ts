@@ -46,4 +46,6 @@ export const WORKBENCH_MANAGEMENT_CSS = `@media (max-width: 1023px) and (pointer
   [data-mobile-management-surface="settings"] > [class*="_content"] > [class*="_header"],
   [data-mobile-management-surface="panel"] [data-testid="task-manager-page"] [class*="_pageHeading"] h1 { display: none !important; }
   [data-mobile-management-surface="panel"] > :not([data-mobile-management-chrome]) { flex: 1; min-height: 0; width: 100%; }
+  .mobile-workbench-install-name [data-install-name-hint] { margin: 8px 0 0; font-size: 12px; line-height: 18px; color: var(--dsw-alias-label-secondary); }
+  .mobile-workbench-install-name [class*="_footer"] button { min-height: 44px; }
 }`
