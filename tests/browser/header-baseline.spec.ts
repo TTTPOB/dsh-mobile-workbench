@@ -103,6 +103,35 @@ test('statistics uses a bounded dialog and all dismissal paths return focus', as
   await expect(page.getByRole('dialog', { name: 'Session information' })).toBeVisible()
 })
 
+test('statistics scrolls inside its material so overflowing rows keep the menu background', async ({ page, isMobile }, info) => {
+  test.skip(!isMobile)
+  await page.setViewportSize({ width: 390, height: 420 })
+  await fixtureSession(page, { reuse: false })
+  await page.locator('[data-mobile-workbench="stats"]').click()
+  const panel = page.getByRole('dialog', { name: 'Session statistics', exact: true })
+  await expect(panel).toBeVisible()
+  const geometry = await panel.evaluate(el => {
+    const scroller = el.querySelector<HTMLElement>('[data-workbench-stats-scroll]')!
+    const material = el.querySelector<HTMLElement>(':scope > [aria-hidden="true"]')!
+    const overflowing = scroller.scrollHeight > scroller.clientHeight
+    scroller.scrollTop = scroller.scrollHeight
+    // The material fills the padding box, inside the surface border.
+    const panelBox = el.getBoundingClientRect()
+    const materialBox = material.getBoundingClientRect()
+    const rows = el.querySelectorAll('[data-workbench-stat]')
+    const last = rows[rows.length - 1]!.getBoundingClientRect()
+    return { overflowing, panelScroll: el.scrollTop, innerScroll: scroller.scrollTop, panel: [panelBox.top + el.clientTop, panelBox.top + el.clientTop + el.clientHeight], material: [materialBox.top, materialBox.bottom], last: [last.top, last.bottom] }
+  })
+  expect(geometry.overflowing, 'the short viewport must force the statistics to scroll').toBe(true)
+  expect(geometry.innerScroll).toBeGreaterThan(0)
+  expect(geometry.panelScroll).toBe(0)
+  expect(Math.abs(geometry.material[0]! - geometry.panel[0]!)).toBeLessThanOrEqual(.5)
+  expect(Math.abs(geometry.material[1]! - geometry.panel[1]!)).toBeLessThanOrEqual(.5)
+  expect(geometry.last[1]).toBeLessThanOrEqual(geometry.material[1]! + .5)
+  expect(geometry.last[0]).toBeGreaterThanOrEqual(geometry.material[0]!)
+  await page.screenshot({ path: '.demo-home/review/a/after-stats-scrolled-' + info.project.name + '.png' })
+})
+
 test('localized public information Modal keeps card clicks and restores title focus on three exits', async ({ page, isMobile }, info) => {
   test.skip(!isMobile)
   await fixtureSession(page, { reuse: false })

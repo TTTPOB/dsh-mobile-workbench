@@ -193,3 +193,27 @@ test('first Automation New after closing a management Modal is an outward action
   await page.goBack()
   await expect(page).toHaveURL('data:text/html,previous-management-site')
 })
+
+test('a short account menu scrolls its native viewport and keeps the menu material', async ({ page, isMobile }) => {
+  test.skip(!isMobile)
+  await page.setViewportSize({ width: 390, height: 300 })
+  await openDemo(page)
+  await page.getByRole('button', { name: 'Sessions', exact: true }).click()
+  await page.getByRole('button', { name: 'Account menu', exact: true }).click()
+  const menu = page.locator('[data-mobile-management-menu]')
+  await expect(menu).toBeVisible()
+  const geometry = await menu.evaluate(el => {
+    const viewport = el.querySelector<HTMLElement>(':scope > [class*="_viewport"]')!
+    const material = el.querySelector<HTMLElement>(':scope > [aria-hidden="true"]')!
+    const overflowing = viewport.scrollHeight > viewport.clientHeight
+    viewport.scrollTop = viewport.scrollHeight
+    const box = el.getBoundingClientRect()
+    const fill = material.getBoundingClientRect()
+    return { overflowing, menuScroll: el.scrollTop, viewportScroll: viewport.scrollTop, top: box.top + el.clientTop, bottom: box.top + el.clientTop + el.clientHeight, fillTop: fill.top, fillBottom: fill.bottom }
+  })
+  expect(geometry.overflowing, 'the short viewport must force the account menu to scroll').toBe(true)
+  expect(geometry.viewportScroll).toBeGreaterThan(0)
+  expect(geometry.menuScroll).toBe(0)
+  expect(Math.abs(geometry.fillTop - geometry.top)).toBeLessThanOrEqual(.5)
+  expect(Math.abs(geometry.fillBottom - geometry.bottom)).toBeLessThanOrEqual(.5)
+})

@@ -169,19 +169,24 @@ export const WORKBENCH_HEADER_CSS = `@media (max-width: 1023px) and (pointer: co
   ${H} [class*="_headerUtilities"] button[aria-haspopup="menu"]:focus-visible { outline: 2px solid currentColor; outline-offset: -2px; }
   ${H} [class*="_headerUtilities"] { display: flex !important; position: absolute !important; top: 8px !important; right: 12px !important; width: 44px !important; height: 44px !important; padding: 0 !important; margin: 0 !important; }
   ${H} [class*="_headerUtilities"] button[aria-haspopup="menu"] { display: flex !important; align-items: center; justify-content: center; width: 44px !important; min-width: 44px !important; height: 44px !important; min-height: 44px !important; padding: 0 !important; }
+  /* MenuSurface paints its material as an absolute inset:0 child, so the surface
+   * itself must never scroll: scrolling it would carry the material away and
+   * leave later rows on a transparent background. Scroll an inner layer instead. */
   [data-workbench-stats-panel] {
     position: fixed;
     z-index: 100;
     width: min(336px, calc(100vw - 24px));
     max-height: 60dvh;
-    overflow-y: auto;
-    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
     box-sizing: border-box;
     border-radius: var(--dsw-radius-lg);
     border: 1px solid var(--dsw-alias-border-l1);
     box-shadow: var(--dsw-elevation-prominent);
     color: var(--dsw-alias-label-primary);
   }
+  [data-workbench-stats-scroll] { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior-y: contain; padding: 12px; }
   [data-workbench-stats-panel] h2 { display: flex; justify-content: space-between; font-size: 14px; margin: 8px 0; }
   [data-workbench-stats-panel] dl { margin: 0 0 12px; font-size: 13px; }
   [data-workbench-stats-panel] dl > div { display: flex; justify-content: space-between; gap: 12px; padding: 4px 0; }

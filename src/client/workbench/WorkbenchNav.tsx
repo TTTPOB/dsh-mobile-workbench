@@ -167,7 +167,9 @@ export function WorkbenchAgents({ useWorkbench, useSessions, useProjection, sess
     </Modal>
     {statsOpen && createPortal(<MenuSurface ref={panelRef} id={panelId} role="dialog" aria-label={t('statistics')}
       data-workbench-stats-panel style={{ top: position?.top, right: 12, visibility: position ? 'visible' : 'hidden' }}>
-      <WorkbenchStatsDetails pressure={pressure} breakdown={breakdown} activity={activity} usage={usage} t={tStats} />
+      <div data-workbench-stats-scroll>
+        <WorkbenchStatsDetails pressure={pressure} breakdown={breakdown} activity={activity} usage={usage} t={tStats} />
+      </div>
     </MenuSurface>, document.body)}
   </>
 }
