@@ -8,10 +8,10 @@
 2. 按仓库保护规则推送源码分支，再推送新的 `v<version>` tag。`.github/workflows/release.yml` 从 tag 冻结安装依赖，执行 `verify`、`test:core`、build，并确认提交的 `lib/` 没有漂移。
 3. Release workflow 打包 `dsh-web-mobile-<version>.tgz`、核对包名与版本，发布 tarball 与 `SHA256SUMS`。不从本地上传产物，不发布 npm；已有 Release 拒绝覆盖。失败时检查 Actions 日志，修复后使用新的 tag/version，绝不移动已推送 tag。公开说明只写当前功能、兼容范围和实际验证结果，保留来源与 MIT 许可证。
 
-已发布的 tag 和资产保持不可变。需要修订时递增版本，不覆盖原包。当前 3.4.0 的安装来源为：
+已发布的 tag 和资产保持不可变。需要修订时递增版本，不覆盖原包。当前 3.4.1 的安装来源为：
 
 ```text
-https://github.com/TTTPOB/dsh-mobile-workbench/releases/download/v3.4.0/dsh-web-mobile-3.4.0.tgz
+https://github.com/TTTPOB/dsh-mobile-workbench/releases/download/v3.4.1/dsh-web-mobile-3.4.1.tgz
 ```
 
 ## 日用部署
@@ -24,7 +24,7 @@ https://github.com/TTTPOB/dsh-mobile-workbench/releases/download/v3.4.0/dsh-web-
 
 ```sh
 PROFILE="$HOME/.dsh/profiles/web"
-VERSION=3.4.0
+VERSION=3.4.1
 URL="https://github.com/TTTPOB/dsh-mobile-workbench/releases/download/v$VERSION/dsh-web-mobile-$VERSION.tgz"
 
 systemctl --user stop dsh-web.service
