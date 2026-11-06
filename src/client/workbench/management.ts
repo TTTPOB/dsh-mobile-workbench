@@ -140,7 +140,7 @@ export function installManagement(ctx: Context, restorePage: (page: 'sessions' |
     }
     const onClick = (event: MouseEvent): void => {
       if (!(event.target instanceof Element)) return
-      const newTask = event.target.closest('[data-testid="task-manager-page"] button[class*="_newButton"], [data-testid="task-manager-page"] button[class*="_emptyAction"]')
+      const newTask = event.target.closest('[data-testid="task-manager-page"] button[class*="_createPrimary"], [data-testid="task-manager-page"] button[class*="_emptyAction"]')
       if (kind === 'panel' && newTask && surface?.contains(newTask)) { nativeSessionExit = true; return }
       if (!launcher()?.contains(event.target)) return
       if (launcher()?.getAttribute('aria-expanded') !== 'true') { captureList(); keyboardOpen = event.detail === 0 }

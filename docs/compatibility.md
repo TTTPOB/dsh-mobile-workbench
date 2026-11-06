@@ -33,7 +33,7 @@ pnpm pack --pack-destination /absolute/path/to/tarballs
 | 官方插件管理器 | F3 `pluginNavigation.openModal(): void`，无参数 | modal 调用、官方包回退与实时 slot label 定位回归；正向集成待 fork 包。 |
 | 可选第三方功能 | dshmarket 的 `data-dsh-market-root/irow/cardShots`；实验 agent-team 的 `data-team-action/panel` | 不是官方管理器 DOM；仅相关功能挂载时生效；第三方最终组合仍需验收。 |
 
-官方 CSS-module 片段可通过 `DSH_HOST_SOURCE` 开启源码存在性检查；本轮不使用旧 checkout 的检查结果代替新 Host 验收。已删除旧 `_searchInline` 规则，消息流观察排除改用 `data-chat-flow`。全名 CSS hash 不再用于模型菜单定位。
+官方 CSS-module 片段可通过 `DSH_HOST_SOURCE` 开启源码存在性检查；本轮不使用旧 checkout 的检查结果代替新 Host 验收。旧 `_searchInline` 与 lineage `_aside` 规则不再保留，消息流观察排除使用 `data-chat-flow`；自动任务的会话创建入口定位新版 `_createPrimary`，不匹配手动创建菜单。全名 CSS hash 不再用于模型菜单定位。
 
 ## 最终隔离 Host 的浏览器验收
 

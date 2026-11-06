@@ -47,7 +47,7 @@ export const LAYOUT_CSS = `@media (max-width: 1023px) and (pointer: coarse) {
     content-visibility: auto;
     contain-intrinsic-size: auto 600px;
   }
-  [data-workbench-agent-menu] :is([class*="_disclosure"], [class*="_disclosureSpace"], [class*="_aside"]) {
+  [data-workbench-agent-menu] :is([class*="_disclosure"], [class*="_disclosureSpace"]) {
     width: 44px !important;
     min-width: 44px !important;
     height: 44px !important;
