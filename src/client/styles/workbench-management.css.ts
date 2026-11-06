@@ -7,7 +7,7 @@ export const WORKBENCH_MANAGEMENT_CSS = `@media (max-width: 1023px) and (pointer
     width: 44px !important; height: 44px !important;
     z-index: 15;
   }
-  html[data-mobile-workbench-active="true"] [data-mobile-nav="frame"] > :first-child [class*="_settingsArea"] [class*="_triggerRow"] [data-mobile-management-anchor] > button {
+  html[data-mobile-workbench-active="true"] [data-mobile-nav="frame"] > [class*="_sidebarCol"] [class*="_settingsArea"] [class*="_triggerRow"] [data-mobile-management-anchor] > button {
     width: 44px !important; min-width: 44px !important; height: 44px !important;
     padding: 0 !important; justify-content: center !important;
   }
@@ -21,8 +21,8 @@ export const WORKBENCH_MANAGEMENT_CSS = `@media (max-width: 1023px) and (pointer
   }
   html[data-mobile-workbench-management] [data-mobile-workbench="navigation"] { display: none !important; }
   html[data-mobile-workbench-management] { --mobile-workbench-nav-height: 0px !important; }
-  html[data-mobile-workbench-management="panel"] [data-mobile-nav="frame"] > :first-child,
-  html[data-mobile-workbench-management="panel"] [data-sidebar-right-panel] { visibility: hidden; }
+  html[data-mobile-workbench-management="panel"] [data-mobile-nav="frame"] > [class*="_sidebarCol"],
+  html[data-mobile-workbench-management="panel"] [data-sidebar-right-panel] { visibility: hidden !important; }
   html[data-mobile-workbench-active="true"][data-mobile-workbench-management] [data-mobile-management-surface][data-mobile-management-surface] {
     position: fixed !important; left: 8px !important;
     top: calc(env(safe-area-inset-top, 0px) + 12px) !important;

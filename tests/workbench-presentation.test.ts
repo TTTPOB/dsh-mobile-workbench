@@ -107,7 +107,6 @@ test('native catalog and inspector markers are reversible without changing host 
 test('sessions page leaves navigation visible with constant clearance and no drawer animation', () => {
   assert.doesNotMatch(WORKBENCH_CSS, /html:has\(\[data-mobile-nav="(frame|backdrop)"/)
   assert.match(WORKBENCH_CSS, /bottom: var\(--mobile-workbench-nav-height\) !important/)
-  assert.match(LAYOUT_CSS, /\[data-sidebar-collapsed\] > :first-child \{\s*display: none !important/)
   assert.doesNotMatch(LAYOUT_CSS + WORKBENCH_CSS, /data-mobile-nav="(?:backdrop|fab)"/)
   assert.match(WORKBENCH_CSS, /html:has\(\[aria-modal="true"\]\) \[data-mobile-workbench="navigation"\]/)
 })

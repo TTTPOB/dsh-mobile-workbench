@@ -1,3 +1,4 @@
+import { sessionsPageOpen } from '../workbench/sidebar-page.ts'
 import type { Context as ClientContext } from '@deepseek-ai/cordis'
 import type {} from '@deepseek-ai/dsh-client-ui-layout/client'
 import type {} from '@deepseek-ai/dsh-client-locale/client'
@@ -62,10 +63,10 @@ export function installWorkbench(ctx: ClientContext): void {
   })
   const bridge = createHostBridge(viewIds, () => counts, () => {
     const frame = getFrame()
-    if (frame && !frame.hasAttribute('data-sidebar-collapsed')) toggleDrawer(ctx)
+    if (frame && sessionsPageOpen(frame)) toggleDrawer()
   }, () => {
     const frame = getFrame()
-    if (frame?.hasAttribute('data-sidebar-collapsed')) toggleDrawer(ctx)
+    if (!sessionsPageOpen(frame)) toggleDrawer()
   }, {
     show: panelSelectorOf(ctx.layout) ?? (() => {}),
     hasSession: () => currentSessionIdOf(ctx.sessions.list.getSnapshot()) !== undefined,
@@ -146,7 +147,7 @@ export function installWorkbench(ctx: ClientContext): void {
     })
     observer.observe(document.body, {
       childList: true, subtree: true, characterData: true, attributes: true,
-      attributeFilter: ['data-sidebar-collapsed', 'aria-label', 'aria-selected', 'aria-expanded', 'data-rightbar-collapsed', 'data-sidebar-right-open', 'data-selected', 'data-trajectory-row-key'],
+      attributeFilter: ['data-mobile-workbench-sessions', 'data-sidebar-collapsed', 'aria-label', 'aria-selected', 'aria-expanded', 'data-rightbar-collapsed', 'data-sidebar-right-open', 'data-selected', 'data-trajectory-row-key'],
     })
     const refreshPresentation = (): void => { presentationDirty = true; schedule() }
     const refreshCounts = (): void => {

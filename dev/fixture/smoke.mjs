@@ -165,8 +165,12 @@ try {
   const removeAnswerer = ctx.on('user-questions/request', async request => ({
     answers: [{ id: request.questions[0].id, selected: ['检查子智能体'] }],
   }))
-  const questionResult = await ctx.tools.execute({ name: questionCall.name, callId: questionCall.id,
-    arguments: questionArgs, signal: new AbortController().signal })
+  const executor = await import(pathToFileURL(require.resolve('@deepseek-ai/dsh-tool-executor-native')).href)
+  await ctx.plugin(executor)
+  const batch = await ctx.tools.execute({ calls: [questionCall], signal: new AbortController().signal })
+  assert.equal(batch.results.length, 1)
+  assert.equal(batch.results[0].callId, questionCall.id)
+  const questionResult = batch.results[0].result
   assert.equal(questionResult.isError, false)
   const confirmation = await collect(adapter.stream({ ...questionRequest, messages: [...questionRequest.messages,
     { role: 'tool', source: { kind: 'tool', callId: questionCall.id }, content: questionResult.content }] }))

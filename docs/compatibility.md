@@ -1,17 +1,17 @@
-# rc.1 兼容性与验收参考
+# DSH 0.2.2-rc.1 兼容性与验收参考
 
-DSH Mobile Workbench 3.3.0 支持 DSH 0.2.1-rc.1。`engines.dsh` 与 DSH peers 均限定在 `>=0.2.1-rc.1 <0.3.0`，插件管理器 peer 精确要求 `0.2.1-rc.1-fork1`。没有继续声明旧 Host 兼容性。
+DSH Mobile Workbench 3.3.0 支持 DSH 0.2.2-rc.1。`engines.dsh` 与 DSH peers 均精确限定为 `0.2.2-rc.1`；开发依赖使用 npm 官方包。插件管理 modal 需要主仓 fork 继续提供 `pluginNavigation.openModal()`，官方包回落到原生插件页面。没有继续声明旧 Host 兼容性。
 
 ## 源码与包验证
 
-开发工具链为 Node.js 24+、pnpm 11.28.5、Cordis 4.0.5、Loader 1.0.6、Schemastery 3.18.5 与 TypeScript ^6.0.3。npm 发布的客户端声明将部分类型依赖放在 devDependencies，消费者不会自动得到它们；本项目显式安装所用声明依赖，并在 CommonJS 客户端编译配置中映射公开 types 子路径，避免旧 Node 模块解析模式把服务或 hooks 退化为 any。
+开发工具链为 Node.js 24.9+、pnpm 11.28.5、Cordis 4.1.0、Loader 1.1.0、Schemastery 3.18.5 与 TypeScript ^6.0.3。npm 发布的客户端声明将部分类型依赖放在 devDependencies，消费者不会自动得到它们；本项目显式安装所用声明依赖，并在 CommonJS 客户端编译配置中映射公开 types 子路径，避免旧 Node 模块解析模式把服务或 hooks 退化为 any。
 
 ```sh
 pnpm install --frozen-lockfile
-NODE_OPTIONS=--max-old-space-size=3072 pnpm verify
+NODE_OPTIONS=--max-old-space-size=4096 pnpm verify
 DSH_HOST_SOURCE=/absolute/path/to/rc1-checkout \
-  NODE_OPTIONS=--max-old-space-size=3072 pnpm test:core
-NODE_OPTIONS=--max-old-space-size=3072 pnpm build
+  NODE_OPTIONS=--max-old-space-size=4096 pnpm test:core
+NODE_OPTIONS=--max-old-space-size=4096 pnpm build
 pnpm pack --pack-destination /absolute/path/to/tarballs
 ```
 
@@ -24,16 +24,16 @@ pnpm pack --pack-destination /absolute/path/to/tarballs
 | 统计栏 | `data-composer-stat="activity"` / `"usage"`；`data-composer-dock` | 独立 pill、普通 span／按钮、compact、context-only、卸载清理的核心回归；源码契约。 |
 | 模型菜单 | `conversation.input.model` 中的原生按钮；`aria-controls` → portal id | 不固定 CSS hash；原生 menu／group 子页不变；身份与重定位回归。 |
 | 编辑器 | `data-composer-card/input/placeholder/seat`、`data-input-scroll`；原生 `_row`、`_tools`、`_trailing`、`_standardControls` | 类型、源码片段与现有展开／软键盘回归；真实 IME 待验。 |
-| 页面与工作区 | `data-shell-overlay`、sidebar collapsed/right-panel/right-open/right-toggle；`data-dockkit-*` | 布局服务 `toggleSidebar`、`selectPanel(null)` 仍存在；导航、层级与独立滚动回归。 |
+| 页面与工作区 | `data-shell-overlay`、sidebar collapsed/right-panel/right-open/right-toggle；`data-dockkit-*` | 原生 drawer 保持关闭；独立页面标记决定 sidebarCol 可见和 inert；导航、层级与独立滚动回归。 |
 | 会话顶栏与轨迹 | `data-conversation-tabs`、`data-trajectory-scroll/row-key`、`data-selected`；crumb、switcher、details 的 CSS-module 片段 | parent／view／目录、轨迹选中行和清理回归；保留原生 React 节点。 |
 | 会话更多菜单 | session-log-export 的 `_moreButton` 与原生 Menu；locale namespace `session-log-download` | 复制当前会话 ID、失败反馈、键盘开启与卸载回归；官方下载项不替换。 |
 | slots | input left/model/permission、session header actions/lineage/utilities、conversation view、shell overlay、sidebar panellist | 所用声明仍存在；贡献通过 `slots.inject` 注册。 |
 | ClientContext | Cordis `Context`，renderer 提供 `slots`；session/workspace-controller、locale、layout、connection、modules 的公开声明 | 删除旧 `dsh-client-runtime` 依赖；以 rc.1 npm 声明编译。 |
 | 会话与恢复状态 | `sessions.list` 的 mainView retention、`refreshProjections`、`uiSession.sessionStatus`、`connection.state`、`modules.entries.state` | 下游计数、目录补载、认证提示和更新失败提示回归；不访问私有 store。 |
-| 官方插件管理器 | F3 `pluginNavigation.openModal(): void`，无参数 | modal 调用与侧栏 ledger 定位回归；包级要求 fork1。 |
+| 官方插件管理器 | F3 `pluginNavigation.openModal(): void`，无参数 | modal 调用、官方包回退与实时 slot label 定位回归；正向集成待 fork 包。 |
 | 可选第三方功能 | dshmarket 的 `data-dsh-market-root/irow/cardShots`；实验 agent-team 的 `data-team-action/panel` | 不是官方管理器 DOM；仅相关功能挂载时生效；第三方最终组合仍需验收。 |
 
-所有保留的官方 CSS-module 片段通过 rc.1 源码存在性测试。已删除旧 `_searchInline` 规则，消息流观察排除改用 `data-chat-flow`。全名 CSS hash 不再用于模型菜单定位。
+官方 CSS-module 片段可通过 `DSH_HOST_SOURCE` 开启源码存在性检查；本轮不使用旧 checkout 的检查结果代替新 Host 验收。已删除旧 `_searchInline` 规则，消息流观察排除改用 `data-chat-flow`。全名 CSS hash 不再用于模型菜单定位。
 
 ## 最终隔离 Host 的浏览器验收
 

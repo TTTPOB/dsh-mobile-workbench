@@ -1,6 +1,6 @@
 # DSH Mobile Workbench
 
-面向 **DSH 0.2.1-rc.1** 的手机工作台。当前版本 **3.3.0**，使用独立的语义化版本号，安装包名为 `dsh-web-mobile`。
+面向 **DSH 0.2.2-rc.1** 的手机工作台。当前版本 **3.3.0**，使用独立的语义化版本号，安装包名为 `dsh-web-mobile`。
 
 ## 使用方式
 
@@ -29,7 +29,7 @@ dsh plugin --profile web add \
 
 ## 开发与验证
 
-需要 Node.js 24+ 和 pnpm。
+需要 Node.js 24.9+ 和 pnpm。
 
 ```sh
 pnpm install --frozen-lockfile

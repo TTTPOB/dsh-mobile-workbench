@@ -1,3 +1,4 @@
+import { sessionsPageOpen } from '../workbench/sidebar-page.ts'
 import type { SessionId } from '@deepseek-ai/dsh-session/types'
 import { getFrame } from '../effects/phone-chrome.ts'
 import { HOST_FILES_CLOSER, HOST_FILES_OPENER, openFilesPanel } from '../components/open-files-panel.ts'
@@ -51,7 +52,7 @@ export function createHostBridge(
     const selected = buttons.findIndex(button => button.getAttribute('aria-selected') === 'true')
     const trigger = agentTrigger()
     return {
-      sessionsOpen: getFrame() !== null && getFrame()?.hasAttribute('data-sidebar-collapsed') === false,
+      sessionsOpen: getFrame() !== null && sessionsPageOpen(getFrame()),
       hasSessions: getFrame() !== null,
       hasSessionPage: getFrame() !== null,
       hasParent: conversation.parentId?.() !== undefined,

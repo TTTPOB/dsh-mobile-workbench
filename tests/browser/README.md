@@ -27,6 +27,12 @@ pnpm exec playwright test                         # all three, one worker
 
 每个 worktree 都从自己的脚本位置定位根目录，链接自身的构建输出，使用自己的 `.demo-home`。并行 demo 分别指定不同端口，例如 54077 和 54078。兼容目录从祖先位置寻找相邻 `dsh-config`，不依赖 worktree 的固定深度。结束后 Ctrl-C，或停止自己启动的后台 job。
 
+## 无 Host 的升级回归
+
+本任务禁止启动 Host 时，只运行 [sidebar-page-host-free.spec.ts](<sidebar-page-host-free.spec.ts>)：它在空白 Chromium 页面挂载本地 React fixture，覆盖新版 mask 插入、React 重挂侧栏列、inert 回写、尺寸变化和三页切换后的点击／滚动／焦点。无需认证 URL，不读取真实 profile。
+
+命令：`NODE_OPTIONS=--max-old-space-size=4096 pnpm exec playwright test tests/browser/sidebar-page-host-free.spec.ts --project=mobile-390 --project=mobile-320`。其余现有浏览器用例需要隔离 Host，留待最终组合验收。
+
 ## Fixture helper
 
 [demo.ts](<demo.ts>) 导出 `openDemo(page)`、`fixtureSession(page, options)` 和 `waitForAudit(page)`。它通过原生 UI 选择工作区／会话、发送「开始手机界面审计」，等待最终 assistant 文本中的 `MOBILE_AUDIT_COMPLETE` 及空闲发送按钮，不使用固定 sleep。
@@ -41,7 +47,7 @@ pnpm exec playwright test                         # all three, one worker
 
 ## Host API 基线
 
-开发依赖精确固定为 0.2.1-rc.1：ui-layout、ui-primitives、ui-workspace、ui-input-trigger、ui-model-selection、ui-conversation、ui-chat、session-stats、token-meter。插件管理器保留项目已有的 0.2.1-rc.1-fork1。
+开发依赖精确固定为 0.2.2-rc.1：ui-layout、ui-primitives、ui-workspace、ui-input-trigger、ui-model-selection、ui-conversation、ui-chat、session-stats、token-meter。插件管理器使用 npm 官方 0.2.2-rc.1；modal 正向集成另对主仓 fork 验证。
 
 原始锁文件没有解析到旧版；workspace、input-trigger、model-selection、chat 和两个 projection 提供包此前没有直接开发依赖。本次补齐，保证后续 worktree 可直接解析这些公开类型，而不是偶然依赖全局 Host 的包。
 

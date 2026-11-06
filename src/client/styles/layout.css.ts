@@ -8,17 +8,19 @@ export const LAYOUT_CSS = `@media (max-width: 1023px) and (pointer: coarse) {
   html [data-mobile-nav="frame"] {
     box-sizing: border-box !important;
     position: relative !important;
-    grid-template-columns: minmax(0, 1fr) 0 0 !important;
+    grid-template-columns: 0 minmax(0, 1fr) 0 !important;
     padding-top: env(safe-area-inset-top, 0px) !important;
   }
+  [data-mobile-nav="frame"] > [data-sidebar-mask] { display: none !important; }
   /* The native sidebar is a page, with no off-screen drawer or backdrop. */
-  [data-mobile-nav="frame"] > :first-child {
+  [data-mobile-nav="frame"] > [class*="_sidebarCol"] {
     position: absolute !important;
     inset: 0 0 var(--mobile-workbench-nav-height) !important;
     width: 100% !important;
     height: auto !important;
     z-index: 10 !important;
     transform: none !important;
+    visibility: visible !important;
     transition: none !important;
     padding-top: env(safe-area-inset-top, 0px) !important;
     box-sizing: border-box;
@@ -26,7 +28,7 @@ export const LAYOUT_CSS = `@media (max-width: 1023px) and (pointer: coarse) {
     background: var(--dsw-alias-bg-surface);
     touch-action: pan-y pinch-zoom !important;
   }
-  [data-mobile-nav="frame"][data-sidebar-collapsed] > :first-child {
+  [data-mobile-nav="frame"]:not([data-mobile-workbench-sessions]) > [class*="_sidebarCol"] {
     display: none !important;
   }
   html [data-mobile-nav="frame"] [data-dsh-responsive-part="sidebar-toggle"],
@@ -41,7 +43,7 @@ export const LAYOUT_CSS = `@media (max-width: 1023px) and (pointer: coarse) {
   [data-mobile-nav="frame"] [class*="sessionRow"] [class*="_rowActions"] {
     display: inline-flex !important;
   }
-  [data-mobile-nav="frame"] > :first-child [role="tree"] {
+  [data-mobile-nav="frame"] > [class*="_sidebarCol"] [role="tree"] {
     content-visibility: auto;
     contain-intrinsic-size: auto 600px;
   }

@@ -1,10 +1,10 @@
 # DSH Mobile Workbench 使用与架构
 
-DSH Mobile Workbench 3.3.0 面向 DSH 0.2.1-rc.1。包名为 `dsh-web-mobile`，版本使用 `major.minor.patch`。
+DSH Mobile Workbench 3.3.0 面向 DSH 0.2.2-rc.1。包名为 `dsh-web-mobile`，版本使用 `major.minor.patch`。
 
 ## 页面与操作
 
-工作台在 `(max-width: 1023px) and (pointer: coarse)` 条件下启用。
+工作台在 `(max-width: 1023px) and (pointer: coarse)` 条件下启用。三页由插件页面标记控制，原生 modal drawer 保持关闭；会话列表页解除原生 sidebarCol 的 inert，其他页面禁用它。观察器只监听 frame 边界和 sidebarCol 的 inert 属性，React 更新或断点变化后重新同步，不扫描流式消息内容。
 
 | 页面 | 内容与操作 |
 | --- | --- |
@@ -44,7 +44,7 @@ DSH Mobile Workbench 3.3.0 面向 DSH 0.2.1-rc.1。包名为 `dsh-web-mobile`，
 
 ## 安装
 
-需要 Node.js 24+、pnpm 11.28.5 和 DSH 0.2.1-rc.1。使用交付的 tarball 安装到指定 profile：
+需要 Node.js 24.9+、pnpm 11.28.5 和 DSH 0.2.2-rc.1。使用交付的 tarball 安装到指定 profile：
 
 ```sh
 DSH_HOME=/path/to/isolated-home dsh plugin --profile web add \
@@ -52,7 +52,7 @@ DSH_HOME=/path/to/isolated-home dsh plugin --profile web add \
   --config.auto-install-peers=false
 ```
 
-插件复用 Host 提供的共享依赖。一个 profile 加载一个版本。插件入口要求 `@deepseek-ai/dsh-client-ui-plugin-manager@0.2.1-rc.1-fork1` 提供无参数 `openModal(): void`。先在隔离环境验证，再按部署授权更新日用实例。安装完成后，核对服务器实际提供的客户端资源与浏览器加载结果。发布与日用更新步骤见 [部署指南](docs/deployment.md)。
+插件复用 Host 提供的共享依赖。一个 profile 加载一个版本。插件管理 modal 使用主仓 fork 提供的无参数 `pluginNavigation.openModal(): void`；npm 官方包没有此命令时保留原生页面导航。先在隔离环境验证，再按部署授权更新日用实例。安装完成后，核对服务器实际提供的客户端资源与浏览器加载结果。发布与日用更新步骤见 [部署指南](docs/deployment.md)。
 
 ### PWA 图标与实例名称
 

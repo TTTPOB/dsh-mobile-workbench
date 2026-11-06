@@ -106,9 +106,14 @@ test('session page returns through formal default panel without forcing chat; to
   assert.equal(events.at(-1), 'chat')
   bridge.returnParent()
   assert.equal(events.at(-1), 'direct-parent')
-  let toggles = 0
-  toggleDrawer({ layout: { toggleSidebar: () => { toggles++ } } } as Parameters<typeof toggleDrawer>[0])
-  assert.equal(toggles, 1)
+  frame.toggleAttribute = (key: string): boolean => {
+    if (attributes.has(key)) { attributes.delete(key); return false }
+    attributes.add(key); return true
+  }
+  toggleDrawer()
+  assert.equal(bridge.evidence().sessionsOpen, true)
+  toggleDrawer()
+  assert.equal(bridge.evidence().sessionsOpen, false)
 })
 
 test('global plugin panel and hero both return to default session without waiting for a header', t => {
@@ -216,30 +221,43 @@ test('disposing catalog discovery removes its subscription and launches no queue
   assert.deepEqual(f.calls, ['B', 'C'])
 })
 
-test('optional native Plugins modal stops panel selection before sidebar close without matching translated labels', t => {
-  class PanelElement { closest() { return this } }
-  const plugins = new PanelElement(), other = new PanelElement()
-  let rows = [plugins, other]
+test('Plugins modal follows live slot labels despite hidden panels and More, and official navigation falls through', t => {
+  let label = '插件'
+  class PanelElement {
+    name: () => string
+    more: boolean
+    constructor(name: () => string, more = false) { this.name = name; this.more = more }
+    closest(selector: string) { return selector.includes(':not(') && this.more ? null : this }
+    querySelector() { return this }
+    getAttribute() { return this.name() }
+  }
+  const plugins = new PanelElement(() => label), other = new PanelElement(() => 'Other')
+  const more = new PanelElement(() => label, true)
   let mobile = true, modalCalls = 0, intercepted = 0, available = true
-  const panelList = { contains: (row: object) => rows.includes(row as PanelElement), querySelectorAll: () => rows }
+  const entries = [{ options: { id: 'other', label: 'Other' } }, { options: { id: 'hidden', label: 'Hidden' } }, { options: { id: 'plugins', label: () => label } }]
   replaceGlobal(t, 'Element', PanelElement)
-  replaceGlobal(t, 'document', { documentElement: { getAttribute: () => mobile ? 'true' : null }, querySelector: () => panelList })
+  replaceGlobal(t, 'document', { documentElement: { getAttribute: () => mobile ? 'true' : null } })
   const ctx = {
-    get: () => available ? { openModal: (...args: object[]) => { assert.equal(args.length, 0); modalCalls++ } } : {},
-    slots: { entriesOfSlot: () => [{ options: { id: 'other', order: 10 } }, { options: { id: 'plugins', order: 0 } }] },
+    get: () => available ? { openModal: () => { modalCalls++ } } : { openList: () => {}, openBundle: () => {} },
+    slots: { entriesOfSlot: () => entries },
   } as Parameters<typeof openPluginsModal>[0]
   const event = { target: plugins, preventDefault: () => { intercepted++ }, stopImmediatePropagation: () => { intercepted++ } } as MouseEvent
   assert.equal(openPluginsModal(ctx, event), true)
   assert.equal(modalCalls, 1)
   assert.equal(intercepted, 2)
   assert.equal(openPluginsModal(ctx, { ...event, target: other } as MouseEvent), false)
+  assert.equal(openPluginsModal(ctx, { ...event, target: more } as MouseEvent), false)
+  label = 'プラグイン'
+  assert.equal(openPluginsModal(ctx, event), true)
   available = false
-  assert.equal(openPluginsModal(ctx, event), false, 'missing official seam leaves the original native behavior')
+  assert.equal(openPluginsModal(ctx, event), false)
+  assert.equal(intercepted, 4, 'official openList/openBundle navigation receives the untouched click')
   available = true; mobile = false
   assert.equal(openPluginsModal(ctx, event), false)
-  mobile = true; rows = [plugins]
-  assert.equal(openPluginsModal(ctx, event), false, 'ledger/DOM mismatch never intercepts another panel')
-  assert.equal(modalCalls, 1)
+  mobile = true
+  entries.push({ options: { id: 'duplicate', label: () => label } })
+  assert.equal(openPluginsModal(ctx, event), false, 'duplicate labels never intercept another panel')
+  assert.equal(modalCalls, 2)
 })
 
 test('own descendant catalog opens by the native pinned click, while second activation still closes with Escape', t => {

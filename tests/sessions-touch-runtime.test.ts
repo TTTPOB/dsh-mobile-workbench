@@ -28,9 +28,9 @@ function fixture(dsha = false, initialSession = 'old', rowKey = 'session:new') {
   }
   const row = new Row()
   const frame = {
-    firstElementChild: { contains: (target: unknown) => target === row },
-    querySelector: () => null,
-    hasAttribute: () => closed,
+    querySelector: (selector: string) => selector.includes('_sidebarCol') ? { contains: (target: unknown) => target === row } : null,
+    hasAttribute: (key: string) => key === 'data-mobile-workbench-sessions' ? !closed : true,
+    toggleAttribute: () => { closed = !closed },
   }
   const dispatch = (type: string, properties: Record<string, unknown> = {}): boolean => {
     let blocked = false

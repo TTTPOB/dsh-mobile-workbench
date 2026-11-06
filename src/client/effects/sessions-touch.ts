@@ -1,3 +1,4 @@
+import { sessionsPageOpen } from '../workbench/sidebar-page.ts'
 import type { Context as ClientContext } from '@deepseek-ai/cordis'
 import { currentSessionIdOf } from '../core/sessions-compat.ts'
 import { detectIosWebKit, getFrame, installMobileEffect, toggleDrawer } from './phone-chrome.ts'
@@ -25,7 +26,7 @@ export function installSessionsTouch(ctx: ClientContext): void {
       if (!sessionsVisible() || document.querySelector('[aria-modal="true"]')) return null
       if (!(target instanceof Element) || target.closest('button, [class*="_rowActions"]')) return null
       const row = target.closest<HTMLElement>('[class*="_sessionRow"]')
-      return row && getFrame()?.firstElementChild?.contains(row) ? row : null
+      return row && getFrame()?.querySelector('[class*="_sidebarCol"]')?.contains(row) ? row : null
     }
     const clearPress = (): void => {
       if (timer !== undefined) window.clearTimeout(timer)
@@ -36,7 +37,7 @@ export function installSessionsTouch(ctx: ClientContext): void {
       if (closeFrame !== undefined) window.cancelAnimationFrame(closeFrame)
       closeFrame = window.requestAnimationFrame(() => {
         closeFrame = undefined
-        if (sessionsVisible() && getFrame()?.hasAttribute('data-sidebar-collapsed') === false) toggleDrawer(ctx)
+        if (sessionsVisible() && sessionsPageOpen(getFrame())) toggleDrawer()
       })
     }
     const sessionId = (row: HTMLElement): string | null => {
@@ -117,8 +118,8 @@ export function installSessionsTouch(ctx: ClientContext): void {
       if (!row) {
         // Navigation must reach React before the sessions pane is hidden.
         if (sessionsVisible() && target instanceof Element
-          && getFrame()?.firstElementChild?.contains(target)
-          && target.closest('[class*="newSession"], [class*="searchResultRow"], [class*="searchResultWorkspace"], [class*="panelRow"], button[data-dsh-taskboard-entry], button[data-dsh-ssh-entry]')) closeSessions()
+          && getFrame()?.querySelector('[class*="_sidebarCol"]')?.contains(target)
+          && target.closest('[class*="newSession"], [class*="searchResultRow"], [class*="searchResultWorkspace"], [class*="panelRow"]:not([aria-haspopup="menu"]), button[data-dsh-taskboard-entry], button[data-dsh-ssh-entry]')) closeSessions()
         return
       }
       fallback.cancel()

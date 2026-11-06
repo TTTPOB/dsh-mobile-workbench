@@ -10,7 +10,7 @@ Mobile Audit 为界面验收生成确定性内容，不需要 API Key。它通�
 node scripts/demo.mjs --port 54076
 ```
 
-需要 Node.js 24+、pnpm、本机已安装的 DSH 0.2.1-rc.1，以及相邻的 `dsh-config` checkout。脚本链接当前仓库的构建输出，创建独立 `.demo-home`；复用 `dsh-config` 的兼容授权逻辑，只为 `shared/dependencies.yaml` 中 `verifiedCompatibility` 已验证的已安装全局 fork 组合写入精确版本豁免，并逐项打印。不修改日用 Host、真实 profile 或全局安装；当前兼容的移动端包和 fixture 不需要豁免。
+需要 Node.js 24.9+、pnpm、本机已安装的 DSH 0.2.2-rc.1，以及相邻的 `dsh-config` checkout。脚本链接当前仓库的构建输出，创建独立 `.demo-home`；复用 `dsh-config` 的兼容授权逻辑，只为 `shared/dependencies.yaml` 中 `verifiedCompatibility` 已验证的已安装全局 fork 组合写入精确版本豁免，并逐项打印。不修改日用 Host、真实 profile 或全局安装；当前兼容的移动端包和 fixture 不需要豁免。
 
 打开终端的 **Authenticated demo URL**（带 `?token=`），或读取 `.demo-home/url.txt`；重启后 URL 会更新。选择打印的 workspace 目录，新建 Mobile Audit 会话，发送「开始手机界面审计」，等待 `MOBILE_AUDIT_COMPLETE`。
 

@@ -4,7 +4,7 @@ import { BASE_CSS } from '../src/client/styles/base.css.ts'
 import { LAYOUT_CSS } from '../src/client/styles/layout.css.ts'
 
 test('sessions never animate a drawer over native modal portals', () => {
-  const column = LAYOUT_CSS.match(/\[data-mobile-nav="frame"\] > :first-child \{([^}]*)\}/)?.[1]
+  const column = LAYOUT_CSS.match(/\[data-mobile-nav="frame"\] > \[class\*="_sidebarCol"\] \{([^}]*)\}/)?.[1]
   assert.ok(column)
   assert.match(column, /transform: none !important/)
   assert.match(column, /transition: none !important/)

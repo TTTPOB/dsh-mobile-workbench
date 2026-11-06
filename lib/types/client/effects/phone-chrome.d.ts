@@ -8,6 +8,6 @@ export declare const TOUCH_QUERY = "(pointer: coarse)";
 export declare function installMobileEffect(ctx: ClientContext, label: string, install: (narrow: MediaQueryList) => (() => void) | undefined, query?: string): void;
 export declare function findFrame(): HTMLElement | null;
 export declare function getFrame(): HTMLElement | null;
-/** Workbench pages use the host sidebar state, with no drawer animation. */
-export declare function toggleDrawer(ctx: ClientContext): void;
+/** Toggle the workbench page; the native modal drawer remains closed. */
+export declare function toggleDrawer(): void;
 //# sourceMappingURL=phone-chrome.d.ts.map

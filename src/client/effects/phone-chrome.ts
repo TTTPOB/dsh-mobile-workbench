@@ -1,4 +1,5 @@
 import type { Context as ClientContext } from '@deepseek-ai/cordis'
+import { toggleSessionsPage } from '../workbench/sidebar-page.ts'
 
 export { detectIosWebKit, installPhoneChrome, STABLE_VIEWPORT_VAR } from './phone-viewport.ts'
 
@@ -38,7 +39,7 @@ export function getFrame(): HTMLElement | null {
   return document.querySelector('[data-mobile-nav="frame"]') ?? findFrame()
 }
 
-/** Workbench pages use the host sidebar state, with no drawer animation. */
-export function toggleDrawer(ctx: ClientContext): void {
-  ctx.layout.toggleSidebar()
+/** Toggle the workbench page; the native modal drawer remains closed. */
+export function toggleDrawer(): void {
+  toggleSessionsPage(getFrame())
 }

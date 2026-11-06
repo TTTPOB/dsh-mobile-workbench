@@ -30,7 +30,7 @@ export function installManagement(ctx: Context, restorePage: (page: 'sessions' |
     const captureList = (): void => {
       const page = document.documentElement.getAttribute('data-mobile-workbench-page')
       origin = page === 'files' || page === 'session' ? page : 'sessions'
-      savedScroll = Array.from(getFrame()?.firstElementChild?.querySelectorAll<HTMLElement>('*') ?? []).filter(node => node.scrollHeight > node.clientHeight && /auto|scroll/.test(getComputedStyle(node).overflowY)).map(node => ({ node, top: node.scrollTop }))
+      savedScroll = Array.from(getFrame()?.querySelector('[class*="_sidebarCol"]')?.querySelectorAll<HTMLElement>('*') ?? []).filter(node => node.scrollHeight > node.clientHeight && /auto|scroll/.test(getComputedStyle(node).overflowY)).map(node => ({ node, top: node.scrollTop }))
     }
     const restore = (): void => {
       restorePage(origin)
@@ -151,7 +151,7 @@ export function installManagement(ctx: Context, restorePage: (page: 'sessions' |
     const sidebar = new MutationObserver(schedule)
     const bindSidebar = (): void => {
       sidebar.disconnect()
-      const column = getFrame()?.firstElementChild
+      const column = getFrame()?.querySelector('[class*="_sidebarCol"]')
       if (column) sidebar.observe(column, { childList: true, subtree: true })
     }
     const stopPanels = ctx.layout.panelInfo.subscribe(() => {
