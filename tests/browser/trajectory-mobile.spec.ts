@@ -142,9 +142,12 @@ test('external Trace switching releases expanded-editor interaction state withou
   await expect(card).not.toHaveAttribute('role', 'dialog')
   await page.locator('[data-workbench-view="chat"]').click()
   await expect(editor).toBeVisible()
-  await editor.focus()
+  await editor.click()
   await expect(editor).toBeFocused()
   await expect(editor).toHaveText('Expanded draft survives external Trace switching')
+  await editor.press('ControlOrMeta+End')
+  await editor.pressSequentially(' continued')
+  await expect(editor).toHaveText('Expanded draft survives external Trace switching continued')
   expect(await handle.evaluate(node => node === document.querySelector('[data-composer-input]'))).toBe(true)
 })
 

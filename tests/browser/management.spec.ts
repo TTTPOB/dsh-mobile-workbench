@@ -151,8 +151,10 @@ test('active management restores native owners and inert state when switching to
   await expect(page.locator('html')).toHaveAttribute('data-mobile-workbench-page', 'session')
   await expect(page.locator('[data-mobile-management-mask], [data-mobile-management-chrome]')).toHaveCount(0)
   const editor = page.locator('[data-composer-input="true"]')
-  await editor.focus()
+  await editor.click()
+  await editor.fill('Typing after management and media recovery')
   await expect(editor).toBeFocused()
+  await expect(editor).toHaveText('Typing after management and media recovery')
 })
 
 test('immutable preset is only a read-only sibling in the current Session menu', async ({ page, isMobile }) => {

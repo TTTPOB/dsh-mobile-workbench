@@ -271,8 +271,19 @@ test('view identity survives native More folding and a live language switch', as
     await page.locator('[data-shortcut-modal="settings"]').getByRole('button', { name: close, exact: true }).click()
     await page.locator('[data-workbench-destination="session"]').click()
   }
-  await language('English', '中文', 'Settings', '关闭')
+  const settingsRpc = async (method: 'describe' | 'replace', args: Record<string, unknown>) => page.evaluate(async ({ method, args }) => {
+    const rpcId = crypto.randomUUID()
+    const response = await fetch('api/settings/' + method, {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ type: 'client-request', rpcId, method: 'settings/' + method, payload: { args } }),
+    })
+    const body = await response.json()
+    if (!response.ok || body.rpcId !== rpcId || !body.result.ok) throw new Error('Settings RPC failed: ' + JSON.stringify(body))
+    return body.result.value
+  }, { method, args })
+  const originalLocale = (await settingsRpc('describe', {})).namespaces.find((entry: { ns: string }) => entry.ns === 'locale').value
   try {
+    await language('English', '中文', 'Settings', '关闭')
     await expect(trace).toHaveText('轨迹')
     await trace.click()
     await expect(trace).toHaveAttribute('aria-selected', 'true')
@@ -280,7 +291,8 @@ test('view identity survives native More folding and a live language switch', as
     await chat.click()
     await expect(chat).toHaveAttribute('aria-selected', 'true')
   } finally {
-    await language('中文', 'English', '设置', 'Close')
+    await settingsRpc('replace', { ns: 'locale', section: originalLocale })
+    await expect.poll(async () => (await settingsRpc('describe', {})).namespaces.find((entry: { ns: string }) => entry.ns === 'locale').value).toEqual(originalLocale)
     await row.evaluate((node, style) => { if (style === null) node.removeAttribute('style'); else node.setAttribute('style', style) }, previousStyle)
   }
 })

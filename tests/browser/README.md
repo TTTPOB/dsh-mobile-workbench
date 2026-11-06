@@ -40,7 +40,8 @@ pnpm exec playwright test                         # all three, one worker
 - 默认复用列表中已有的审计会话；没有时新建，并使用本 worktree 的 fixture 工作区。选中行内标题而非 action 区；复用时扫描原生虚拟滚动窗口查找旧审计标记，验证后回到消息尾部，避免旧 turn 被卸载而超时。
 - `{ reuse: false }` 强制新建；`{ sessionId }` 或 `DSH_BROWSER_SESSION_ID` 复用指定会话（它应已运行审计并完成）。
 - 连接另一个 worktree 时，用 `DSH_BROWSER_WORKSPACE` 或 `{ workspace }` 指定该实例打印的 fixture workspace 绝对路径。
-- 浏览器语言固定为英文以稳定官方 UI 选择器；审计提示及回复仍为中文。
+- 常规 project 使用英文浏览器，中文专题使用 `zh-CN`；审计提示及回复仍为中文。切换 Host 语言的用例通过公开 settings Remote 保存并在 `finally` 恢复原 locale section，原偏好未设置时仍保持自动检测，不用固定 English 覆盖它。
+- 导航后的输入可用性用真实点击编辑器并输入文本验证。手机 focus guard 按设计阻止会话／管理返回后的程序自动聚焦，不能用立即调用 `focus()` 代表用户点击。
 - 失败截图、trace 放在已忽略的 `test-results/`；可用 `pnpm exec playwright show-trace <trace.zip>` 查看。
 
 [导航冒烟](<navigation.spec.ts>) 在触屏 project 中检查会话列表 → 会话 → 工作区 → 会话的选中态及原生内容可见；桌面 project 检查原生侧栏／编辑器可见，且没有手机导航。
