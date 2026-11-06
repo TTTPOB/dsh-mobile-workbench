@@ -15,6 +15,7 @@ import { boundaryMutation, NAVIGATION_BOUNDARY, PRESENTATION_BOUNDARY, PRESENTAT
 import { installAgentCatalogLoader } from './agent-catalog-loader.ts'
 import { createWorkbenchPresentation } from './presentation.ts'
 import { createHostBridge } from './host-bridge.ts'
+import { resolveSlotLabel } from '@deepseek-ai/dsh-client-ui-slots'
 import { subagentCounts, type AgentStatusSource } from './agent-counts.ts'
 import { WorkbenchAgents, WorkbenchNav, type WorkbenchSnapshot, type WorkbenchInjected } from './WorkbenchNav.tsx'
 import { WORKBENCH_NS, en, zh } from './locales.ts'
@@ -77,7 +78,10 @@ export function installWorkbench(ctx: ClientContext): void {
       return () => { openSession = () => {} }
     }, 'mobile-workbench: session navigation service')
   })
-  const bridge = createHostBridge(viewIds, () => counts, () => {
+  const viewTabs = () => ctx.slots.entriesOfSlot('conversation.view')
+    .filter(entry => entry.options.label !== undefined && entry.options.id !== undefined)
+    .map(entry => ({ id: entry.options.id!, label: resolveSlotLabel(entry.options.label) ?? entry.options.id! }))
+  const bridge = createHostBridge(viewTabs, () => counts, () => {
     const frame = getFrame()
     if (frame && sessionsPageOpen(frame)) toggleDrawer()
   }, () => {

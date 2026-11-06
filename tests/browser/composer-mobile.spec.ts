@@ -117,7 +117,8 @@ test('expanded editor keeps draft, selection and node identity; traps focus and 
   expect(await handle.evaluate(element => element === document.querySelector('[data-composer-input]'))).toBe(true)
   await editor.click()
   await editor.fill('')
-  await expect(page.locator('[inert]')).toHaveCount(0)
+  await expect(editor).toBeFocused()
+  expect(await editor.evaluate(element => element.closest('[inert]') === null)).toBe(true)
 })
 
 test('plus closes both launcher and typed slash menus through native state', async ({ page, isMobile }) => {

@@ -50,10 +50,13 @@ async function startSession(page: Page, prompt: string, workspace: string): Prom
     const menu = page.getByRole('menu')
     const picker = page.getByRole('dialog', { name: 'Select Workspace Directory', exact: true })
     await expect(menu.or(picker)).toBeVisible()
-    if (await menu.isVisible()) {
-      await menu.getByRole('menuitem', { name: basename(workspace), exact: true }).click()
+    const existingWorkspace = menu.getByRole('menuitem', { name: basename(workspace), exact: true })
+    if (await menu.isVisible() && await existingWorkspace.count() > 0) {
+      await existingWorkspace.click()
     } else {
-      await page.getByRole('button', { name: 'Edit path', exact: true }).click()
+      if (await menu.isVisible()) await menu.getByRole('menuitem', { name: 'Add workspace…', exact: true }).click()
+      await expect(picker).toBeVisible()
+      await picker.getByRole('button', { name: 'Edit path', exact: true }).click()
       const path = page.getByRole('textbox', { name: 'Edit path', exact: true })
       await path.fill(workspace)
       await path.press('Enter')

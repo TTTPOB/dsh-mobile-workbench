@@ -87,12 +87,12 @@ test('missing discovery follows only current reachable branches and leaves loadi
 test('session page returns through formal default panel without forcing chat; top views do not change pages', t => {
   const events: string[] = []
   const attributes = new Set(['data-sidebar-collapsed'])
-  const tabs = ['chat', 'trajectory'].map(id => ({ getAttribute: () => id === 'trajectory' ? 'true' : 'false', click: () => { events.push(id) } }))
+  const tabs = ['chat', 'trajectory'].map(id => ({ textContent: id, getAttribute: () => id === 'trajectory' ? 'true' : 'false', click: () => { events.push(id) } }))
   const parent = { click: () => { events.push('direct-parent') } }
   const header = { querySelector: () => parent, querySelectorAll: (s: string) => s.includes('data-conversation-tabs') ? tabs : [] }
   const frame = { hasAttribute: (key: string) => attributes.has(key), removeAttribute: () => {}, querySelector: () => header }
   replaceGlobal(t, 'document', { querySelector: (s: string) => s === '[data-mobile-nav="frame"]' ? frame : null, documentElement: { getAttribute: () => 'true' } })
-  const bridge = createHostBridge(() => ['chat', 'trajectory'], () => ({}),
+  const bridge = createHostBridge(() => ['chat', 'trajectory'].map(id => ({ id, label: id })), () => ({}),
     () => { attributes.add('data-sidebar-collapsed'); events.push('close') },
     () => { attributes.delete('data-sidebar-collapsed'); events.push('sessions') },
     { show: () => { events.push('default-panel') }, hasSession: () => true, parentId: () => 'parent', openSession: () => { events.push('direct-parent') } })
@@ -121,7 +121,7 @@ test('global plugin panel and hero both return to default session without waitin
   let hasSession = true
   const frame = { hasAttribute: () => true, removeAttribute: () => {}, querySelector: () => null }
   replaceGlobal(t, 'document', { querySelector: (s: string) => s === '[data-mobile-nav="frame"]' ? frame : null })
-  const bridge = createHostBridge(() => ['chat', 'trajectory'], () => ({}), () => {}, () => {}, {
+  const bridge = createHostBridge(() => ['chat', 'trajectory'].map(id => ({ id, label: id })), () => ({}), () => {}, () => {}, {
     show: () => { calls.push('selectPanel(null)') }, hasSession: () => hasSession,
   })
   bridge.activate('session')
@@ -136,7 +136,7 @@ test('native sibling switchers are excluded when the current descendant catalog 
   const header = { querySelector: () => null, querySelectorAll: (s: string) => { queried = s; return [] } }
   const frame = { hasAttribute: () => true, querySelector: () => header }
   replaceGlobal(t, 'document', { querySelector: (s: string) => s === '[data-mobile-nav="frame"]' ? frame : null })
-  const bridge = createHostBridge(() => ['chat', 'trajectory'])
+  const bridge = createHostBridge(() => ['chat', 'trajectory'].map(id => ({ id, label: id })))
   assert.equal(bridge.evidence().hasAgents, false)
   assert.match(queried, /:not\(\[class\*="_switcherTrigger"\]\)/)
 })
@@ -277,7 +277,7 @@ test('own descendant catalog opens by the native pinned click, while second acti
   }
   replaceGlobal(t, 'KeyboardEvent', KeyEvent)
   replaceGlobal(t, 'document', { querySelector: (selector: string) => selector === '[data-mobile-nav="frame"]' ? frame : selector.startsWith('[role="tree"]') ? tree : null })
-  const bridge = createHostBridge(() => ['chat', 'trajectory'])
+  const bridge = createHostBridge(() => ['chat', 'trajectory'].map(id => ({ id, label: id })))
   bridge.activate('agents')
   assert.equal(bridge.evidence().agentsOpen, true)
   assert.deepEqual(events, ['own-count-click'])

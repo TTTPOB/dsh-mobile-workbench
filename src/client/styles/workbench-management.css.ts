@@ -45,7 +45,7 @@ export const WORKBENCH_MANAGEMENT_CSS = `@media (max-width: 1023px) and (pointer
   [data-mobile-management-chrome] button:hover { background: var(--dsw-alias-interactive-bg-hover); }
   [data-mobile-management-surface="plugins"] > [class*="_toolbar"],
   [data-mobile-management-surface="plugins"] [data-plugin-panel] h1,
-  [data-mobile-management-surface="settings"] > [class*="_content"] > [class*="_header"],
+  [data-mobile-management-surface="settings"] > :is([class*="_navTitle"], [class*="_header"]),
   [data-mobile-management-surface="panel"] [data-testid="task-manager-page"] [class*="_pageHeading"] h1 { display: none !important; }
   [data-mobile-management-surface="panel"] > :not([data-mobile-management-chrome]) { flex: 1; min-height: 0; width: 100%; }
   .mobile-workbench-install-name [data-install-name-hint] { margin: 8px 0 0; font-size: 12px; line-height: 18px; color: var(--dsw-alias-label-secondary); }

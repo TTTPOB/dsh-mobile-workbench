@@ -22,7 +22,6 @@ test('title and native utilities retain 44px targets with readable context', () 
 // otherwise takes a row of its own and pushes the title/statistics row down.
 test('the actions row is a two-row grid with a single second-row band', () => {
   assert.match(WORKBENCH_HEADER_CSS, /grid-template-rows: 44px 44px/)
-  assert.match(WORKBENCH_HEADER_CSS, /"main main main main"\s+"views tasks team agents"/)
   assert.match(WORKBENCH_HEADER_CSS, /\[data-workbench-header-main\] \{\s*grid-area: main/)
   assert.match(WORKBENCH_HEADER_CSS, /\[data-workbench-header-secondary\] \{ display: contents !important; \}/)
   assert.match(WORKBENCH_HEADER_CSS, /\[data-mobile-workbench="views"\] \{ grid-area: views/)

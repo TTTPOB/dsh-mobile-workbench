@@ -38,14 +38,39 @@ export const WORKBENCH_HEADER_CSS = `@media (max-width: 1023px) and (pointer: co
      background-task chip, the host team chip and the downstream directory. */
   ${H} [class*="_headerActions"] {
     display: grid !important;
-    grid-template-columns: auto minmax(0, 1fr) auto auto;
+    grid-template-columns: auto minmax(0, 1fr) auto auto 44px;
     grid-template-rows: 44px 44px;
     grid-template-areas:
-      "main main main main"
-      "views tasks team agents";
+      "main main main main main"
+      "views tasks team agents .";
     column-gap: 4px;
     row-gap: 4px;
     align-items: center;
+  }
+  ${H}[data-workbench-tabs-owned] [class*="_tabs"]:has(> [data-conversation-tabs]) {
+    position: absolute !important;
+    top: 56px !important;
+    right: 12px !important;
+    left: 12px !important;
+    display: flex !important;
+    align-items: center;
+    justify-content: flex-end;
+    pointer-events: none;
+    width: auto !important;
+    height: 44px !important;
+    min-height: 44px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: visible;
+  }
+  ${H}[data-workbench-tabs-owned] [class*="_tabs"]:has(> [data-conversation-tabs]) button {
+    pointer-events: auto;
+    box-sizing: border-box;
+    width: 44px !important;
+    min-width: 44px !important;
+    height: 44px !important;
+    min-height: 44px !important;
+    padding: 0 !important;
   }
   ${H} [data-workbench-header-main] {
     grid-area: main;
