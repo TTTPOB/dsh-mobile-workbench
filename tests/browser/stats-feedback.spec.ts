@@ -70,13 +70,6 @@ test('touch controls show pressed and expanded feedback in both themes without s
   await page.getByRole('button', { name: 'Send message', exact: true }).click()
   await expect(page.getByText(/MOBILE_AUDIT_NESTED_ROOT_(?:NOT_)?COMPLETE/).last()).toBeVisible({ timeout: 60_000 })
   await expect(agents).toBeEnabled()
-  // Use the real preference so emulateMedia exercises both palettes, not a persisted fixed theme.
-  await page.locator('[data-workbench-destination="sessions"]').click()
-  await page.getByRole('button', { name: 'Account menu', exact: true }).click()
-  await page.getByRole('menuitem', { name: 'Settings', exact: true }).click()
-  await page.getByRole('button', { name: 'System', exact: true }).click()
-  await page.locator('[data-shortcut-modal="settings"]').getByRole('button', { name: 'Close', exact: true }).click()
-  await page.locator('[data-workbench-destination="session"]').click()
   const stats = page.locator('[data-mobile-workbench="stats"]')
   const more = page.locator('[data-mobile-workbench-header] [class*="_headerUtilities"] button[aria-haspopup="menu"]')
   const colors: string[] = []

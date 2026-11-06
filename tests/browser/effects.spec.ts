@@ -1,5 +1,6 @@
 import { expect, test, type Page } from '@playwright/test'
 import { fixtureSession } from './demo.ts'
+import { settingsSection } from './settings.ts'
 
 async function sessions(page: Page): Promise<void> {
   if (await page.locator('[data-mobile-workbench="navigation"]').isVisible()) {
@@ -48,13 +49,19 @@ test('settings and shortcuts keep native surface tokens and stable mobile geomet
 
 test('theme-color remains unique and follows Host light and dark preferences', async ({ page }) => {
   await fixtureSession(page)
-  await settings(page)
-  const metas = page.locator('meta[name="theme-color"]')
-  await expect(metas).toHaveCount(1)
-  for (const name of ['Dark', 'Light']) {
-    await page.getByRole('button', { name, exact: true }).click()
-    await expect.poll(() => page.evaluate(() => document.querySelector<HTMLMetaElement>('meta[name="theme-color"]')?.content === getComputedStyle(document.body).backgroundColor)).toBe(true)
+  const originalTheme = await settingsSection(page, 'ui-theme')
+  try {
+    await settings(page)
+    const metas = page.locator('meta[name="theme-color"]')
     await expect(metas).toHaveCount(1)
+    for (const name of ['Dark', 'Light']) {
+      await page.getByRole('button', { name, exact: true }).click()
+      await expect.poll(() => page.evaluate(() => document.querySelector<HTMLMetaElement>('meta[name="theme-color"]')?.content === getComputedStyle(document.body).backgroundColor)).toBe(true)
+      await expect(metas).toHaveCount(1)
+    }
+  } finally {
+    await settingsSection(page, 'ui-theme', originalTheme)
+    await expect.poll(() => settingsSection(page, 'ui-theme')).toEqual(originalTheme)
   }
 })
 
