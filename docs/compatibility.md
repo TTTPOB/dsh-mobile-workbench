@@ -30,7 +30,7 @@ pnpm pack --pack-destination /absolute/path/to/tarballs
 | slots | input left/model/permission、session header actions/lineage/utilities、conversation view、shell overlay、sidebar panellist | 所用声明仍存在；贡献通过 `slots.inject` 注册。 |
 | ClientContext | Cordis `Context`，renderer 提供 `slots`；session/workspace-controller、locale、layout、connection、modules 的公开声明 | 删除旧 `dsh-client-runtime` 依赖；以 rc.1 npm 声明编译。 |
 | 会话与恢复状态 | `sessions.list` 的 mainView retention、`refreshProjections`、`uiSession.sessionStatus`、`connection.state`、`modules.entries.state` | 下游计数、目录补载、认证提示和更新失败提示回归；不访问私有 store。 |
-| 官方插件管理器 | F3 `pluginNavigation.openModal(): void`，无参数 | modal 调用、官方包回退与实时 slot label 定位回归；正向集成待 fork 包。 |
+| 官方插件管理器 | F3 `pluginNavigation.openModal(): void`，无参数 | modal 调用、官方包回退与实时 slot label 定位回归；隔离 fork Host 的入口打开、二级菜单返回、焦点恢复与卸载由完整浏览器套件验证。 |
 | 可选第三方功能 | dshmarket 的 `data-dsh-market-root/irow/cardShots`；实验 agent-team 的 `data-team-action/panel` | 不是官方管理器 DOM；仅相关功能挂载时生效；第三方最终组合仍需验收。 |
 
 官方 CSS-module 片段可通过 `DSH_HOST_SOURCE` 开启源码存在性检查；本轮不使用旧 checkout 的检查结果代替新 Host 验收。旧 `_searchInline` 与 lineage `_aside` 规则不再保留，消息流观察排除使用 `data-chat-flow`；自动任务的会话创建入口定位新版 `_createPrimary`，不匹配手动创建菜单。全名 CSS hash 不再用于模型菜单定位。

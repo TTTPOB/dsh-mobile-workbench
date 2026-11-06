@@ -29,7 +29,7 @@ pnpm exec playwright test                         # all three, one worker
 
 ## 无 Host 的升级回归
 
-本任务禁止启动 Host 时，只运行 [sidebar-page-host-free.spec.ts](<sidebar-page-host-free.spec.ts>)：它在空白 Chromium 页面挂载本地 React fixture，覆盖新版 mask 插入、React 重挂侧栏列、inert 回写、尺寸变化和三页切换后的点击／滚动／焦点。无需认证 URL，不读取真实 profile。
+无需启动 Host 时，可以运行 [sidebar-page-host-free.spec.ts](<sidebar-page-host-free.spec.ts>)：它在空白 Chromium 页面挂载本地 React fixture，覆盖新版 mask 插入、React 重挂侧栏列、inert 回写、尺寸变化和三页切换后的点击／滚动／焦点。无需认证 URL，不读取真实 profile。
 
 命令：`NODE_OPTIONS=--max-old-space-size=4096 pnpm exec playwright test tests/browser/sidebar-page-host-free.spec.ts --project=mobile-390 --project=mobile-320`。其余现有浏览器用例需要隔离 Host，留待最终组合验收。
 
@@ -48,7 +48,7 @@ pnpm exec playwright test                         # all three, one worker
 
 ## Host API 基线
 
-开发依赖精确固定为 0.2.2-rc.1：ui-layout、ui-primitives、ui-workspace、ui-input-trigger、ui-model-selection、ui-conversation、ui-chat、session-stats、token-meter。插件管理器使用 npm 官方 0.2.2-rc.1；modal 正向集成另对主仓 fork 验证。
+开发依赖精确固定为 0.2.2-rc.1：ui-layout、ui-primitives、ui-workspace、ui-input-trigger、ui-model-selection、ui-conversation、ui-chat、session-stats、token-meter。插件管理器声明使用 npm 官方 0.2.2-rc.1；[management.spec.ts](<management.spec.ts>) 的 modal 正向路径在匹配主仓 fork 的隔离 Host 上验证。官方包没有 `openModal` 时仍保留原生页面导航。
 
 原始锁文件没有解析到旧版；workspace、input-trigger、model-selection、chat 和两个 projection 提供包此前没有直接开发依赖。本次补齐，保证后续 worktree 可直接解析这些公开类型，而不是偶然依赖全局 Host 的包。
 
