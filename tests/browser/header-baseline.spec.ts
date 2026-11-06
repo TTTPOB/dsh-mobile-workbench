@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test'
-import { fixtureSession } from './demo.ts'
+import { fixtureSession, freshSession } from './demo.ts'
 
 test('two-row header, touch boxes, native view and desktop invariance', async ({ page, isMobile }, info) => {
   await fixtureSession(page, { reuse: false })
@@ -37,6 +37,41 @@ test('two-row header, touch boxes, native view and desktop invariance', async ({
   await page.screenshot({ path: '.demo-home/review/a/after-root-' + info.project.name + '.png' })
 })
 
+test('background tasks and the host team chip stay on the second row', async ({ page, isMobile }) => {
+  test.skip(!isMobile)
+  await freshSession(page, '演示后台任务')
+  const header = page.locator('header:has([data-conversation-tabs])')
+  const tasks = page.locator('[data-slot="conversation.session.header.actions"] > div:has(> button[class*="_trigger"] > [class*="_count"])')
+  await expect(tasks).toBeVisible()
+  const rows = await header.evaluate(el => {
+    const box = (node: Element | null): { x: number, y: number, width: number, height: number } | null => {
+      const rect = node?.getBoundingClientRect()
+      return rect ? { x: rect.x, y: rect.y, width: rect.width, height: rect.height } : null
+    }
+    return {
+      height: el.getBoundingClientRect().height,
+      overflow: document.documentElement.scrollWidth > innerWidth,
+      stats: box(el.querySelector('[data-mobile-workbench="stats"]')),
+      more: box(el.querySelector('[class*="_headerUtilities"] button[aria-haspopup="menu"]')),
+      tasks: box(el.querySelector('[data-slot="conversation.session.header.actions"] > div:has(> button[class*="_trigger"] > [class*="_count"])')),
+      team: box(el.querySelector('[data-team-action] > button')),
+      views: box(el.querySelector('[data-mobile-workbench="views"]')),
+      controls: [...el.querySelectorAll('button')].filter(b => b.getBoundingClientRect().width > 0).map(b => box(b)!),
+    }
+  })
+  expect(rows.height).toBeLessThanOrEqual(112)
+  expect(rows.overflow).toBe(false)
+  // The statistics ring shares the first row with the absolutely positioned native utilities.
+  expect(Math.abs(rows.stats!.y - rows.more!.y)).toBeLessThanOrEqual(.5)
+  // The task chip and the team chip sit on the view row; neither opens a third row.
+  expect(Math.abs(rows.tasks!.y - rows.views!.y)).toBeLessThanOrEqual(.5)
+  if (rows.team) expect(Math.abs(rows.team.y - rows.views!.y)).toBeLessThanOrEqual(.5)
+  for (const box of rows.controls) {
+    expect(box.width, JSON.stringify(box)).toBeGreaterThanOrEqual(44)
+    expect(box.height, JSON.stringify(box)).toBeGreaterThanOrEqual(44)
+  }
+})
+
 test('statistics uses a bounded dialog and all dismissal paths return focus', async ({ page, isMobile }, info) => {
   test.skip(!isMobile)
   await fixtureSession(page, { reuse: false })
@@ -66,6 +101,35 @@ test('statistics uses a bounded dialog and all dismissal paths return focus', as
   await stats.click(); await page.locator('[data-workbench-title-info]').click()
   await expect(panel).toHaveCount(0)
   await expect(page.getByRole('dialog', { name: 'Session information' })).toBeVisible()
+})
+
+test('statistics scrolls inside its material so overflowing rows keep the menu background', async ({ page, isMobile }, info) => {
+  test.skip(!isMobile)
+  await page.setViewportSize({ width: 390, height: 420 })
+  await fixtureSession(page, { reuse: false })
+  await page.locator('[data-mobile-workbench="stats"]').click()
+  const panel = page.getByRole('dialog', { name: 'Session statistics', exact: true })
+  await expect(panel).toBeVisible()
+  const geometry = await panel.evaluate(el => {
+    const scroller = el.querySelector<HTMLElement>('[data-workbench-stats-scroll]')!
+    const material = el.querySelector<HTMLElement>(':scope > [aria-hidden="true"]')!
+    const overflowing = scroller.scrollHeight > scroller.clientHeight
+    scroller.scrollTop = scroller.scrollHeight
+    // The material fills the padding box, inside the surface border.
+    const panelBox = el.getBoundingClientRect()
+    const materialBox = material.getBoundingClientRect()
+    const rows = el.querySelectorAll('[data-workbench-stat]')
+    const last = rows[rows.length - 1]!.getBoundingClientRect()
+    return { overflowing, panelScroll: el.scrollTop, innerScroll: scroller.scrollTop, panel: [panelBox.top + el.clientTop, panelBox.top + el.clientTop + el.clientHeight], material: [materialBox.top, materialBox.bottom], last: [last.top, last.bottom] }
+  })
+  expect(geometry.overflowing, 'the short viewport must force the statistics to scroll').toBe(true)
+  expect(geometry.innerScroll).toBeGreaterThan(0)
+  expect(geometry.panelScroll).toBe(0)
+  expect(Math.abs(geometry.material[0]! - geometry.panel[0]!)).toBeLessThanOrEqual(.5)
+  expect(Math.abs(geometry.material[1]! - geometry.panel[1]!)).toBeLessThanOrEqual(.5)
+  expect(geometry.last[1]).toBeLessThanOrEqual(geometry.material[1]! + .5)
+  expect(geometry.last[0]).toBeGreaterThanOrEqual(geometry.material[0]!)
+  await page.screenshot({ path: '.demo-home/review/a/after-stats-scrolled-' + info.project.name + '.png' })
 })
 
 test('localized public information Modal keeps card clicks and restores title focus on three exits', async ({ page, isMobile }, info) => {

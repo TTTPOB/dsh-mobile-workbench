@@ -15,6 +15,7 @@
 | [model-menu-anchor](<../../src/client/effects/model-menu-anchor.ts>)／[展开焦点范围](<../../src/client/workbench/composer-focus.ts>) | 展开编辑态 trigger 菜单公开 anchor／边界容器、portal 白名单及 dismiss 优先级 | 用 trigger aria-controls 限定 portal menu，局部改 left 并在退出／dispose 恢复；焦点范围容许上游 menu／listbox portal |
 | 原底部统计适配及后续主题消费者 | context meter 的稳定 data-context-meter 标记或渲染 slot | 当前隐藏整段 data-composer-dock，顶部通过公开 useProjection 重绘统计；stats-line effect 已删除，不再按百分比文本识别 meter。未来若需定制原生 meter，仍需稳定扩展点 |
 | [会话列表触控](<../../src/client/styles/layout.css.ts>)／[目录样式](<../../src/client/styles/workbench-header.css.ts>) | 行动作／目录 disclosure 的稳定 part 或 data 标记、最小触区 token | 优先 data-row-key、role 和所属区域；少量 class fragment 仅限区域内，视觉图标与触控盒分开 |
+| [顶栏样式](<../../src/client/styles/workbench-header.css.ts>) | header actions 槽内宿主 chip（团队、后台任务）的稳定 layout part 或显式排序 token | 在宿主 headerActions 上用 grid 固定两行，插件自有 wrapper 以 display:contents 参与；宿主 chip 按 grid-area 落在第二行。后台任务 wrapper 没有 class，只能按 slot + trigger 内 count 结构定位，宿主改结构时会再次失效 |
 | [管理菜单](<../../src/client/workbench/management-menu.ts>)／[管理呈现](<../../src/client/workbench/management.ts>) | settings.launcher 原生菜单 item slot、open observable 与管理 Modal 呈现标记；复杂 footer action 的显式菜单元数据 | 原生账户 anchor 只做手机 CSS 定位，限定其实际 portal 追加自有 panellist 行；设置／插件管理 Modal 由局部挂载观察标记，公开 layout.panelInfo 管理中央页面；复杂 footer 不隐藏、不自动转换 |
 
 ## 已可直接使用的契约

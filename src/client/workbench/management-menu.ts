@@ -1,5 +1,6 @@
 import type { Context } from '@deepseek-ai/cordis'
 import type { MainPanelId } from '@deepseek-ai/dsh-client-ui-layout/client'
+import { INSTALL_NAME_ENTRY_ID } from './install-name.ts'
 
 /** Public panel registrations supply menu labels; account rows remain native. */
 export function managementEntries(ctx: Context): { id: MainPanelId; label: string }[] {
@@ -28,7 +29,12 @@ export function decorateManagementMenu(menu: HTMLElement, entries: readonly { id
     const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
     for (const [key, value] of Object.entries({ viewBox: '0 0 16 16', width: '16', height: '16', fill: 'none', stroke: 'currentColor', 'stroke-width': '1.2' })) svg.setAttribute(key, value)
     const path = document.createElementNS(svg.namespaceURI, 'path')
-    path.setAttribute('d', entry.id === 'schedules' ? 'M8 2a6 6 0 1 0 0 12A6 6 0 0 0 8 2Zm0 2v4l3 2' : 'M2 2h5v5H2Zm7 0h5v5H9ZM2 9h5v5H2Zm7 0h5v5H9Z')
+    const pathData = entry.id === 'schedules'
+      ? 'M8 2a6 6 0 1 0 0 12A6 6 0 0 0 8 2Zm0 2v4l3 2'
+      : entry.id === INSTALL_NAME_ENTRY_ID
+        ? 'M8 2v7m0 0 3-3m-3 3L5 6M3 11v2a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1v-2'
+        : 'M2 2h5v5H2Zm7 0h5v5H9ZM2 9h5v5H2Zm7 0h5v5H9Z'
+    path.setAttribute('d', pathData)
     svg.append(path)
     icon.append(svg)
     const label = document.createElement('span')

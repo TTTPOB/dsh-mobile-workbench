@@ -17,8 +17,10 @@ export const WORKBENCH_MANAGEMENT_CSS = `@media (max-width: 1023px) and (pointer
     top: calc(env(safe-area-inset-top, 0px) + 62px) !important;
     right: 12px !important; left: auto !important;
     width: min(256px, calc(100vw - 24px)); max-width: calc(100vw - 24px) !important;
-    max-height: min(70dvh, 500px); overflow-y: auto;
+    max-height: min(70dvh, 500px); display: flex; flex-direction: column; overflow: hidden;
   }
+  /* Scroll the native viewport, not the MenuSurface that owns the absolute material layer. */
+  [data-mobile-management-menu][role="menu"] > [class*="_viewport"] { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior-y: contain; }
   html[data-mobile-workbench-management] [data-mobile-workbench="navigation"] { display: none !important; }
   html[data-mobile-workbench-management] { --mobile-workbench-nav-height: 0px !important; }
   html[data-mobile-workbench-management="panel"] [data-mobile-nav="frame"] > [class*="_sidebarCol"],
@@ -46,4 +48,6 @@ export const WORKBENCH_MANAGEMENT_CSS = `@media (max-width: 1023px) and (pointer
   [data-mobile-management-surface="settings"] > [class*="_content"] > [class*="_header"],
   [data-mobile-management-surface="panel"] [data-testid="task-manager-page"] [class*="_pageHeading"] h1 { display: none !important; }
   [data-mobile-management-surface="panel"] > :not([data-mobile-management-chrome]) { flex: 1; min-height: 0; width: 100%; }
+  .mobile-workbench-install-name [data-install-name-hint] { margin: 8px 0 0; font-size: 12px; line-height: 18px; color: var(--dsw-alias-label-secondary); }
+  .mobile-workbench-install-name [class*="_footer"] button { min-height: 44px; }
 }`

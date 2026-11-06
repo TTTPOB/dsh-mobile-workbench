@@ -1,6 +1,6 @@
 # DSH Mobile Workbench 使用与架构
 
-DSH Mobile Workbench 3.3.0 面向 DSH 0.2.2-rc.1。包名为 `dsh-web-mobile`，版本使用 `major.minor.patch`。
+DSH Mobile Workbench 3.4.1 面向 DSH 0.2.2-rc.1。包名为 `dsh-web-mobile`，版本使用 `major.minor.patch`。
 
 ## 页面与操作
 
@@ -8,8 +8,8 @@ DSH Mobile Workbench 3.3.0 面向 DSH 0.2.2-rc.1。包名为 `dsh-web-mobile`，
 
 | 页面 | 内容与操作 |
 | --- | --- |
-| 会话列表 | 创建、选择和管理会话；顶栏唯一更多菜单包含插件、自动任务与原生账户／设置入口。 |
-| 会话 | 官方对话与轨迹；两行顶栏提供标题／会话信息、统计、更多操作、view 切换、下游目录和直接父返回；更多菜单显示模式名称。 |
+| 会话列表 | 创建、选择和管理会话；顶栏唯一更多菜单包含插件、自动任务、安装名称与原生账户／设置入口。 |
+| 会话 | 官方对话与轨迹；两行顶栏提供标题／会话信息、统计、更多操作、view 切换、后台任务与团队 chip、下游目录和直接父返回；更多菜单显示模式名称。 |
 | 工作区 | 官方文件树、预览与终端；底部会话按钮返回会话页。 |
 
 下游计数包含当前会话的全部子孙，排除自身、父会话和兄弟会话。目录尚未加载或加载失败时显示对应状态；已知叶子显示 `0/0`。
@@ -20,7 +20,7 @@ DSH Mobile Workbench 3.3.0 面向 DSH 0.2.2-rc.1。包名为 `dsh-web-mobile`，
 
 ### 两行顶栏与统计
 
-第一行依次为直接父返回（仅子会话）、最多两行的会话标题／信息入口、可选任务入口、统计圆环与更多操作；第二行只包含对话／轨迹 tab 与下游图标／计数。模式名称在当前会话更多菜单的只读信息区显示为「模式：显示名」，不占第二行动作行；会话信息 Modal 共用该显示名解析。名称从公开 agentPresets.list 读取，使用官方 display 工具解析内置翻译，自定义名称原样保留；删除／不可用／无名称时显示可读回退，不把内部 ID 当显示名。根、子、孙会话使用同一结构，标题优先按词换行，长无空格串允许断开，超过两行省略。每个主要动作保留至少 44px 触区。
+顶栏固定两行，由宿主 header actions 容器上的 grid 排版：第一行依次为直接父返回（仅子会话）、最多两行的会话标题／信息入口、统计圆环，并与绝对定位在右上角的更多操作同排；第二行依次为对话／轨迹 tab、宿主后台任务 chip（占中间弹性列，空间不足时文案省略）、宿主团队 chip 与下游目录按钮。后台任务、团队 chip 和子会话父返回都不再各占一行，header 高度保持 108px（含边框 109px）。宿主 React 节点不移动，只有插件自有的第二行 wrapper 以 display:contents 参与 grid。团队 chip 保留宿主人群图标并把触区放大到 44px；下游目录按钮改用层级树图标并带计数，两者在第二行右侧相邻，便于区分。模式名称在当前会话更多菜单的只读信息区显示为「模式：显示名」，不占第二行动作行；会话信息 Modal 共用该显示名解析。名称从公开 agentPresets.list 读取，使用官方 display 工具解析内置翻译，自定义名称原样保留；删除／不可用／无名称时显示可读回退，不把内部 ID 当显示名。根、子、孙会话使用同一结构，标题优先按词换行，长无空格串允许断开，超过两行省略。每个主要动作保留至少 44px 触区。
 
 统计入口显示 contextPressure 的百分比；未加载显示「—」，真实 0 才显示 0%。面板使用上游 MenuSurface，分上下文（已用 token 参考值、窗口与可选估算构成）、会话活动（轮／步、会话平均输出速率、平均首 token 等待、模型／工具用时）和 Token（总计、缓存命中率与四类用量）三组，通过公开 useProjection 订阅。输出速率只使用成对 decodeTokens／decodeMs 样本，不以总耗时除 token；Token 总计累加互斥计费桶，不重复计入 reasoning，缓存命中率只计算输入。它与会话信息 Modal、子智能体目录互斥；外点、Escape 或再次点击关闭后回到触发按钮。底部旧统计文本反解析与 stats-line effect 已移除。
 
@@ -38,7 +38,7 @@ DSH Mobile Workbench 3.3.0 面向 DSH 0.2.2-rc.1。包名为 `dsh-web-mobile`，
 
 ### 手机管理入口
 
-会话列表顶栏复用官方账户菜单，登录／登出、反馈、设置及其确认流程仍由原组件处理。公开 sidebar.panellist 贡献按注册顺序追加到同一菜单，插件管理优先调用公开 openModal；复杂 sidebar.footer.action 贡献保留在原位置，避免不可达。所有原生 React 节点保留原挂载位置。
+会话列表顶栏复用官方账户菜单，登录／登出、反馈、设置及其确认流程仍由原组件处理。公开 sidebar.panellist 贡献按注册顺序追加到同一菜单，插件管理优先调用公开 openModal；复杂 sidebar.footer.action 贡献保留在原位置，避免不可达。插件自有的「安装名称…」行追加在这些贡献之后，打开同一套上游 Modal 编辑安装名称，不复制或移动原生账户节点。所有原生 React 节点保留原挂载位置。
 
 插件、设置与全局自动任务使用同一近全屏预算：左右 8px、顶部安全区后 12px、高度不超过 800px 或可见区减安全区和 24px。管理层隐藏底部三页导航，不将自动任务伪装为会话。返回保存来源列表的滚动和焦点；自动任务的“新建”仍允许官方流程进入新会话。桌面与细指针窗口保持原布局。
 
@@ -48,7 +48,7 @@ DSH Mobile Workbench 3.3.0 面向 DSH 0.2.2-rc.1。包名为 `dsh-web-mobile`，
 
 ```sh
 DSH_HOME=/path/to/isolated-home dsh plugin --profile web add \
-  ./dsh-web-mobile-3.3.0.tgz \
+  ./dsh-web-mobile-3.4.1.tgz \
   --config.auto-install-peers=false
 ```
 
@@ -84,6 +84,8 @@ DSH_HOME=/path/to/isolated-home dsh plugin --profile web add \
 ```
 
 按实例的正常配置加载流程应用后，刷新网页并检查 `/manifest.webmanifest` 的名称，再执行浏览器的“安装应用”或“添加到主屏幕”。这些字段提供安装建议名称；是否允许安装时编辑、显示完整名还是短名、何时更新已安装应用，由浏览器和操作系统决定。已有安装可能保留旧名或旧图标，必要时移除旧安装，再从对应实例 URL 重新安装。
+
+网页内也可以在安装前改名：会话列表顶栏的更多菜单选择「安装名称…」，输入并保存后，插件把 `<link rel="manifest">` 的 href 改为 `/manifest.webmanifest?name=<名称>`（保留 `crossorigin="use-credentials"`），并同步更新 `apple-mobile-web-app-title` meta；服务端对该查询参数裁剪空白、忽略空值并把长度限制为 40 个字符，覆盖 manifest 的 `name` 与 `short_name`。值按 origin 保存在浏览器 localStorage，页面加载时就应用，不需要先改 profile；「恢复默认」清除保存值并回到 Config 名称。该名称只影响当前浏览器：Chrome／Android 在安装或重新读取 manifest 时使用它，iOS 添加主屏幕时仍读取 Apple meta 且本就可编辑名称；已安装应用不保证跟随改名。名称不改变应用标识、启动 URL 和 scope。
 
 应用标识、启动 URL 和 scope 固定为 `/`。工作站与服务器应使用不同 origin（域名／端口）；更改名称不会在同一 origin 下创建第二个独立应用，也不提供同源多路径实例安装。同源 manifest 请求保持携带登录 Cookie。PWA 安装还受浏览器、认证和代理环境影响；当前版本不提供离线会话或 Web Push。
 
@@ -121,7 +123,7 @@ node scripts/demo.mjs --port 54076
 
 工作台复用官方界面，通过客户端插槽增加导航和操作控件，通过有限的 DOM 适配调整原生组件的移动端呈现。
 
-- **宿主端**：`src/index.ts` 注册每实例 manifest、图标路由及公开 `tapIndex` 安装元数据（manifest 凭据属性与 Apple 图标／建议名称）。
+- **宿主端**：`src/index.ts` 注册每实例 manifest（含 `?name=` 覆盖）、图标路由及公开 `tapIndex` 安装元数据（manifest 凭据属性、Apple 图标／建议名称与客户端改名默认值）。
 - **客户端入口**：`src/client/index.tsx` 安装样式、移动端效果和插槽。
 - **导航与宿主适配**：`src/client/workbench/` 订阅官方会话、状态和插槽；原生服务或按钮执行页面切换，DOM 观察补充未公开的界面状态。
 - **浏览器适配**：`src/client/effects/` 处理视口、安全区、焦点、会话列表触控和原生菜单定位。

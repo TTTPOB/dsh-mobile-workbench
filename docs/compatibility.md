@@ -1,6 +1,6 @@
 # DSH 0.2.2-rc.1 兼容性与验收参考
 
-DSH Mobile Workbench 3.3.0 支持 DSH 0.2.2-rc.1。`engines.dsh` 与 DSH peers 均精确限定为 `0.2.2-rc.1`；开发依赖使用 npm 官方包。插件管理 modal 需要主仓 fork 继续提供 `pluginNavigation.openModal()`，官方包回落到原生插件页面。没有继续声明旧 Host 兼容性。
+DSH Mobile Workbench 3.4.1 支持 DSH 0.2.2-rc.1。`engines.dsh` 与 DSH peers 均精确限定为 `0.2.2-rc.1`；开发依赖使用 npm 官方包。插件管理 modal 需要主仓 fork 继续提供 `pluginNavigation.openModal()`，官方包回落到原生插件页面。没有继续声明旧 Host 兼容性。
 
 ## 源码与包验证
 

@@ -39,6 +39,12 @@ export declare const zh: {
     copySessionId: string;
     copySessionIdSuccess: string;
     copySessionIdFailure: string;
+    installName: string;
+    installNameTitle: string;
+    installNameDescription: string;
+    installNameLimit: string;
+    installNameSave: string;
+    installNameRestore: string;
 };
 export type WorkbenchKey = keyof typeof zh;
 export declare const en: Record<WorkbenchKey, string>;

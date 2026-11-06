@@ -1,6 +1,6 @@
 # DSH Mobile Workbench
 
-面向 **DSH 0.2.2-rc.1** 的手机工作台。当前版本 **3.3.0**，使用独立的语义化版本号，安装包名为 `dsh-web-mobile`。
+面向 **DSH 0.2.2-rc.1** 的手机工作台。当前版本 **3.4.1**，使用独立的语义化版本号，安装包名为 `dsh-web-mobile`。
 
 ## 使用方式
 
@@ -11,7 +11,7 @@
 - 模型、权限、发送、提问和审批由 DSH 处理。
 - 输入区适配软键盘可见区和屏幕安全区；鼠标设备保持官方桌面布局。
 
-PWA 使用深色几何终端图标；通过插件 `name` / `shortName` 配置可区分工作站与服务器的安装建议名称。配置例子、重新安装限制、演示与架构见 [工作台指南](WORKBENCH.md)。
+PWA 使用深色几何终端图标；通过插件 `name` / `shortName` 配置可区分工作站与服务器的安装建议名称，也可以在会话列表顶栏的「安装名称…」中按浏览器手动改名。配置例子、两种改名方式的限制、演示与架构见 [工作台指南](WORKBENCH.md)。
 
 移动连接失败后可探测认证过期并弹窗提醒先保存未发送内容和附件，再手动刷新；不会自动刷新或停止核心重试。此提示需要 Host 公开 `connection.state`；Access 部署配置与接口要求见[认证提示说明](WORKBENCH.md#连接失败后的认证提示)。
 
@@ -21,7 +21,7 @@ PWA 使用深色几何终端图标；通过插件 `name` / `shortName` 配置可
 
 ```sh
 dsh plugin --profile web add \
-  ./dsh-web-mobile-3.3.0.tgz \
+  ./dsh-web-mobile-3.4.1.tgz \
   --config.auto-install-peers=false
 ```
 
