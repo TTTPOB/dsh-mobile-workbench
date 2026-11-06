@@ -6,7 +6,7 @@ export declare function sessionsPageOpen(frame: Element | null): boolean;
 /** Toggle the retained sidebar page without opening the native modal drawer. */
 export declare function toggleSessionsPage(frame: Element | null): void;
 /** Keep the native drawer closed and reapply page focusability after React commits. */
-export declare function createSidebarPage(frame: HTMLElement, toggleNative: () => void): {
+export declare function createSidebarPage(frame: HTMLElement, toggleNative: () => void, panelOpen: () => boolean): {
     sync: () => void;
     dispose: () => void;
 };

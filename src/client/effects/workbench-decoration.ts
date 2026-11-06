@@ -16,7 +16,7 @@ export function installWorkbenchDecoration(ctx: ClientContext): void {
       frame?.removeAttribute('data-mobile-nav')
       frame = next
       frame?.setAttribute('data-mobile-nav', 'frame')
-      page = frame ? createSidebarPage(frame, () => { ctx.layout.toggleSidebar() }) : undefined
+      page = frame ? createSidebarPage(frame, () => { ctx.layout.toggleSidebar() }, () => ctx.layout.panelInfo.getSnapshot().activePanelId !== null) : undefined
       mounts.disconnect()
       if (frame?.parentElement) mounts.observe(frame.parentElement, { childList: true })
       else mounts.observe(document.body, { childList: true, subtree: true })
@@ -24,7 +24,9 @@ export function installWorkbenchDecoration(ctx: ClientContext): void {
     const mounts = new MutationObserver(refresh)
     mounts.observe(document.body, { childList: true, subtree: true })
     refresh()
+    const stopPanel = ctx.layout.panelInfo.subscribe(() => { page?.sync() })
     return () => {
+      stopPanel()
       mounts.disconnect()
       page?.dispose()
       panelBack.dispose()

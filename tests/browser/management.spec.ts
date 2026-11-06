@@ -149,7 +149,10 @@ test('active management restores native owners and inert state when switching to
   await page.getByRole('menuitem', { name: 'Automation tasks', exact: true }).click()
   await page.locator('[data-mobile-management-surface=panel]').getByRole('button', { name: 'New', exact: true }).click()
   await expect(page.locator('html')).toHaveAttribute('data-mobile-workbench-page', 'session')
-  await expect(page.locator('[inert], [data-mobile-management-mask], [data-mobile-management-chrome]')).toHaveCount(0)
+  await expect(page.locator('[data-mobile-management-mask], [data-mobile-management-chrome]')).toHaveCount(0)
+  const editor = page.locator('[data-composer-input="true"]')
+  await editor.focus()
+  await expect(editor).toBeFocused()
 })
 
 test('immutable preset is only a read-only sibling in the current Session menu', async ({ page, isMobile }) => {

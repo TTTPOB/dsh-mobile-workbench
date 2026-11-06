@@ -13,7 +13,7 @@ export function toggleSessionsPage(frame: Element | null): void {
 }
 
 /** Keep the native drawer closed and reapply page focusability after React commits. */
-export function createSidebarPage(frame: HTMLElement, toggleNative: () => void): { sync: () => void; dispose: () => void } {
+export function createSidebarPage(frame: HTMLElement, toggleNative: () => void, panelOpen: () => boolean): { sync: () => void; dispose: () => void } {
   const wasOpen = !frame.hasAttribute('data-sidebar-collapsed')
   frame.toggleAttribute(SESSIONS_PAGE, wasOpen)
   let observedColumn: HTMLElement | null | undefined
@@ -33,7 +33,7 @@ export function createSidebarPage(frame: HTMLElement, toggleNative: () => void):
     const open = sessionsPageOpen(frame)
     for (const element of frame.querySelectorAll<HTMLElement>(':scope > [class*="_centerCol"], :scope > [data-rightbar-col], :scope > [data-shell-bottom], :scope > [data-shell-leading]')) {
       if (!background.has(element)) background.set(element, element.inert)
-      if (previousPage !== open || open) element.inert = open
+      if (previousPage !== open || open) element.inert = open && !(panelOpen() && element.matches('[class*="_centerCol"]'))
     }
     previousPage = open
     if (column) {

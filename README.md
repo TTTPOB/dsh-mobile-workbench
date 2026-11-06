@@ -42,6 +42,10 @@ pnpm build
 
 构建输出位于 `lib/`。源码与构建输出一并提交；开发约定见 [AGENTS.md](AGENTS.md)。rc.1 逐项适配与最终浏览器检查点见[兼容性与验收参考](docs/compatibility.md)。
 
+## 已知限制
+
+管理面板打开时，浮层后面的对话区和会话列表只被遮罩挡住点击，不是 inert；键盘或读屏器的焦点可能移到浮层后面。
+
 ## 来源与许可证
 
 项目基于 [mexiaosqwq/dsh-web-mobile](https://github.com/mexiaosqwq/dsh-web-mobile)，保留原作者信息和 [MIT 许可证](LICENSE)。移动工作台使用独立版本号维护。

@@ -47,8 +47,9 @@ async function startSession(page: Page, prompt: string, workspace: string): Prom
   const editor = page.locator('[data-composer-input="true"]')
   if (await editor.getAttribute('contenteditable') !== 'true') {
     await page.getByRole('button', { name: 'Choose workspace', exact: true }).click()
-    await expect(page.locator('[role="menu"], [role="dialog"]')).toBeVisible()
     const menu = page.getByRole('menu')
+    const picker = page.getByRole('dialog', { name: 'Select Workspace Directory', exact: true })
+    await expect(menu.or(picker)).toBeVisible()
     if (await menu.isVisible()) {
       await menu.getByRole('menuitem', { name: basename(workspace), exact: true }).click()
     } else {

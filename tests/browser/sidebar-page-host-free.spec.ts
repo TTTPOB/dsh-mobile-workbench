@@ -4,6 +4,7 @@ import { createRequire, stripTypeScriptTypes } from 'node:module'
 import { dirname, join } from 'node:path'
 import { LAYOUT_CSS } from '../../src/client/styles/layout.css.ts'
 import { WORKBENCH_CSS } from '../../src/client/styles/workbench.css.ts'
+import { WORKBENCH_MANAGEMENT_CSS } from '../../src/client/styles/workbench-management.css.ts'
 
 const require = createRequire(import.meta.url)
 const source = stripTypeScriptTypes(readFileSync(new URL('../../src/client/workbench/sidebar-page.ts', import.meta.url), 'utf8').replaceAll('export ', ''))
@@ -22,14 +23,14 @@ test('retained sessions page stays clickable, scrollable and focusable after Rea
     [role="tree"] { height: 240px; overflow-y: auto; }
     [data-sidebar-mask] { position: fixed; inset: 0; background: #888; }
     button { min-height: 44px; }
-    ${LAYOUT_CSS}${WORKBENCH_CSS}
+    ${LAYOUT_CSS}${WORKBENCH_CSS}${WORKBENCH_MANAGEMENT_CSS}
   ` })
   await page.addScriptTag({ path: react })
   await page.addScriptTag({ path: reactDom })
   await page.addScriptTag({ content: source + `
     const h = React.createElement
     const root = ReactDOM.createRoot(document.getElementById('app'))
-    let collapsed = false, revision = 0, drawer = true
+    let collapsed = false, revision = 0, drawer = true, panelOpen = false
     window.clicks = 0
     const render = () => ReactDOM.flushSync(() => root.render(h('div', {
       'data-mobile-nav': 'frame', 'data-sidebar-collapsed': collapsed || undefined,
@@ -38,7 +39,7 @@ test('retained sessions page stays clickable, scrollable and focusable after Rea
       drawer && h('div', { 'data-sidebar-mask': '' }),
       h('div', { key: revision, className: '_sidebarCol_fixture', inert: drawer && collapsed ? '' : undefined },
         h('div', { role: 'tree' }, h('button', { onClick: () => { window.clicks++ } }, 'Select session'), h('div', { style: { height: 1000 } }, 'Scrollable content'))),
-      h('main', { className: '_centerCol_fixture' }, h('button', {}, 'Conversation')),
+      h('main', { className: '_centerCol_fixture' }, h('button', { onClick: () => { window.panelClicks = (window.panelClicks ?? 0) + 1 } }, 'Conversation')),
       h('div', { 'data-rightbar-col': '' }),
       h('div', { 'data-shell-overlay': '' }, h('nav', { 'data-mobile-workbench': 'navigation' },
         ...['sessions', 'session', 'files'].map(id => h('button', { key: id, onClick: () => {
@@ -49,7 +50,19 @@ test('retained sessions page stays clickable, scrollable and focusable after Rea
     document.documentElement.setAttribute('data-mobile-workbench-active', 'true')
     render()
     const frame = document.querySelector('[data-mobile-nav]')
-    const page = createSidebarPage(frame, () => { collapsed = !collapsed; render() })
+    const page = createSidebarPage(frame, () => { collapsed = !collapsed; render() }, () => panelOpen)
+    window.setPanel = open => {
+      panelOpen = open
+      const center = frame.querySelector('main')
+      if (open) {
+        document.documentElement.setAttribute('data-mobile-workbench-management', 'panel')
+        center.setAttribute('data-mobile-management-surface', 'panel')
+      } else {
+        document.documentElement.removeAttribute('data-mobile-workbench-management')
+        center.removeAttribute('data-mobile-management-surface')
+      }
+      page.sync()
+    }
     window.commit = () => { revision++; render() }
     window.resizeCommit = () => { drawer = false; render(); drawer = true; revision++; render() }
     window.disposePage = () => { page.dispose(); document.documentElement.removeAttribute('data-mobile-workbench-active'); render() }
@@ -84,6 +97,15 @@ test('retained sessions page stays clickable, scrollable and focusable after Rea
     await page.getByRole('button', { name: 'sessions', exact: true }).click()
     await checkList()
   }
+  await page.evaluate('window.setPanel(true)')
+  const panelAction = page.getByRole('button', { name: 'Conversation', exact: true })
+  await panelAction.click()
+  await expect.poll(() => page.evaluate('window.panelClicks')).toBe(1)
+  await panelAction.focus()
+  await expect(panelAction).toBeFocused()
+  await page.evaluate('window.setPanel(false)')
+  await expect(page.locator('main')).toHaveAttribute('inert', '')
+  await checkList()
   await page.evaluate('window.disposePage()')
   await expect(button).toBeHidden()
   await expect.poll(() => page.locator('[data-mobile-nav]').getAttribute('data-mobile-workbench-sessions')).toBeNull()
