@@ -4,7 +4,7 @@ DSH Mobile Workbench 3.5.0 支持 DSH 0.2.2-rc.1。`engines.dsh` 与 DSH peers �
 
 ## 源码与包验证
 
-开发工具链为 Node.js 24.9+、pnpm 11.28.5、Cordis 4.1.0、Loader 1.1.0、Schemastery 3.19.0（与 Host 共享的精确 peer 和开发依赖） 与 TypeScript ^6.0.3。npm 发布的客户端声明将部分类型依赖放在 devDependencies，消费者不会自动得到它们；本项目显式安装所用声明依赖，并在 CommonJS 客户端编译配置中映射公开 types 子路径，避免旧 Node 模块解析模式把服务或 hooks 退化为 any。
+开发工具链为 Node.js 24.9+、pnpm 11.28.5、Cordis 4.1.0、Loader 1.1.0、Schemastery 3.19.0（无状态运行时依赖，Schema 通过全局 Symbol 互认） 与 TypeScript ^6.0.3。npm 发布的客户端声明将部分类型依赖放在 devDependencies，消费者不会自动得到它们；本项目显式安装所用声明依赖，并在 CommonJS 客户端编译配置中映射公开 types 子路径，避免旧 Node 模块解析模式把服务或 hooks 退化为 any。
 
 ```sh
 pnpm install --frozen-lockfile
