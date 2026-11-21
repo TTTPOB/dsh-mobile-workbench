@@ -12,13 +12,19 @@ test('fixture completes and native pages remain accessible', async ({ page, isMo
   }
 
   await expect(nav).toBeVisible()
-  for (const destination of ['sessions', 'session', 'files', 'session']) {
+  const sidebar = page.locator('[data-shell-overlay]').locator('..').locator(':scope > [class*="_sidebarCol"]')
+  for (const destination of ['session', 'sessions', 'session', 'files', 'sessions', 'session']) {
     const button = nav.locator('[data-workbench-destination="' + destination + '"]')
-    await button.click()
+    await button.tap()
     await expect(button).toHaveAttribute('aria-current', 'page')
     await expect(page.locator('html')).toHaveAttribute('data-mobile-workbench-page', destination)
     if (destination === 'sessions') {
       await expect(page.locator('[data-row-key^="session:"]').filter({ hasText: '开始手机界面审计' }).first()).toBeVisible()
+      const viewportWidth = await page.evaluate(() => window.innerWidth)
+      await expect.poll(async () => {
+        const bounds = await sidebar.boundingBox()
+        return bounds && { x: bounds.x, width: bounds.width }
+      }).toEqual({ x: 0, width: viewportWidth })
     } else if (destination === 'session') {
       await expect(page.locator('[data-composer-input]')).toBeVisible()
     } else {
