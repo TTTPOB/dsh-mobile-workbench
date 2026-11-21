@@ -1,6 +1,6 @@
 import { useEffect, useId, useRef, useState, type ReactElement } from 'react'
 import { createPortal } from 'react-dom'
-import { MenuSurface, Modal, useAnchoredPosition } from '@deepseek-ai/dsh-client-ui-primitives'
+import { MenuSurface, Modal } from '@deepseek-ai/dsh-client-ui-primitives'
 import type {} from '@deepseek-ai/dsh-client-ui-session/client'
 import { contextPercent, pressureLabel } from './stats.ts'
 import { WorkbenchStatsDetails } from './WorkbenchStatsDetails.tsx'
@@ -89,7 +89,7 @@ export function WorkbenchAgents({ useWorkbench, useSessions, useProjection, sess
   const panelRef = useRef<HTMLDivElement>(null)
   const panelId = useId()
   const statsOpen = overlay === 'stats' && state.mobile
-  const position = useAnchoredPosition({ open: statsOpen, anchorRef: statsRef, panelRef, align: 'end', gap: 4, margin: 12 })
+  const anchorName = `--mobile-workbench-stats-${panelId.replaceAll(':', '')}`
   const closeStats = (): void => { setOverlay(null); statsRef.current?.focus({ preventScroll: true }) }
   useEffect(() => { setOverlay(null) }, [sessionId, state.mobile])
   useEffect(() => { if (state.agentsOpen) setOverlay(null) }, [state.agentsOpen])
@@ -122,7 +122,7 @@ export function WorkbenchAgents({ useWorkbench, useSessions, useProjection, sess
       <button type="button" data-workbench-title-info data-workbench-context-control
         aria-label={title + ' · ' + t('viewSessionInfo')} aria-haspopup="dialog" aria-expanded={overlay === 'info'}
         onClick={event => { event.currentTarget.focus({ preventScroll: true }); closeAgents(false); setOverlay('info') }}><span>{title}</span></button>
-      <button ref={statsRef} type="button" data-mobile-workbench="stats" data-workbench-context-control
+      <button ref={statsRef} type="button" data-mobile-workbench="stats" data-workbench-context-control style={{ anchorName }}
         aria-label={t('statistics') + ' · ' + pressureLabel(pressure)} aria-haspopup="dialog" aria-expanded={statsOpen} aria-controls={statsOpen ? panelId : undefined}
         onClick={() => { if (statsOpen) closeStats(); else { closeAgents(false); setOverlay('stats') } }}>
         <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="9" stroke="currentColor" opacity=".2" strokeWidth="2" />
@@ -166,7 +166,7 @@ export function WorkbenchAgents({ useWorkbench, useSessions, useProjection, sess
       <button type="button" data-modal-autofocus onClick={() => { setOverlay(null) }}>{t('close')}</button>
     </Modal>
     {statsOpen && createPortal(<MenuSurface ref={panelRef} id={panelId} role="dialog" aria-label={t('statistics')}
-      data-workbench-stats-panel style={{ top: position?.top, right: 12, visibility: position ? 'visible' : 'hidden' }}>
+      data-workbench-stats-panel style={{ positionAnchor: anchorName }}>
       <div data-workbench-stats-scroll>
         <WorkbenchStatsDetails pressure={pressure} breakdown={breakdown} activity={activity} usage={usage} t={tStats} />
       </div>

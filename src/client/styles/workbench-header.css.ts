@@ -199,6 +199,8 @@ export const WORKBENCH_HEADER_CSS = `@media (max-width: 1023px) and (pointer: co
    * leave later rows on a transparent background. Scroll an inner layer instead. */
   [data-workbench-stats-panel] {
     position: fixed;
+    top: calc(anchor(bottom) + 4px);
+    right: 12px;
     z-index: 100;
     width: min(336px, calc(100vw - 24px));
     max-height: 60dvh;

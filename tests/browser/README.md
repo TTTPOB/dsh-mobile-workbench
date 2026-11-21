@@ -57,7 +57,7 @@ pnpm exec playwright test                         # all three, one worker
 | 提供包 | 已确认的公开 API |
 | --- | --- |
 | ui-layout/client | `ILayout.panelInfo`、`selectPanel` |
-| ui-primitives | `Modal`、`MenuSurface`、`useAnchoredPosition` |
+| ui-primitives | `Modal`、`MenuSurface` |
 | ui-model-selection/client | `conversation.input.model.label` slot、`ModelLabelOwner` |
 | ui-input-trigger/client | `sessionOf` 返回 controller，其 `menu` 可订阅，`dismiss` 可调用 |
 | session-stats/client | `SessionProjectionMap.sessionStats` |

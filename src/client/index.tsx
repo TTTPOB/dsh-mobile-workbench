@@ -10,7 +10,6 @@ import { installWorkbenchDecoration } from './effects/workbench-decoration.ts'
 import { installSessionsTouch } from './effects/sessions-touch.ts'
 import { installComposerKeyboardGuard } from './effects/composer-keyboard-guard.ts'
 import { installComposerPlusToggle } from './effects/composer-plus-toggle.ts'
-import { installWorkspaceChipToggle } from './effects/workspace-chip-toggle.ts'
 import { installTeamChipToggle } from './effects/team-chip-toggle.ts'
 import { installModelMenuAnchor } from './effects/model-menu-anchor.ts'
 import { installShortcutModalKeyboardGuard } from './effects/shortcut-modal-keyboard-guard.ts'
@@ -68,7 +67,6 @@ export function apply(ctx: ClientContext): void {
   installComposerKeyboardGuard(ctx)
   installComposerPlusToggle(ctx)
 
-  installWorkspaceChipToggle(ctx)
 
   installTeamChipToggle(ctx)
 
