@@ -1,6 +1,6 @@
 {
   "name": "dsh-web-mobile",
-  "version": "3.5.0",
+  "version": "3.5.1",
   "description": "DSH Mobile Workbench — mobile-first shell retaining native trajectory and subagents",
   "license": "MIT",
   "author": "mexiaosh",
@@ -79,14 +79,14 @@
   },
   "peerDependencies": {
     "@deepseek-ai/cordis": "4.1.0",
-    "@deepseek-ai/dsh-client-locale": "0.2.2-rc.1",
-    "@deepseek-ai/dsh-client-ui-conversation": "0.2.2-rc.1",
-    "@deepseek-ai/dsh-client-ui-layout": "0.2.2-rc.1",
-    "@deepseek-ai/dsh-client-ui-plugin-manager": "0.2.2-rc.1",
-    "@deepseek-ai/dsh-client-ui-primitives": "0.2.2-rc.1",
-    "@deepseek-ai/dsh-client-ui-settings": "0.2.2-rc.1",
-    "@deepseek-ai/dsh-client-ui-sidebar": "0.2.2-rc.1",
-    "@deepseek-ai/dsh-client-ui-slots": "0.2.2-rc.1",
+    "@deepseek-ai/dsh-client-locale": "0.2.2-rc.5",
+    "@deepseek-ai/dsh-client-ui-conversation": "0.2.2-rc.5",
+    "@deepseek-ai/dsh-client-ui-layout": "0.2.2-rc.5",
+    "@deepseek-ai/dsh-client-ui-plugin-manager": "0.2.2-rc.5",
+    "@deepseek-ai/dsh-client-ui-primitives": "0.2.2-rc.5",
+    "@deepseek-ai/dsh-client-ui-settings": "0.2.2-rc.5",
+    "@deepseek-ai/dsh-client-ui-sidebar": "0.2.2-rc.5",
+    "@deepseek-ai/dsh-client-ui-slots": "0.2.2-rc.5",
     "react": "^18.2.0"
   },
   "devDependencies": {
@@ -145,7 +145,7 @@
   },
   "engines": {
     "node": ">=24.9.0",
-    "dsh": "0.2.2-rc.1"
+    "dsh": "0.2.2-rc.5"
   },
   "packageManager": "pnpm@11.28.5",
   "peerDependenciesMeta": {

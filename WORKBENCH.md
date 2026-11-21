@@ -1,6 +1,6 @@
 # DSH Mobile Workbench 使用与架构
 
-DSH Mobile Workbench 3.5.0 面向 DSH 0.2.2-rc.1。包名为 `dsh-web-mobile`，版本使用 `major.minor.patch`。
+DSH Mobile Workbench 3.5.1 面向 DSH 0.2.2-rc.5。包名为 `dsh-web-mobile`，版本使用 `major.minor.patch`。
 
 ## 页面与操作
 
@@ -44,11 +44,11 @@ DSH Mobile Workbench 3.5.0 面向 DSH 0.2.2-rc.1。包名为 `dsh-web-mobile`，
 
 ## 安装
 
-需要 Node.js 24.9+、pnpm 11.28.5 和 DSH 0.2.2-rc.1。使用交付的 tarball 安装到指定 profile：
+需要 Node.js 24.9+、pnpm 11.28.5 和 DSH 0.2.2-rc.5。使用交付的 tarball 安装到指定 profile：
 
 ```sh
 DSH_HOME=/path/to/isolated-home dsh plugin --profile web add \
-  ./dsh-web-mobile-3.5.0.tgz \
+  ./dsh-web-mobile-3.5.1.tgz \
   --config.auto-install-peers=false
 ```
 

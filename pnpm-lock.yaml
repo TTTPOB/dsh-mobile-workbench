@@ -4,10 +4,16 @@ settings:
   autoInstallPeers: false
   excludeLinksFromLockfile: false
 
+overrides:
+  '@deepseek-ai/dsh-client-ui-plugin-manager': https://github.com/TTTPOB/deepseek-harness/releases/download/daily-driver-v0.2.2-rc.5-fork4/deepseek-ai-dsh-client-ui-plugin-manager-0.2.2-rc.5-fork1.tgz
+
 importers:
 
   .:
     dependencies:
+      '@deepseek-ai/dsh-client-ui-plugin-manager':
+        specifier: https://github.com/TTTPOB/deepseek-harness/releases/download/daily-driver-v0.2.2-rc.5-fork4/deepseek-ai-dsh-client-ui-plugin-manager-0.2.2-rc.5-fork1.tgz
+        version: https://github.com/TTTPOB/deepseek-harness/releases/download/daily-driver-v0.2.2-rc.5-fork4/deepseek-ai-dsh-client-ui-plugin-manager-0.2.2-rc.5-fork1.tgz(@deepseek-ai/cordis@4.1.0)
       '@deepseek-ai/schemastery':
         specifier: 3.19.0
         version: 3.19.0
@@ -73,9 +79,6 @@ importers:
         specifier: 0.2.2-rc.5
         version: 0.2.2-rc.5(@deepseek-ai/cordis@4.1.0)
       '@deepseek-ai/dsh-client-ui-model-selection':
-        specifier: 0.2.2-rc.5
-        version: 0.2.2-rc.5(@deepseek-ai/cordis@4.1.0)
-      '@deepseek-ai/dsh-client-ui-plugin-manager':
         specifier: 0.2.2-rc.5
         version: 0.2.2-rc.5(@deepseek-ai/cordis@4.1.0)
       '@deepseek-ai/dsh-client-ui-primitives':
@@ -384,8 +387,9 @@ packages:
     peerDependencies:
       '@deepseek-ai/cordis': ~4.1.0
 
-  '@deepseek-ai/dsh-client-ui-plugin-manager@0.2.2-rc.5':
-    resolution: {integrity: sha512-XhwV/mz/3K8zK8OIN7Map8FeNSX/QnF4y/HcKKkfv0CvlabbpOVGgFI72oSNqlYhWdVuQx3xt+lbRFMjKje6tA==}
+  '@deepseek-ai/dsh-client-ui-plugin-manager@https://github.com/TTTPOB/deepseek-harness/releases/download/daily-driver-v0.2.2-rc.5-fork4/deepseek-ai-dsh-client-ui-plugin-manager-0.2.2-rc.5-fork1.tgz':
+    resolution: {integrity: sha512-ZvqoxO2SAZveBwwsA4IdtvEa+e1bH46jX4Iwt3Ul58KngC4ZhDFz0ZecDRBLnwB2sceEBPffPd40qHmaOqrswQ==, tarball: https://github.com/TTTPOB/deepseek-harness/releases/download/daily-driver-v0.2.2-rc.5-fork4/deepseek-ai-dsh-client-ui-plugin-manager-0.2.2-rc.5-fork1.tgz}
+    version: 0.2.2-rc.5-fork1
     peerDependencies:
       '@deepseek-ai/cordis': ~4.1.0
 
@@ -991,7 +995,7 @@ snapshots:
     dependencies:
       '@deepseek-ai/cordis': 4.1.0(@deepseek-ai/cordis-plugin-loader@1.1.0)
 
-  '@deepseek-ai/dsh-client-ui-plugin-manager@0.2.2-rc.5(@deepseek-ai/cordis@4.1.0)':
+  '@deepseek-ai/dsh-client-ui-plugin-manager@https://github.com/TTTPOB/deepseek-harness/releases/download/daily-driver-v0.2.2-rc.5-fork4/deepseek-ai-dsh-client-ui-plugin-manager-0.2.2-rc.5-fork1.tgz(@deepseek-ai/cordis@4.1.0)':
     dependencies:
       '@deepseek-ai/cordis': 4.1.0(@deepseek-ai/cordis-plugin-loader@1.1.0)
       '@deepseek-ai/dsh-timeout': 0.2.2-rc.5(@deepseek-ai/cordis@4.1.0)
