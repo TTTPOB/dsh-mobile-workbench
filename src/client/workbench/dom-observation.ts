@@ -1,5 +1,6 @@
 export const HOST_AGENT_TRIGGER = '[data-slot="conversation.session.header.actions"] [data-subagent-action] button[aria-haspopup="dialog"]:has([data-subagent-count])'
 export const HOST_AGENT_PANEL = '[role="dialog"][data-subagent-panel]'
+export const HOST_JOB_TRIGGER = 'button:has(> [data-job-count])'
 
 // Only inspect changed boundary nodes, never the streamed conversation subtree.
 export const PRESENTATION_LOCAL = 'header:has([data-conversation-tabs]), [data-subagent-panel]'

@@ -1,9 +1,8 @@
+import { HOST_JOB_TRIGGER } from '../workbench/dom-observation.ts'
+
 const H = 'html[data-mobile-workbench-active="true"] [data-mobile-nav="frame"] [data-phase] header[data-mobile-workbench-header]'
-// The host background-task chip is a class-less wrapper directly under the header
-// actions slot; the old `_root` arm stopped matching when the host dropped that
-// wrapper class, so the chip fell out of the first row. Anchor on the slot and on
-// the count inside the trigger instead, and keep the team chip out of the match.
-const TASKS = '[data-slot="conversation.session.header.actions"] > div:has(> button[class*="_trigger"] > [class*="_count"])'
+const JOB_BUTTON = '[data-slot="conversation.session.header.actions"] ' + HOST_JOB_TRIGGER
+const TASKS = '[data-slot="conversation.session.header.actions"] > div:has(> ' + HOST_JOB_TRIGGER + ')'
 
 export const WORKBENCH_HEADER_CSS = `@media (max-width: 1023px) and (pointer: coarse) {
   ${H} {
@@ -20,7 +19,7 @@ export const WORKBENCH_HEADER_CSS = `@media (max-width: 1023px) and (pointer: co
   ${H} [data-conversation-header-corner],
   ${H}[data-workbench-tabs-owned] [data-conversation-tabs],
   ${H} nav[class*="_crumbs"],
-  ${H} [data-workbench-agent-count],
+  ${H} [data-slot="conversation.session.header.actions"] > [data-subagent-action]:has([data-subagent-count]),
   ${H} [data-slot="conversation.session.header.actions"] > span[title],
   ${H} [data-slot="conversation.session.header.utilities"] > :has([data-open-target]) { display: none !important; }
   ${H} [class*="_titleRow"], ${H} [class*="_titleCluster"], ${H} [class*="_headerActions"] {
@@ -35,14 +34,14 @@ export const WORKBENCH_HEADER_CSS = `@media (max-width: 1023px) and (pointer: co
   /* Host nodes and the plugin nodes are siblings under the display:contents slot,
      so the actions row is a grid: row one keeps the title and the reserve for the
      absolutely positioned native utilities, row two holds the view tabs, the
-     background-task chip, the host team chip and the downstream directory. */
+     background-job chip and the downstream directory. */
   ${H} [class*="_headerActions"] {
     display: grid !important;
-    grid-template-columns: auto minmax(0, 1fr) auto auto 44px;
+    grid-template-columns: auto minmax(0, 1fr) auto;
     grid-template-rows: 44px 44px;
     grid-template-areas:
-      "main main main main main"
-      "views tasks team agents .";
+      "main main main"
+      "views tasks agents";
     column-gap: 4px;
     row-gap: 4px;
     align-items: center;
@@ -126,40 +125,29 @@ export const WORKBENCH_HEADER_CSS = `@media (max-width: 1023px) and (pointer: co
   }
   ${H} [data-workbench-mode] { flex: 1 1 0; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 11px; color: var(--dsw-alias-label-secondary); }
   ${H} [data-mobile-workbench="agents"] { grid-area: agents; justify-self: end; gap: 4px; }
-  ${H} [data-team-action] { grid-area: team; justify-self: end; }
-  /* The host hides the team label below 480px, so the icon-only phone trigger
-     reaches 44px through min-width while tablets keep the visible label. */
-  ${H} [data-team-action] > button {
+  /* Restore the native text-mode trigger inside the compact header container. */
+  ${H} ${TASKS} { grid-area: tasks; justify-self: start; min-width: 0; max-width: 100%; }
+  ${H} ${JOB_BUTTON} {
     box-sizing: border-box;
-    min-width: 44px !important;
-    height: 44px !important;
-    min-height: 44px !important;
-    padding: 0 6px !important;
-    justify-content: center;
-    touch-action: manipulation;
-  }
-  ${H} ${TASKS} {
-    grid-area: tasks;
-    justify-self: start;
-    align-items: center;
-    min-width: 0;
+    width: auto;
     max-width: 100%;
-    overflow: hidden;
-  }
-  ${H} ${TASKS} > button {
-    box-sizing: border-box;
+    min-width: 44px;
     height: 44px !important;
-    min-height: 44px !important;
-    min-width: 0 !important;
-    max-width: 100% !important;
+    min-height: 44px;
+    padding: 0 4px;
+    justify-content: start;
     touch-action: manipulation;
   }
-  ${H} ${TASKS} > button [class*="_count"] {
+  ${H} ${JOB_BUTTON} > [data-job-count] {
+    display: block;
     min-width: 0;
     overflow: hidden;
-    text-overflow: ellipsis;
     white-space: nowrap;
+    text-overflow: ellipsis;
   }
+  ${H} ${JOB_BUTTON}[aria-describedby] { color: var(--dsw-alias-state-business-primary); }
+  ${H} ${JOB_BUTTON} [class*="_compactIcon"] { display: none; }
+  ${H} ${JOB_BUTTON} [class*="_textModeActivity"] { display: inline-flex !important; }
   ${H} [data-workbench-count] { background: transparent; font-size: 11px; padding: 0; margin: 0; }
   ${H} button[data-mobile-workbench="agents"] > svg { width: 16px; height: 16px; }
   /* Touch feedback remains visible without permanently filling every control. */
