@@ -50,7 +50,7 @@ test('native background jobs open within the viewport and close', async ({ page,
   await expect(jobs).toHaveAccessibleName('1 background job')
   await jobs.tap()
   const list = page.getByRole('list', { name: 'Background jobs', exact: true })
-  await expect(list.getByRole('listitem').filter({ hasText: '演示本地后台任务固定标记' })).toBeVisible()
+  await expect(list.getByRole('button', { name: /Show live output.*MOBILE_AUDIT_BACKGROUND_DONE/ })).toBeVisible()
   const bounds = (await list.boundingBox())!
   const viewport = page.viewportSize()!
   expect(bounds.x).toBeGreaterThanOrEqual(0)
