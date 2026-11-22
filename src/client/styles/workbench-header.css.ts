@@ -31,6 +31,8 @@ export const WORKBENCH_HEADER_CSS = `@media (max-width: 1023px) and (pointer: co
     overflow: visible !important;
   }
   ${H} [class*="_titleRow"], ${H} [class*="_titleCluster"] { display: block !important; }
+  /* The desktop title fade also masked the end of the second mobile row. */
+  ${H} [class*="_titleCluster"] { mask-image: none; }
   /* Host nodes and the plugin nodes are siblings under the display:contents slot,
      so the actions row is a grid: row one keeps the title and the reserve for the
      absolutely positioned native utilities, row two holds the view tabs, the
@@ -124,7 +126,7 @@ export const WORKBENCH_HEADER_CSS = `@media (max-width: 1023px) and (pointer: co
     background: var(--dsw-static-deepseek-500);
   }
   ${H} [data-workbench-mode] { flex: 1 1 0; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 11px; color: var(--dsw-alias-label-secondary); }
-  ${H} [data-mobile-workbench="agents"] { grid-area: agents; justify-self: end; gap: 4px; }
+  ${H} [data-mobile-workbench="agents"] { grid-area: agents; justify-self: end; gap: 4px; white-space: nowrap; }
   /* Restore the native text-mode trigger inside the compact header container. */
   ${H} ${TASKS} { grid-area: tasks; justify-self: start; min-width: 0; max-width: 100%; }
   ${H} ${JOB_BUTTON} {
@@ -138,14 +140,16 @@ export const WORKBENCH_HEADER_CSS = `@media (max-width: 1023px) and (pointer: co
     justify-content: start;
     touch-action: manipulation;
   }
-  ${H} ${JOB_BUTTON} > [data-job-count] {
-    display: block;
-    min-width: 0;
-    overflow: hidden;
+  ${H} ${JOB_BUTTON} > [data-job-count] { display: none; }
+  ${H} ${JOB_BUTTON}[data-workbench-job-count]::after {
+    content: attr(data-workbench-job-count) / "";
+    font-size: 11px;
+    line-height: 16px;
     white-space: nowrap;
-    text-overflow: ellipsis;
   }
-  ${H} ${JOB_BUTTON}[aria-describedby] { color: var(--dsw-alias-state-business-primary); }
+  ${H} ${JOB_BUTTON}[data-workbench-job-count]:not([data-workbench-job-count^="0/"])::after {
+    color: var(--dsw-alias-state-business-primary);
+  }
   ${H} ${JOB_BUTTON} [class*="_compactIcon"] { display: none; }
   ${H} ${JOB_BUTTON} [class*="_textModeActivity"] { display: inline-flex !important; }
   ${H} [data-workbench-count] { background: transparent; font-size: 11px; padding: 0; margin: 0; }

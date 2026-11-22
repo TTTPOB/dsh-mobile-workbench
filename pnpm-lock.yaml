@@ -33,6 +33,9 @@ importers:
       '@deepseek-ai/dsh-api-gateway':
         specifier: 0.2.2-rc.5
         version: 0.2.2-rc.5(@deepseek-ai/cordis@4.1.0)
+      '@deepseek-ai/dsh-api-job-controller':
+        specifier: 0.2.2-rc.5
+        version: 0.2.2-rc.5(@deepseek-ai/cordis@4.1.0)
       '@deepseek-ai/dsh-api-remote-access':
         specifier: 0.2.2-rc.5
         version: 0.2.2-rc.5(@deepseek-ai/cordis@4.1.0)
@@ -231,6 +234,11 @@ packages:
 
   '@deepseek-ai/dsh-api-gateway@0.2.2-rc.5':
     resolution: {integrity: sha512-1JByZz6npb/mRdb7Jv6hrvVaFv+FgyMeQ+2QWk0ctYx46F+T+YL6aUKX8K4ncUm7tcTs91KG0rEn3znIW1Z/zA==}
+    peerDependencies:
+      '@deepseek-ai/cordis': ~4.1.0
+
+  '@deepseek-ai/dsh-api-job-controller@0.2.2-rc.5':
+    resolution: {integrity: sha512-8NacXUzGlhyrrfSUljVPrhEP3RO2GhKtIf4xveXCSoMbpQtYPYIkvK2xARNk3QL8AagiYe2iy/lJk4IkBWIZRA==}
     peerDependencies:
       '@deepseek-ai/cordis': ~4.1.0
 
@@ -853,6 +861,13 @@ snapshots:
     transitivePeerDependencies:
       - bufferutil
       - utf-8-validate
+
+  '@deepseek-ai/dsh-api-job-controller@0.2.2-rc.5(@deepseek-ai/cordis@4.1.0)':
+    dependencies:
+      '@deepseek-ai/cordis': 4.1.0(@deepseek-ai/cordis-plugin-loader@1.1.0)
+      '@deepseek-ai/dsh-typert-protocol': 0.2.2-rc.5(@deepseek-ai/cordis@4.1.0)
+      '@deepseek-ai/schemastery': 3.19.0
+      zod: 4.6.6
 
   '@deepseek-ai/dsh-api-remote-access@0.2.2-rc.5(@deepseek-ai/cordis@4.1.0)':
     dependencies:

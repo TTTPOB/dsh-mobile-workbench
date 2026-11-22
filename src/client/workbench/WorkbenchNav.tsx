@@ -1,4 +1,5 @@
-import { HOST_AGENT_PANEL } from './dom-observation.ts'
+import { HOST_AGENT_PANEL, HOST_JOB_TRIGGER } from './dom-observation.ts'
+import type { IJobs } from '@deepseek-ai/dsh-api-job-controller/client'
 import { useEffect, useId, useRef, useState, type ReactElement } from 'react'
 import { createPortal } from 'react-dom'
 import { MenuSurface, Modal } from '@deepseek-ai/dsh-client-ui-primitives'
@@ -16,6 +17,7 @@ export interface WorkbenchInjected {
   tStats: StatsTranslate
   resolvePreset: (id: string | undefined) => Promise<string>
   hooks: {
+    jobs: Pick<IJobs['state'], 'getSnapshot' | 'subscribe'>
     workbench: {
       getSnapshot: () => WorkbenchSnapshot
       subscribe: (listener: () => void) => () => void
@@ -65,8 +67,31 @@ export function WorkbenchNav({ useWorkbench, activate, t }: Props): ReactElement
 }
 
 /** Header content uses public session summaries and session-bound projections. */
-export function WorkbenchAgents({ useWorkbench, useSessions, useProjection, sessionId, activate, selectView, returnParent, closeAgents, focusAgents, resolvePreset, t, tStats }: AgentProps): ReactElement | null {
+export function WorkbenchAgents({ useWorkbench, useJobs, useSessions, useProjection, sessionId, activate, selectView, returnParent, closeAgents, focusAgents, resolvePreset, t, tStats }: AgentProps): ReactElement | null {
   const state = useWorkbench(value => value)
+  const jobCount = useJobs(snapshot => {
+    const rows = snapshot.rows[sessionId]
+    if (!rows?.length) return undefined
+    return rows.filter(job => job.status === 'running').length + '/' + rows.length
+  })
+  const secondaryRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (!state.mobile || jobCount === undefined) return
+    const actions = secondaryRef.current?.closest('[data-slot="conversation.session.header.actions"]')
+    if (!actions) return
+    const attribute = 'data-workbench-job-count'
+    let button: Element | null = null
+    const update = (): void => {
+      const next = actions.querySelector(HOST_JOB_TRIGGER)
+      if (next !== button) button?.removeAttribute(attribute)
+      button = next
+      button?.setAttribute(attribute, jobCount)
+    }
+    update()
+    const observer = new MutationObserver(update)
+    observer.observe(actions, { childList: true, subtree: true })
+    return () => { observer.disconnect(); button?.removeAttribute(attribute) }
+  }, [jobCount, sessionId, state.mobile])
   const summary = useSessions(value => sessionId ? value.byId[sessionId] : undefined)
   const parent = useSessions(value => summary?.parentId ? value.byId[summary.parentId] : undefined)
   const pressure = useProjection('contextPressure')
@@ -131,7 +156,7 @@ export function WorkbenchAgents({ useWorkbench, useSessions, useProjection, sess
         <span>{pressureLabel(pressure)}</span>
       </button>
     </div>
-    <div data-workbench-header-secondary>
+    <div ref={secondaryRef} data-workbench-header-secondary>
       <div data-mobile-workbench="views" role="tablist" aria-label={t('sessionView')}>
         {views.map(view => <button key={view} type="button" role="tab" data-workbench-context-control data-workbench-view={view}
           aria-selected={state.selectedView === view} disabled={view === 'chat' ? !state.hasChat : !state.hasTrajectory}

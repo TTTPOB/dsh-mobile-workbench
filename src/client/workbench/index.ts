@@ -1,4 +1,5 @@
 import { HOST_AGENT_PANEL } from './dom-observation.ts'
+import type { IJobs, JobsSnapshot } from '@deepseek-ai/dsh-api-job-controller/client'
 import { sessionsPageOpen } from '../workbench/sidebar-page.ts'
 import type { Context as ClientContext } from '@deepseek-ai/cordis'
 import type {} from '@deepseek-ai/dsh-client-ui-layout/client'
@@ -99,6 +100,9 @@ export function installWorkbench(ctx: ClientContext): void {
     openSession: id => { openSession(id) },
   })
   const presentation = createWorkbenchPresentation()
+  const emptyJobs: JobsSnapshot = { rows: {}, observed: {} }
+  const fallbackJobs = { getSnapshot: () => emptyJobs, subscribe: () => () => {} }
+  const jobsSource = () => (ctx.get('jobs') as IJobs | undefined)?.state ?? fallbackJobs
   let snapshot: WorkbenchSnapshot = { ...bridge.evidence(), mobile: mq.matches }
   const listeners = new Set<() => void>()
   const source = {
@@ -211,14 +215,14 @@ export function installWorkbench(ctx: ClientContext): void {
     id: 'mobile-workbench-agents',
     order: 5,
     locale: WORKBENCH_NS,
-    inject: (): WorkbenchInjected => ({ resolvePreset, tStats: ctx.locale.bind(STATS_NS), hooks: { workbench: source }, activate: (destination, pointerStartedOpen) => { activate(destination, pointerStartedOpen) }, selectView: bridge.selectView, returnParent: bridge.returnParent, closeAgents: bridge.closeAgents, focusAgents: bridge.focusAgents }),
+    inject: (): WorkbenchInjected => ({ resolvePreset, tStats: ctx.locale.bind(STATS_NS), hooks: { workbench: source, jobs: jobsSource() }, activate: (destination, pointerStartedOpen) => { activate(destination, pointerStartedOpen) }, selectView: bridge.selectView, returnParent: bridge.returnParent, closeAgents: bridge.closeAgents, focusAgents: bridge.focusAgents }),
   }, WorkbenchAgents))
   ctx.slots.inject('shell.overlay', () => ctx.slots.register({
     name: 'shell.overlay',
     id: 'mobile-workbench-navigation',
     order: 20,
     locale: WORKBENCH_NS,
-    inject: (): WorkbenchInjected => ({ resolvePreset, tStats: ctx.locale.bind(STATS_NS), hooks: { workbench: source }, activate: (destination, pointerStartedOpen) => { activate(destination, pointerStartedOpen) }, selectView: bridge.selectView, returnParent: bridge.returnParent, closeAgents: bridge.closeAgents, focusAgents: bridge.focusAgents }),
+    inject: (): WorkbenchInjected => ({ resolvePreset, tStats: ctx.locale.bind(STATS_NS), hooks: { workbench: source, jobs: jobsSource() }, activate: (destination, pointerStartedOpen) => { activate(destination, pointerStartedOpen) }, selectView: bridge.selectView, returnParent: bridge.returnParent, closeAgents: bridge.closeAgents, focusAgents: bridge.focusAgents }),
   }, WorkbenchNav))
   // The editor lives beside the navigation entry and is opened from the management menu.
   ctx.slots.inject('shell.overlay', () => ctx.slots.register({

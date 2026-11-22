@@ -27,6 +27,7 @@
     ],
     "noEmitOnError": true,
     "paths": {
+      "@deepseek-ai/dsh-api-job-controller/client": ["./node_modules/@deepseek-ai/dsh-api-job-controller/lib/types/client/index.d.ts"],
       "@deepseek-ai/dsh-agent-preset-registry/display": ["./node_modules/@deepseek-ai/dsh-agent-preset-registry/lib/types/display.d.ts"],
       "@deepseek-ai/dsh-agent-preset-registry/types": ["./node_modules/@deepseek-ai/dsh-agent-preset-registry/lib/types/types.d.ts"],
       "@deepseek-ai/dsh-agent-preset-registry/remote": ["./node_modules/@deepseek-ai/dsh-agent-preset-registry/lib/typert.remote-client.d.ts"],

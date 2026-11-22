@@ -18,7 +18,8 @@ test('the phone separates header controls and shows native job activity', async 
     await expect(send).toBeVisible()
     await composer.fill('演示后台任务')
     await send.click()
-    await expect(jobs.locator('[data-job-count]')).toHaveText(count === 1 ? '1 background job' : '2 background jobs')
+    await expect(jobs).toHaveAccessibleName(count === 1 ? '1 background job' : '2 background jobs')
+    await expect(jobs).toHaveAttribute('data-workbench-job-count', `${count}/${count}`)
     await expect(jobs.locator('[class*="_textModeActivity"]')).toBeVisible()
     await expect(jobs).toBeVisible()
     await expect(native).toHaveCount(1)
@@ -29,22 +30,32 @@ test('the phone separates header controls and shows native job activity', async 
       const workbench = button.getBoundingClientRect()
       const job = chip.getBoundingClientRect()
       return {
-        rightGap: header.getBoundingClientRect().right - workbench.right - parseFloat(getComputedStyle(header).paddingRight),
+        rightDelta: Math.abs(header.querySelector('[class*="_headerUtilities"] button[aria-haspopup="menu"]')!.getBoundingClientRect().right - workbench.right),
+        inViewport: workbench.left >= 0 && workbench.right <= innerWidth && workbench.top >= 0 && workbench.bottom <= innerHeight && job.left >= 0 && job.right <= innerWidth && job.top >= 0 && job.bottom <= innerHeight,
+        masked: (() => {
+          for (let node: Element | null = button; node && node !== header; node = node.parentElement) {
+            if (getComputedStyle(node).maskImage !== 'none') return true
+          }
+          return false
+        })(),
         sameRow: Math.abs(job.top - workbench.top) < 1,
         separated: job.right <= workbench.left,
-        text: getComputedStyle(chip.querySelector('[data-job-count]')!).display,
-        liveColor: getComputedStyle(chip).color,
+        number: getComputedStyle(chip, '::after').content,
+        liveColor: getComputedStyle(chip, '::after').color,
       }
     }, HOST_JOB_TRIGGER)
-    expect(geometry.rightGap).toBeCloseTo(0, 0)
+    expect(geometry.rightDelta).toBeLessThanOrEqual(1)
+    expect(geometry.inViewport).toBe(true)
+    expect(geometry.masked, 'The complete agent count must be painted').toBe(false)
     expect(geometry.sameRow).toBe(true)
     expect(geometry.separated).toBe(true)
-    expect(geometry.text).not.toBe('none')
+    expect(geometry.number).toContain(`${count}/${count}`)
     await page.screenshot({ path: '.validation/header-r2-running-' + count + '-' + info.project.name + '.png', animations: 'disabled' })
     if (count === 2) {
       await expect(jobs.locator('[class*="_textModeActivity"]')).toHaveCount(0, { timeout: 30_000 })
       await expect(jobs).toBeVisible()
-      const settledColor = await jobs.evaluate(chip => getComputedStyle(chip).color)
+      await expect(jobs).toHaveAttribute('data-workbench-job-count', '0/2')
+      const settledColor = await jobs.evaluate(chip => getComputedStyle(chip, '::after').color)
       expect(settledColor).not.toBe(geometry.liveColor)
     }
   }
