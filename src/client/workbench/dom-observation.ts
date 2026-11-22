@@ -1,4 +1,7 @@
-export const HOST_AGENT_TRIGGER = '[data-slot="conversation.session.header.actions"] [data-subagent-action] button[aria-haspopup="dialog"]:has([data-subagent-count])'
+const HOST_AGENT_SLOTS = ':is([data-slot="conversation.session.header.actions"], [data-slot="conversation.session.header.lineage"])'
+const HOST_AGENT_COUNT_BUTTON = 'button[aria-haspopup="dialog"]:has([data-subagent-count])'
+export const HOST_AGENT_TRIGGER = `${HOST_AGENT_SLOTS} [data-subagent-action] ${HOST_AGENT_COUNT_BUTTON}`
+export const HOST_AGENT_COUNT_ACTION = `${HOST_AGENT_SLOTS} [data-subagent-action]:has([data-subagent-count])`
 export const HOST_AGENT_PANEL = '[role="dialog"][data-subagent-panel]'
 export const HOST_JOB_TRIGGER = 'button:has(> [data-job-count])'
 

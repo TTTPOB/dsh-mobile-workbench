@@ -1,4 +1,4 @@
-import { HOST_JOB_TRIGGER } from '../workbench/dom-observation.ts'
+import { HOST_AGENT_COUNT_ACTION, HOST_JOB_TRIGGER } from '../workbench/dom-observation.ts'
 
 const H = 'html[data-mobile-workbench-active="true"] [data-mobile-nav="frame"] [data-phase] header[data-mobile-workbench-header]'
 const JOB_BUTTON = '[data-slot="conversation.session.header.actions"] ' + HOST_JOB_TRIGGER
@@ -19,7 +19,7 @@ export const WORKBENCH_HEADER_CSS = `@media (max-width: 1023px) and (pointer: co
   ${H} [data-conversation-header-corner],
   ${H}[data-workbench-tabs-owned] [data-conversation-tabs],
   ${H} nav[class*="_crumbs"],
-  ${H} [data-slot="conversation.session.header.actions"] > [data-subagent-action]:has([data-subagent-count]),
+  ${H} ${HOST_AGENT_COUNT_ACTION},
   ${H} [data-slot="conversation.session.header.actions"] > span[title],
   ${H} [data-slot="conversation.session.header.utilities"] > :has([data-open-target]) { display: none !important; }
   ${H} [class*="_titleRow"], ${H} [class*="_titleCluster"], ${H} [class*="_headerActions"] {

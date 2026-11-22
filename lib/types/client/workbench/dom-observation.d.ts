@@ -1,4 +1,5 @@
-export declare const HOST_AGENT_TRIGGER = "[data-slot=\"conversation.session.header.actions\"] [data-subagent-action] button[aria-haspopup=\"dialog\"]:has([data-subagent-count])";
+export declare const HOST_AGENT_TRIGGER = ":is([data-slot=\"conversation.session.header.actions\"], [data-slot=\"conversation.session.header.lineage\"]) [data-subagent-action] button[aria-haspopup=\"dialog\"]:has([data-subagent-count])";
+export declare const HOST_AGENT_COUNT_ACTION = ":is([data-slot=\"conversation.session.header.actions\"], [data-slot=\"conversation.session.header.lineage\"]) [data-subagent-action]:has([data-subagent-count])";
 export declare const HOST_AGENT_PANEL = "[role=\"dialog\"][data-subagent-panel]";
 export declare const HOST_JOB_TRIGGER = "button:has(> [data-job-count])";
 export declare const PRESENTATION_LOCAL = "header:has([data-conversation-tabs]), [data-subagent-panel]";
