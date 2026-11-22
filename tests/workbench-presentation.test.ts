@@ -170,11 +170,6 @@ test('native fullscreen file panels subtract navigation height once from the vie
   assert.match(panel, /padding-top: env\(safe-area-inset-top, 0px\)/)
 })
 
-test('bottom Plugins and Settings controls have one 44px baseline without trigger-row margins', () => {
-  assert.match(WORKBENCH_CSS, /\[class\*="_settingsArea"\] \[class\*="_triggerRow"\] \{ margin: 0 !important; width: 100% !important/)
-  assert.match(WORKBENCH_CSS, /button\[class\*="_panelRow"\],[\s\S]*?button\[class\*="_trigger"\] \{[\s\S]*?height: 44px !important;[\s\S]*?padding: 0 8px !important/)
-})
-
 test('three pages fade only their content, reduced motion skips it, and Workspace collapse alone is hidden', () => {
   assert.match(WORKBENCH_CSS, /grid-template-columns: repeat\(3,/)
   assert.match(WORKBENCH_CSS, /data-mobile-workbench-page="sessions"/)

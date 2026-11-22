@@ -7,7 +7,7 @@ export const WORKBENCH_MANAGEMENT_CSS = `@media (max-width: 1023px) and (pointer
     width: 44px !important; height: 44px !important;
     z-index: 15;
   }
-  html[data-mobile-workbench-active="true"] [data-mobile-nav="frame"] > [class*="_sidebarCol"] [class*="_settingsArea"] [class*="_triggerRow"] [data-mobile-management-anchor] > button {
+  html[data-mobile-workbench-active="true"] [data-mobile-nav="frame"] > [class*="_sidebarCol"] > [data-slot="sidebar"] > [class*="_root"] > [class*="_footArea"] > [class*="_settingsArea"] > [data-slot="sidebar.settings"] > [class*="_triggerRow"] [data-mobile-management-anchor] > button {
     width: 44px !important; min-width: 44px !important; height: 44px !important;
     padding: 0 !important; justify-content: center !important;
   }

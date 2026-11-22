@@ -63,14 +63,9 @@ export const WORKBENCH_HEADER_CSS = `@media (max-width: 1023px) and (pointer: co
     padding: 0 !important;
     overflow: visible;
   }
-  ${H}[data-workbench-tabs-owned] [class*="_tabs"]:has(> [data-conversation-tabs]) button {
-    pointer-events: auto;
-    box-sizing: border-box;
-    width: 44px !important;
-    min-width: 44px !important;
-    height: 44px !important;
-    min-height: 44px !important;
-    padding: 0 !important;
+  /* Leave the native launcher mounted for selection of a folded view. */
+  ${H} [data-conversation-tabs] + span > button[aria-haspopup="menu"]:has(> svg[data-icon="dsw-icon-ellipsis-outline-regular"]) {
+    display: none !important;
   }
   ${H} [data-workbench-header-main] {
     grid-area: main;
@@ -219,8 +214,13 @@ export const WORKBENCH_HEADER_CSS = `@media (max-width: 1023px) and (pointer: co
   [data-workbench-stats-panel] dl > div { display: flex; justify-content: space-between; gap: 12px; padding: 4px 0; }
   [data-workbench-stats-panel] dt { color: var(--dsw-alias-label-secondary); min-width: 0; }
   [data-workbench-stats-panel] dd { margin: 0; flex: none; text-align: right; white-space: nowrap; }
-  .mobile-workbench-session-info { width: min(400px, calc(100vw - 24px)); overflow-wrap: anywhere; }
-  .mobile-workbench-session-info button { min-width: 44px; min-height: 44px; }
+  .mobile-workbench-session-info { overflow-wrap: anywhere; }
+  .mobile-workbench-session-info-content > :has(> h2) { padding-block: 12px 4px; }
+  .mobile-workbench-session-info-content > :has(> h2) > button { min-width: 44px; min-height: 44px; }
+  .mobile-workbench-session-info-content > :has(> [data-workbench-info-details]) { margin-top: 0; }
+  [data-workbench-info-details] { display: grid; gap: 4px; font-size: 14px; line-height: 22px; }
+  [data-workbench-info-details] > p { margin: 0; color: var(--dsw-alias-label-primary); }
+  [data-workbench-info-details] > p + p { color: var(--dsw-alias-label-secondary); }
   /* Native catalog behaves as a readable sheet, not a tiny header popover. */
   html[data-mobile-workbench-active="true"] [data-workbench-agent-menu] {
     position: fixed !important;

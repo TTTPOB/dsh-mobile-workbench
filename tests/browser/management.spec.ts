@@ -79,7 +79,7 @@ test('management preserves list scroll, footer reachability and media disposal',
   await openDemo(page)
   await page.getByRole('button', { name: 'Sessions', exact: true }).click()
   await page.evaluate(() => {
-    const list = document.querySelector<HTMLElement>('[data-slot="sidebar.workspaces"] [class$="_list"]')!
+    const list = document.querySelector<HTMLElement>('[data-slot="sidebar.workspaces"] [class$="_listArea"]')!
     list.id = 'management-scroll-fixture'
     const filler = document.createElement('div')
     filler.style.cssText = 'height:2600px;flex:none'

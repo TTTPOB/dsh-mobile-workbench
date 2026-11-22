@@ -161,9 +161,12 @@ export function WorkbenchAgents({ useWorkbench, useSessions, useProjection, sess
       </button>
     </div>
     <Modal open={overlay === 'info'} title={t('sessionInfo')} closeLabel={t('close')}
-      className="mobile-workbench-session-info" onClose={() => { setOverlay(null) }}>
-      <p>{title}</p><p>{t('presetReadOnly', { name: mode })}</p>
-      <button type="button" data-modal-autofocus onClick={() => { setOverlay(null) }}>{t('close')}</button>
+      className="mobile-workbench-session-info" contentClassName="mobile-workbench-session-info-content"
+      onClose={() => { setOverlay(null) }}>
+      <div data-workbench-info-details>
+        <p>{title}</p>
+        <p>{t('presetReadOnly', { name: mode })}</p>
+      </div>
     </Modal>
     {statsOpen && createPortal(<MenuSurface ref={panelRef} id={panelId} role="dialog" aria-label={t('statistics')}
       data-workbench-stats-panel style={{ positionAnchor: anchorName }}>

@@ -25,7 +25,7 @@ export const LAYOUT_CSS = `@media (max-width: 1023px) and (pointer: coarse) {
     padding-top: env(safe-area-inset-top, 0px) !important;
     box-sizing: border-box;
     border-right: none !important;
-    background: var(--dsw-alias-bg-surface);
+    background: var(--dsw-specific-sidebar-fill);
     touch-action: pan-y pinch-zoom !important;
   }
   [data-mobile-nav="frame"]:not([data-mobile-workbench-sessions]) > [class*="_sidebarCol"] {
