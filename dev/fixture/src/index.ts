@@ -83,6 +83,7 @@ export class MobileAuditAdapter extends LlmAdapter {
   override async listModels(provider: string) {
     return [
       { provider, id: 'mobile-audit', name: 'Mobile Audit', description: 'Deterministic local Chinese reply + read tool' },
+      { provider, id: 'mobile-audit-fast', name: 'Mobile Audit Fast', description: 'Local fixture' },
       { provider, id: 'mobile-audit-extended-preview', name: 'Mobile Audit — Extended Reasoning Preview',
         description: 'Local synthetic menu stress fixture; no external model, network or credentials' },
     ]
@@ -102,6 +103,31 @@ export class MobileAuditAdapter extends LlmAdapter {
       (message.source === undefined || message.source.kind === 'user'))
     const prompt = options.messages[lastUser]?.content
       .filter(block => block.type === 'text').map(block => block.text).join('\n') ?? ''
+    if (prompt.startsWith('GRID_SLOW_CHILD')) {
+      await delay(35000, undefined, { signal: options.signal })
+      yield* this.text('GRID_CHILD_DONE', options)
+      return
+    }
+    if (prompt === 'GRID_DEMO' || prompt === 'GRID_TEAM_DEMO') {
+      const sequence = options.messages.slice(lastUser + 1)
+      const prefix = 'mobile-grid-' + lastUser + '-'
+      const index = sequence.filter(message => message.role === 'tool' && message.source?.kind === 'tool' && String(message.source.callId).startsWith(prefix)).length
+      const tasks = prompt === 'GRID_TEAM_DEMO' ? 2 : 0
+      if (index < tasks) {
+        yield* this.tool('Fixture', 'team_task_create', { subject: ['复核结果', '汇总任务'][index], description: '本地演示任务' }, ToolCallId(prefix + index), options)
+      } else if (index < tasks + 12) {
+        const n = index - tasks
+        // Start an older child slowly too, so running-first differs from newest-first.
+        yield* this.tool('Fixture', 'subagent', {
+          description: ['检查数据来源', '整理接口清单', '复核边界条件', '核对结果与记录', '检查移动布局', '确认异常路径'][n % 6] + ' · ' + (n + 1),
+          prompt: n === 0 ? NESTED_PARENT_MARKER : (n === 1 || n === 11) ? 'GRID_SLOW_CHILD' : 'MOBILE_AUDIT_CHILD_TASK',
+          provider: 'mobile-audit',
+          model: ['mobile-audit', 'mobile-audit-fast', 'mobile-audit-extended-preview'][n % 3],
+          run_in_background: true,
+        }, ToolCallId(prefix + index), options)
+      } else yield* this.text('GRID_READY', options)
+      return
+    }
     // Markers precede user trigger text; only the marked parent delegates.
     const childTask = prompt.startsWith('MOBILE_AUDIT_CHILD_TASK')
     const scenario = prompt.startsWith(NESTED_LEAF_MARKER) ? 'nested-leaf'

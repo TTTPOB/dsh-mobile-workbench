@@ -28,7 +28,7 @@ test('native descendant dialog opens, closes, and enters a child session', async
   await expect(panel).toHaveCount(0)
   await expect(agents).toBeFocused()
   await agents.tap()
-  const parent = tree.getByText('MOBILE_AUDIT_NESTED_B · 两层目录父节点', { exact: true })
+  const parent = tree.getByRole('button', { name: /MOBILE_AUDIT_NESTED_B · 两层目录父节点/ })
   await expect(parent).toBeVisible()
   await parent.tap()
   await expect(panel).toHaveCount(0)

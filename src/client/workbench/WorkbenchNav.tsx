@@ -1,4 +1,5 @@
 import { HOST_AGENT_PANEL, HOST_JOB_TRIGGER } from './dom-observation.ts'
+import { AgentCards, type AgentCardLabel, type OpenAgentCard } from './AgentCards.tsx'
 import type { IJobs } from '@deepseek-ai/dsh-api-job-controller/client'
 import { useEffect, useId, useRef, useState, type ReactElement } from 'react'
 import { createPortal } from 'react-dom'
@@ -28,6 +29,8 @@ export interface WorkbenchInjected {
   returnParent: () => void
   closeAgents: (restoreFocus?: boolean) => void
   focusAgents: () => void
+  openAgentCard: OpenAgentCard
+  agentCardLabel: AgentCardLabel
 }
 type Props = PropsRuntime<'shell.overlay'> & InjectFace<WorkbenchInjected> & PropsLocale<'mobileWorkbench'>
 type AgentProps = PropsRuntime<'conversation.session.header.actions'> & InjectFace<WorkbenchInjected> & PropsLocale<'mobileWorkbench'>
@@ -67,7 +70,7 @@ export function WorkbenchNav({ useWorkbench, activate, t }: Props): ReactElement
 }
 
 /** Header content uses public session summaries and session-bound projections. */
-export function WorkbenchAgents({ useWorkbench, useJobs, useSessions, useProjection, sessionId, activate, selectView, returnParent, closeAgents, focusAgents, resolvePreset, t, tStats }: AgentProps): ReactElement | null {
+export function WorkbenchAgents({ useWorkbench, useJobs, useSessions, useProjection, sessionId, activate, selectView, returnParent, closeAgents, focusAgents, openAgentCard, agentCardLabel, resolvePreset, t, tStats }: AgentProps): ReactElement | null {
   const state = useWorkbench(value => value)
   const jobCount = useJobs(snapshot => {
     const rows = snapshot.rows[sessionId]
@@ -92,6 +95,7 @@ export function WorkbenchAgents({ useWorkbench, useJobs, useSessions, useProject
     observer.observe(actions, { childList: true, subtree: true })
     return () => { observer.disconnect(); button?.removeAttribute(attribute) }
   }, [jobCount, sessionId, state.mobile])
+  const agentList = useSessions(value => state.agentsOpen ? value : undefined)
   const summary = useSessions(value => sessionId ? value.byId[sessionId] : undefined)
   const parent = useSessions(value => summary?.parentId ? value.byId[summary.parentId] : undefined)
   const pressure = useProjection('contextPressure')
@@ -188,14 +192,18 @@ export function WorkbenchAgents({ useWorkbench, useJobs, useSessions, useProject
     </div>
     {state.agentsOpen && (() => {
       const panel = document.querySelector(HOST_AGENT_PANEL)
-      return panel && createPortal(<div data-workbench-agent-heading>
+      const tree = panel?.querySelector(':scope > :has(> [role="tree"]) > [role="tree"]')
+      return panel && <>{tree && agentList && createPortal(<AgentCards list={agentList} root={sessionId} open={address => {
+        closeAgents(false)
+        openAgentCard(address)
+      }} t={agentCardLabel} />, tree)}{createPortal(<div data-workbench-agent-heading>
         <h2>{panel.getAttribute('aria-label')}</h2>
         <button type="button" aria-label={t('close')} onClick={() => { closeAgents() }}>
           <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden="true">
             <path d="m6 6 12 12M18 6 6 18" />
           </svg>
         </button>
-      </div>, panel)
+      </div>, panel)}</>
     })()}
     <Modal open={overlay === 'info'} title={t('sessionInfo')} closeLabel={t('close')}
       className="mobile-workbench-session-info" contentClassName="mobile-workbench-session-info-content"

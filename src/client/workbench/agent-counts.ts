@@ -4,7 +4,7 @@ import { currentSessionIdOf } from '../core/sessions-compat.ts'
 /** Public catalog and status fields needed for descendant counts. */
 interface CatalogList {
   byId?: Record<string, { running?: boolean }>
-  projectionsBySession?: Readonly<Record<string, { state?: string; values: { subagentCatalog?: readonly { id: string }[] } }>>
+  projectionsBySession?: Readonly<Record<string, { state?: string; values: { subagentCatalog?: readonly { id: string; mode?: string; activity?: string }[] } }>>
 }
 export interface AgentStatusSource {
   getSnapshot: () => ReadonlyMap<string, { running?: boolean }>
@@ -30,7 +30,7 @@ export function missingDescendantCatalogs(snapshot: unknown): string[] {
       if (projection?.state === undefined || projection.state === 'idle') missing.push(id)
       return
     }
-    for (const child of catalog) visit(child.id)
+    for (const child of catalog) if (child.mode !== 'external') visit(child.id)
   }
   visit(root)
   return missing
@@ -45,16 +45,20 @@ export function subagentCounts(snapshot: unknown, statuses?: ReadonlyMap<string,
     const projection = list.projectionsBySession?.[id]
     if (projection?.state === 'error') return { agentCountsState: 'unavailable' }
     const catalog = projection?.values.subagentCatalog
-    if (projection?.state === 'loading' || catalog === undefined) {
+    if (catalog === undefined && id === root) {
       return { agentCountsState: projection?.state === 'ready' ? 'unavailable' : 'loading' }
     }
+    // A known child is counted as soon as its parent publishes it. Its own
+    // directory can add descendants later; it must not reset the known count.
     let active = 0
     let total = 0
-    for (const child of catalog) {
+    for (const child of catalog ?? []) {
+      if (child.mode === 'external') continue
+      total++
+      active += (statuses?.get(child.id)?.running ?? list.byId?.[child.id]?.running ?? child.activity === 'running') ? 1 : 0
       const descendants = visit(child.id)
-      if (descendants.agentCountsState !== 'ready') return descendants
-      total += 1 + (descendants.agentTotalCount ?? 0)
-      active += (statuses?.get(child.id)?.running ?? list.byId?.[child.id]?.running) === true ? 1 : 0
+      if (descendants.agentCountsState === 'unavailable') return descendants
+      total += descendants.agentTotalCount ?? 0
       active += descendants.agentActiveCount ?? 0
     }
     return { agentActiveCount: active, agentTotalCount: total, agentCountsState: 'ready' }

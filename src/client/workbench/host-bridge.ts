@@ -22,7 +22,7 @@ export function createHostBridge(
   const focusAgents = (): void => {
     focusObserver?.disconnect()
     const focus = (): boolean => {
-      const item = document.querySelector<HTMLElement>(`${HOST_AGENT_PANEL} [role="treeitem"]:not([aria-disabled="true"])`)
+      const item = document.querySelector<HTMLElement>(`${HOST_AGENT_PANEL} [data-agent-card]:not([aria-disabled="true"])`)
       if (!item) return false
       item.focus({ preventScroll: true })
       focusObserver?.disconnect()

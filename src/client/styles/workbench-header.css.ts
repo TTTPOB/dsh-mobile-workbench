@@ -261,5 +261,17 @@ export const WORKBENCH_HEADER_CSS = `@media (max-width: 1023px) and (pointer: co
   [role="dialog"][data-subagent-panel] [class*="_label"] { font-size: 14px; }
   [role="dialog"][data-subagent-panel] [class*="_summary"] { font-size: 11px; }
   [role="dialog"][data-subagent-panel] [class*="_sidebarButton"] { width: 44px; height: 44px; }
+  [data-subagent-panel]:has([data-agent-cards]) { max-height: min(80dvh, 610px) !important; background: var(--dsw-alias-bg-layer-2) !important; }
+  [data-subagent-panel] [role="tree"]:has(> [data-agent-cards]) > :not([data-agent-cards]) { display: none; }
+  [data-agent-cards] { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+  [data-agent-cards="nested"] { grid-column: 1 / -1; margin-inline-start: 12px; padding-inline-start: 8px; border-inline-start: 1px solid var(--dsw-alias-border-l2); }
+  [data-agent-card] { position: relative; min-width: 0; border: 1px solid var(--dsw-alias-border-l2); border-radius: var(--dsw-radius-md); background: var(--dsw-alias-interactive-bg-hover); }
+  [data-agent-card-open], [data-agent-card-branch] { border: 0; background: transparent; color: inherit; font: inherit; }
+  [data-agent-card-open] { width: 100%; min-height: 44px; padding: 6px 8px; display: grid; gap: 1px; text-align: start; }
+  [data-agent-card]:has(> [data-agent-card-branch]) [data-agent-card-open] { padding-inline-end: 44px; }
+  [data-agent-card-branch] { position: absolute; inset: 0 0 auto auto; width: 44px; height: 44px; }
+  [data-agent-card-branch][aria-expanded="true"] { rotate: 90deg; }
+  [data-agent-card-name] { display: flex; align-items: center; gap: 6px; font-weight: 600; }
+  [data-agent-card-detail], [data-agent-card-model] { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; color: var(--dsw-alias-label-secondary); }
 }
 `

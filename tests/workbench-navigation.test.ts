@@ -76,7 +76,9 @@ test('missing or failed catalogs are not leaves and never fall back to parent/si
   assert.deepEqual(subagentCounts({ byId: { 'child': retained('child') }, projectionsBySession: { child: { state: 'ready', values: {} } } }), { agentCountsState: 'unavailable' })
   assert.deepEqual(subagentCounts({ byId: { 'child': retained('child') }, projectionsBySession: { child: { state: 'error', values: { subagentCatalog: [] } } } }), { agentCountsState: 'unavailable' })
   assert.deepEqual(subagentCounts({ byId: { 'child': retained('child') }, projectionsBySession: { child: ready() } }), { agentCountsState: 'ready', agentActiveCount: 0, agentTotalCount: 0 })
-  assert.deepEqual(subagentCounts({ byId: { 'A': retained('A') }, projectionsBySession: { A: ready(['B']) } }), { agentCountsState: 'loading' })
+  assert.deepEqual(subagentCounts({ byId: { A: retained('A'), B: { running: true } }, projectionsBySession: {
+    A: ready(['B']), B: { state: 'loading', values: {} },
+  } }), { agentCountsState: 'ready', agentActiveCount: 1, agentTotalCount: 1 })
 })
 
 test('missing discovery follows only current reachable branches and leaves loading/failure to the owner', () => {
@@ -187,7 +189,7 @@ test('new grandchild projections drive incremental loads; failure is quiet until
   await nextTurn()
   f.snapshot.projectionsBySession.B = ready(['D']); f.publish()
   assert.equal(f.calls.at(-1), 'D')
-  assert.equal(subagentCounts(f.snapshot)?.agentCountsState, 'loading')
+  assert.equal(subagentCounts(f.snapshot)?.agentTotalCount, 4)
   f.resolve.get('D')?.(new Error('network failed'))
   await nextTurn()
   assert.equal(subagentCounts(f.snapshot)?.agentCountsState, 'unavailable')

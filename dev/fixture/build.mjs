@@ -19,6 +19,10 @@ const entry = fileURLToPath(new URL('./dist/index.js', import.meta.url))
 const fixtureFile = fileURLToPath(new URL('./workspace/mobile-audit.md', import.meta.url))
 const subagentConfig = await fixtureSubagentConfig(require)
 const overlay = [
+  '- id: subagent-model-selection-settings',
+  '  config:',
+  '    enabled: true',
+  '    allowedModels: ' + JSON.stringify(['mobile-audit', 'mobile-audit-fast', 'mobile-audit-extended-preview'].map(model => ({ provider: 'mobile-audit', model }))),
   '- id: subagent',
   '  config: ' + JSON.stringify(subagentConfig),
   '- id: agent-default-model',

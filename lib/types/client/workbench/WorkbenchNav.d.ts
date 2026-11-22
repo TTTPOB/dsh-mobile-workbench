@@ -1,3 +1,4 @@
+import { type AgentCardLabel, type OpenAgentCard } from './AgentCards.tsx';
 import type { IJobs } from '@deepseek-ai/dsh-api-job-controller/client';
 import { type ReactElement } from 'react';
 import type { StatsTranslate } from './stats-locales.ts';
@@ -21,12 +22,14 @@ export interface WorkbenchInjected {
     returnParent: () => void;
     closeAgents: (restoreFocus?: boolean) => void;
     focusAgents: () => void;
+    openAgentCard: OpenAgentCard;
+    agentCardLabel: AgentCardLabel;
 }
 type Props = PropsRuntime<'shell.overlay'> & InjectFace<WorkbenchInjected> & PropsLocale<'mobileWorkbench'>;
 type AgentProps = PropsRuntime<'conversation.session.header.actions'> & InjectFace<WorkbenchInjected> & PropsLocale<'mobileWorkbench'>;
 /** Render page navigation without owning the native page trees. */
 export declare function WorkbenchNav({ useWorkbench, activate, t }: Props): ReactElement | null;
 /** Header content uses public session summaries and session-bound projections. */
-export declare function WorkbenchAgents({ useWorkbench, useJobs, useSessions, useProjection, sessionId, activate, selectView, returnParent, closeAgents, focusAgents, resolvePreset, t, tStats }: AgentProps): ReactElement | null;
+export declare function WorkbenchAgents({ useWorkbench, useJobs, useSessions, useProjection, sessionId, activate, selectView, returnParent, closeAgents, focusAgents, openAgentCard, agentCardLabel, resolvePreset, t, tStats }: AgentProps): ReactElement | null;
 export {};
 //# sourceMappingURL=WorkbenchNav.d.ts.map

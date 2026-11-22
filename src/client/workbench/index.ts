@@ -74,10 +74,12 @@ export function installWorkbench(ctx: ClientContext): void {
     (ctx.get('uiSession') as { sessionStatus?: AgentStatusSource } | undefined)?.sessionStatus
   let counts = subagentCounts(ctx.sessions.list.getSnapshot(), statusSource()?.getSnapshot()) ?? {}
   let openSession: (id: NonNullable<ReturnType<typeof currentSessionIdOf>>) => void = () => {}
+  let openAgentCard: WorkbenchInjected['openAgentCard'] = () => {}
   ctx.inject(['uiWorkspace'], child => {
     child.effect(() => {
       openSession = id => { child.uiWorkspace.openSession(id) }
-      return () => { openSession = () => {} }
+      openAgentCard = address => { child.uiWorkspace.openSession(address) }
+      return () => { openSession = () => {}; openAgentCard = () => {} }
     }, 'mobile-workbench: session navigation service')
   })
   const viewTabs = () => ctx.slots.entriesOfSlot('conversation.view')
@@ -215,14 +217,14 @@ export function installWorkbench(ctx: ClientContext): void {
     id: 'mobile-workbench-agents',
     order: 5,
     locale: WORKBENCH_NS,
-    inject: (): WorkbenchInjected => ({ resolvePreset, tStats: ctx.locale.bind(STATS_NS), hooks: { workbench: source, jobs: jobsSource() }, activate: (destination, pointerStartedOpen) => { activate(destination, pointerStartedOpen) }, selectView: bridge.selectView, returnParent: bridge.returnParent, closeAgents: bridge.closeAgents, focusAgents: bridge.focusAgents }),
+    inject: (): WorkbenchInjected => ({ resolvePreset, tStats: ctx.locale.bind(STATS_NS), hooks: { workbench: source, jobs: jobsSource() }, activate: (destination, pointerStartedOpen) => { activate(destination, pointerStartedOpen) }, selectView: bridge.selectView, returnParent: bridge.returnParent, closeAgents: bridge.closeAgents, focusAgents: bridge.focusAgents, openAgentCard: address => { openAgentCard(address) }, agentCardLabel: ctx.locale.bind('subagent') }),
   }, WorkbenchAgents))
   ctx.slots.inject('shell.overlay', () => ctx.slots.register({
     name: 'shell.overlay',
     id: 'mobile-workbench-navigation',
     order: 20,
     locale: WORKBENCH_NS,
-    inject: (): WorkbenchInjected => ({ resolvePreset, tStats: ctx.locale.bind(STATS_NS), hooks: { workbench: source, jobs: jobsSource() }, activate: (destination, pointerStartedOpen) => { activate(destination, pointerStartedOpen) }, selectView: bridge.selectView, returnParent: bridge.returnParent, closeAgents: bridge.closeAgents, focusAgents: bridge.focusAgents }),
+    inject: (): WorkbenchInjected => ({ resolvePreset, tStats: ctx.locale.bind(STATS_NS), hooks: { workbench: source, jobs: jobsSource() }, activate: (destination, pointerStartedOpen) => { activate(destination, pointerStartedOpen) }, selectView: bridge.selectView, returnParent: bridge.returnParent, closeAgents: bridge.closeAgents, focusAgents: bridge.focusAgents, openAgentCard: address => { openAgentCard(address) }, agentCardLabel: ctx.locale.bind('subagent') }),
   }, WorkbenchNav))
   // The editor lives beside the navigation entry and is opened from the management menu.
   ctx.slots.inject('shell.overlay', () => ctx.slots.register({
