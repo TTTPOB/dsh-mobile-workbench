@@ -88,8 +88,7 @@ test('session page returns through formal default panel without forcing chat; to
   const events: string[] = []
   const attributes = new Set(['data-sidebar-collapsed'])
   const tabs = ['chat', 'trajectory'].map(id => ({ textContent: id, getAttribute: () => id === 'trajectory' ? 'true' : 'false', click: () => { events.push(id) } }))
-  const parent = { click: () => { events.push('direct-parent') } }
-  const header = { querySelector: () => parent, querySelectorAll: (s: string) => s.includes('data-conversation-tabs') ? tabs : [] }
+  const header = { querySelector: () => null, querySelectorAll: (s: string) => s.includes('data-conversation-tabs') ? tabs : [] }
   const frame = { hasAttribute: (key: string) => attributes.has(key), removeAttribute: () => {}, querySelector: () => header }
   replaceGlobal(t, 'document', { querySelector: (s: string) => s === '[data-mobile-nav="frame"]' ? frame : null, documentElement: { getAttribute: () => 'true' } })
   const bridge = createHostBridge(() => ['chat', 'trajectory'].map(id => ({ id, label: id })), () => ({}),
@@ -129,16 +128,6 @@ test('global plugin panel and hero both return to default session without waitin
   bridge.activate('session')
   assert.deepEqual(calls, ['selectPanel(null)', 'selectPanel(null)'])
   assert.equal(bridge.evidence().hasSessionPage, true)
-})
-
-test('native sibling switchers are excluded when the current descendant catalog is absent', t => {
-  let queried = ''
-  const header = { querySelector: () => null, querySelectorAll: (s: string) => { queried = s; return [] } }
-  const frame = { hasAttribute: () => true, querySelector: () => header }
-  replaceGlobal(t, 'document', { querySelector: (s: string) => s === '[data-mobile-nav="frame"]' ? frame : null })
-  const bridge = createHostBridge(() => ['chat', 'trajectory'].map(id => ({ id, label: id })))
-  assert.equal(bridge.evidence().hasAgents, false)
-  assert.match(queried, /:not\(\[class\*="_switcherTrigger"\]\)/)
 })
 
 function loaderFixture(t: { after: (fn: () => void) => void }) {
@@ -260,34 +249,19 @@ test('Plugins modal follows live slot labels despite hidden panels and More, and
   assert.equal(modalCalls, 2)
 })
 
-test('own descendant catalog opens by the native pinned click, while second activation still closes with Escape', t => {
+test('descendant dialog toggles through the native trigger without reopening after outside dismissal', t => {
   let open = false
-  const events: string[] = []
-  const trigger = {
-    getAttribute: (key: string) => key === 'aria-expanded' ? String(open) : null,
-    click: () => { events.push('own-count-click'); open = true },
-    dispatchEvent: () => { assert.fail('keyboard open does not carry the rc2 own-count pinned-click semantics') },
-  }
-  const tree = { dispatchEvent: (event: KeyboardEvent) => { assert.equal(event.key, 'Escape'); events.push('native-Escape'); open = false } }
-  const header = { querySelector: () => null, querySelectorAll: (selector: string) => selector.includes('role="tablist"') ? [] : [trigger] }
+  const trigger = { getAttribute: () => String(open), click: () => { open = !open } }
+  const header = { querySelector: () => trigger, querySelectorAll: () => [] }
   const frame = { hasAttribute: () => true, querySelector: () => header }
-  class KeyEvent extends Event {
-    key: string
-    constructor(type: string, init: KeyboardEventInit) { super(type, init); this.key = init.key ?? '' }
-  }
-  replaceGlobal(t, 'KeyboardEvent', KeyEvent)
-  replaceGlobal(t, 'document', { querySelector: (selector: string) => selector === '[data-mobile-nav="frame"]' ? frame : selector.startsWith('[role="tree"]') ? tree : null })
-  const bridge = createHostBridge(() => ['chat', 'trajectory'].map(id => ({ id, label: id })))
+  replaceGlobal(t, 'document', { querySelector: (selector: string) => selector === '[data-mobile-nav="frame"]' ? frame : null })
+  const bridge = createHostBridge(() => [])
   bridge.activate('agents')
   assert.equal(bridge.evidence().agentsOpen, true)
-  assert.deepEqual(events, ['own-count-click'])
   bridge.activate('agents')
   assert.equal(bridge.evidence().agentsOpen, false)
-  assert.deepEqual(events, ['own-count-click', 'native-Escape'])
-  // Native outside dismissal may finish between pointerdown and the owned click.
   bridge.activate('agents', true)
-  assert.equal(open, false)
-  assert.equal(events.length, 2, 'the second touch must not reopen the already dismissed catalog')
+  assert.equal(bridge.evidence().agentsOpen, false)
 })
 
 function historyFixture() {

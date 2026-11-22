@@ -78,26 +78,12 @@ test('remove duplicate native tabs only when the workbench represents every view
 })
 
 test('native catalog and inspector markers are reversible without changing host attributes', t => {
-  const { header, root, countRoot, setMenus } = fixture(t)
-  const tree = new Node()
-  const menu = new Node()
-  tree.parentElement = menu
-  setMenus([tree])
+  const { header, root, countRoot } = fixture(t)
   header.setAttribute('data-host', 'preserved')
   const presentation = createWorkbenchPresentation()
   presentation.update(['chat', 'trajectory'])
-  assert.equal(menu.hasAttribute('data-workbench-agent-menu'), true)
-  const heading = menu.children[0]
-  assert.equal(heading.hasAttribute('data-workbench-agent-heading'), true)
-  presentation.update(['chat', 'trajectory'])
-  assert.equal(menu.children.length, 1)
-  assert.equal(tree.parentElement, menu)
   assert.equal(root.hasAttribute('data-workbench-trajectory'), true)
   assert.equal(countRoot.hasAttribute('data-workbench-agent-count'), true)
-  setMenus([])
-  presentation.update(['chat', 'trajectory'])
-  assert.equal(menu.hasAttribute('data-workbench-agent-menu'), false)
-  assert.equal(heading.parentElement, null)
   presentation.clear()
   assert.deepEqual([...header.attributes], [['data-host', 'preserved']])
   assert.equal(root.attributes.size, 0)

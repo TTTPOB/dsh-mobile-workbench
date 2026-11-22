@@ -1,3 +1,4 @@
+import { HOST_AGENT_PANEL } from './dom-observation.ts'
 import { useEffect, useId, useRef, useState, type ReactElement } from 'react'
 import { createPortal } from 'react-dom'
 import { MenuSurface, Modal } from '@deepseek-ai/dsh-client-ui-primitives'
@@ -138,7 +139,7 @@ export function WorkbenchAgents({ useWorkbench, useSessions, useProjection, sess
       </div>
       <button type="button" data-mobile-workbench="agents" data-workbench-context-control
         aria-label={t('agentCatalog') + ' · ' + counts} title={state.agentTotalCount === 0 ? t('emptyAgents') : t('agentCatalog')}
-        aria-haspopup="tree" aria-expanded={state.agentsOpen} disabled={!state.hasAgents || state.agentTotalCount === 0}
+        aria-haspopup="dialog" aria-expanded={state.agentsOpen} disabled={!state.hasAgents}
         onMouseDown={event => { event.preventDefault() }}
         onPointerDownCapture={() => { pointerStartedOpen.current = state.agentsOpen }}
         onPointerCancel={() => { pointerStartedOpen.current = false }}
@@ -160,6 +161,17 @@ export function WorkbenchAgents({ useWorkbench, useSessions, useProjection, sess
         <small data-workbench-count>{counts}</small>
       </button>
     </div>
+    {state.agentsOpen && (() => {
+      const panel = document.querySelector(HOST_AGENT_PANEL)
+      return panel && createPortal(<div data-workbench-agent-heading>
+        <h2>{panel.getAttribute('aria-label')}</h2>
+        <button type="button" aria-label={t('close')} onClick={() => { closeAgents() }}>
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden="true">
+            <path d="m6 6 12 12M18 6 6 18" />
+          </svg>
+        </button>
+      </div>, panel)
+    })()}
     <Modal open={overlay === 'info'} title={t('sessionInfo')} closeLabel={t('close')}
       className="mobile-workbench-session-info" contentClassName="mobile-workbench-session-info-content"
       onClose={() => { setOverlay(null) }}>

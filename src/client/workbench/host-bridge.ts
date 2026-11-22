@@ -1,3 +1,4 @@
+import { HOST_AGENT_PANEL, HOST_AGENT_TRIGGER } from './dom-observation.ts'
 import { sessionsPageOpen } from '../workbench/sidebar-page.ts'
 import type { SessionId } from '@deepseek-ai/dsh-session/types'
 import { getFrame } from '../effects/phone-chrome.ts'
@@ -21,7 +22,7 @@ export function createHostBridge(
   const focusAgents = (): void => {
     focusObserver?.disconnect()
     const focus = (): boolean => {
-      const item = document.querySelector<HTMLElement>('[role="tree"][class*="_menuBody"] [role="treeitem"]:not([aria-disabled="true"])')
+      const item = document.querySelector<HTMLElement>(`${HOST_AGENT_PANEL} [role="treeitem"]:not([aria-disabled="true"])`)
       if (!item) return false
       item.focus({ preventScroll: true })
       focusObserver?.disconnect()
@@ -37,13 +38,9 @@ export function createHostBridge(
     focusObserver?.disconnect()
     viewObserver?.disconnect()
   }
-  const header = (): HTMLElement | null => getFrame()?.querySelector('header:has([role="tablist"]), header:has(button[aria-haspopup="tree"])') ?? null
+  const header = (): HTMLElement | null => getFrame()?.querySelector('header:has([data-conversation-tabs])') ?? null
   const tabs = (): HTMLButtonElement[] => Array.from(header()?.querySelectorAll<HTMLButtonElement>('[data-conversation-tabs] > button[role="tab"]') ?? [])
-  const agentTrigger = (): HTMLButtonElement | null => {
-    const buttons = Array.from(header()?.querySelectorAll<HTMLButtonElement>('button[aria-haspopup="tree"]:not([class*="_switcherTrigger"]):not([data-mobile-workbench="agents"])') ?? [])
-    // Own count only; switchers are rooted at the parent and include siblings.
-    return buttons.at(-1) ?? null
-  }
+  const agentTrigger = (): HTMLButtonElement | null => header()?.querySelector<HTMLButtonElement>(HOST_AGENT_TRIGGER) ?? null
   const officialFilesOpen = (): boolean => {
     // Fullscreen panels keep the grid track collapsed even while visibly open.
     // The panel's own open marker is authoritative; its closer stays mounted.
@@ -80,9 +77,10 @@ export function createHostBridge(
   }
   const closeAgents = (restoreFocus = true): void => {
     focusObserver?.disconnect()
-    if (agentTrigger()?.getAttribute('aria-expanded') !== 'true') return
+    const trigger = agentTrigger()
+    if (trigger?.getAttribute('aria-expanded') !== 'true') return
     const previous = document.activeElement
-    document.querySelector('[role="tree"][class*="_menuBody"]')?.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))
+    trigger.click()
     if (restoreFocus) ownedTrigger()?.focus({ preventScroll: true })
     else if (previous instanceof HTMLElement) previous.focus({ preventScroll: true })
   }
@@ -125,7 +123,7 @@ export function createHostBridge(
     if (destination === 'agents') {
       const trigger = agentTrigger()
       if (pointerStartedOpen || trigger?.getAttribute('aria-expanded') === 'true') closeAgents()
-      // The rc.2 own-count click pins the catalog and cancels hover-close timers.
+      // The native count trigger owns the dialog and pins it open.
       else trigger?.click()
       return
     }

@@ -102,7 +102,7 @@ test('touch controls show pressed and expanded feedback in both themes without s
     await page.screenshot({ path: '.demo-home/review/stats/after-' + theme + '-' + info.project.name + '.png' })
     await stats.click()
     await agents.click()
-    await page.locator('[role="tree"][class*="_menuBody"]').getByText('MOBILE_AUDIT_NESTED_B · 两层目录父节点', { exact: true }).click()
+    await page.locator('[data-subagent-panel] [role="tree"]').getByText('MOBILE_AUDIT_NESTED_B · 两层目录父节点', { exact: true }).click()
     const parent = page.locator('[data-mobile-workbench="parent"]')
     await expect(parent).toBeVisible()
     await pressFeedback(page, parent)

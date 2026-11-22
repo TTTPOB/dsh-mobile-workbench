@@ -160,7 +160,7 @@ test('child Trace also hides composer clearance while preserving the two-pane in
   const agents = page.locator('[data-mobile-workbench="agents"]')
   await expect(agents).toBeEnabled({ timeout: 60_000 })
   await agents.click()
-  const tree = page.locator('[role="tree"][class*="_menuBody"]')
+  const tree = page.locator('[data-subagent-panel] [role="tree"]')
   await expect(tree).toBeVisible()
   await tree.locator('[role="treeitem"]').first().click()
   const parent = page.locator('[data-mobile-workbench="parent"]')

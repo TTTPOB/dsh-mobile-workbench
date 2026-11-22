@@ -1,3 +1,4 @@
+import { HOST_AGENT_PANEL } from './dom-observation.ts'
 import { sessionsPageOpen } from '../workbench/sidebar-page.ts'
 import type { Context as ClientContext } from '@deepseek-ai/cordis'
 import type {} from '@deepseek-ai/dsh-client-ui-layout/client'
@@ -179,7 +180,7 @@ export function installWorkbench(ctx: ClientContext): void {
     refreshStatus = refreshCounts
     const escape = (event: KeyboardEvent): void => {
       if (!mq.matches || event.key !== 'Escape' || !event.isTrusted || !(event.target instanceof Element)) return
-      if (!event.target.closest('[role="tree"][class*="_menuBody"], [data-mobile-workbench="agents"]')) return
+      if (!event.target.closest(`${HOST_AGENT_PANEL}, [data-mobile-workbench="agents"]`)) return
       event.preventDefault()
       event.stopImmediatePropagation()
       bridge.closeAgents()

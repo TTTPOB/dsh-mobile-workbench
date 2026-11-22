@@ -47,21 +47,12 @@ export const WORKBENCH_HEADER_CSS = `@media (max-width: 1023px) and (pointer: co
     row-gap: 4px;
     align-items: center;
   }
-  ${H}[data-workbench-tabs-owned] [class*="_tabs"]:has(> [data-conversation-tabs]) {
+  /* Keep measuring the native strip without letting it occupy the mobile header grid. */
+  ${H}[data-workbench-tabs-owned] :has(> [data-conversation-tabs]) {
     position: absolute !important;
-    top: 56px !important;
-    right: 12px !important;
-    left: 12px !important;
-    display: flex !important;
-    align-items: center;
-    justify-content: flex-end;
+    inset-inline: 12px;
+    visibility: hidden;
     pointer-events: none;
-    width: auto !important;
-    height: 44px !important;
-    min-height: 44px !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    overflow: visible;
   }
   /* Leave the native launcher mounted for selection of a folded view. */
   ${H} [data-conversation-tabs] + span > button[aria-haspopup="menu"]:has(> svg[data-icon="dsw-icon-ellipsis-outline-regular"]) {
@@ -222,7 +213,7 @@ export const WORKBENCH_HEADER_CSS = `@media (max-width: 1023px) and (pointer: co
   [data-workbench-info-details] > p { margin: 0; color: var(--dsw-alias-label-primary); }
   [data-workbench-info-details] > p + p { color: var(--dsw-alias-label-secondary); }
   /* Native catalog behaves as a readable sheet, not a tiny header popover. */
-  html[data-mobile-workbench-active="true"] [data-workbench-agent-menu] {
+  html[data-mobile-workbench-active="true"] [role="dialog"][data-subagent-panel] {
     position: fixed !important;
     top: auto !important;
     left: 12px !important;
@@ -231,27 +222,34 @@ export const WORKBENCH_HEADER_CSS = `@media (max-width: 1023px) and (pointer: co
     width: auto !important;
     max-width: none !important;
     max-height: min(65dvh, 520px) !important;
+    display: flex !important;
+    flex-direction: column-reverse !important;
     border-radius: var(--dsw-radius-lg) !important;
     padding: 10px !important;
     box-shadow: var(--dsw-elevation-prominent);
     border: 1px solid var(--dsw-alias-border-l1);
     box-sizing: border-box;
   }
-  /* Keep the native absolute background pseudo-element out of the title layout. */
-  [data-workbench-agent-menu] > [data-workbench-agent-heading] {
+  [role="dialog"][data-subagent-panel] > [data-workbench-agent-heading] {
+    display: flex;
     flex: none;
-    margin: 0;
-    padding: 4px 6px 10px;
-    font-size: 14px;
-    font-weight: 600;
-    line-height: 22px;
-    max-height: 25dvh;
-    overflow-y: auto;
-    overflow-wrap: anywhere;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 0 4px 4px;
   }
   [data-workbench-agent-heading] h2 { font-size: 16px; line-height: 22px; margin: 0; }
-  [data-workbench-agent-heading] p { font-size: 12px; line-height: 18px; margin: 4px 0 0; color: var(--dsw-alias-label-secondary); }
-  [data-workbench-agent-menu] > [role="tree"] {
+  [data-workbench-agent-heading] button {
+    display: grid;
+    place-items: center;
+    flex: 0 0 44px;
+    height: 44px;
+    border: 0;
+    border-radius: var(--dsw-radius-sm);
+    background: transparent;
+    color: var(--dsw-alias-label-secondary);
+  }
+  [role="dialog"][data-subagent-panel] > :has(> [role="tree"]) {
     flex: 1 1 auto !important;
     min-height: 0 !important;
     max-height: none !important;
@@ -259,17 +257,17 @@ export const WORKBENCH_HEADER_CSS = `@media (max-width: 1023px) and (pointer: co
     padding: 4px 2px;
     overscroll-behavior-y: contain;
   }
-  [data-workbench-agent-menu] [class*="_content"] { min-width: 0 !important; }
-  [data-workbench-agent-menu] [class*="_metrics"] { flex: none !important; }
-  [data-workbench-agent-menu] [class*="_label"],
-  [data-workbench-agent-menu] [class*="_summary"] {
+  [role="dialog"][data-subagent-panel] [class*="_content"] { min-width: 0 !important; }
+  [role="dialog"][data-subagent-panel] [class*="_metrics"] { flex: none !important; }
+  [role="dialog"][data-subagent-panel] [class*="_label"],
+  [role="dialog"][data-subagent-panel] [class*="_summary"] {
     white-space: normal !important;
     overflow-wrap: anywhere;
     text-overflow: clip !important;
     line-height: 1.5 !important;
   }
-  [data-workbench-agent-menu] [class*="_label"] { font-size: 14px; }
-  [data-workbench-agent-menu] [class*="_summary"] { font-size: 11px; }
-  [data-workbench-agent-menu] [class*="_sidebarButton"] { width: 44px; height: 44px; }
+  [role="dialog"][data-subagent-panel] [class*="_label"] { font-size: 14px; }
+  [role="dialog"][data-subagent-panel] [class*="_summary"] { font-size: 11px; }
+  [role="dialog"][data-subagent-panel] [class*="_sidebarButton"] { width: 44px; height: 44px; }
 }
 `

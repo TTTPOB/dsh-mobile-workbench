@@ -1,7 +1,8 @@
+import { HOST_AGENT_TRIGGER } from './dom-observation.ts'
+
 /** Mark presentation boundaries without moving React-owned elements. */
 export function createWorkbenchPresentation(): { update: (viewIds: readonly string[], scope?: ParentNode) => void; clear: () => void } {
   let marked = new Map<Element, Set<string>>()
-  const menuHeadings = new Map<Element, { element: HTMLElement; name: HTMLElement; mode: HTMLElement }>()
   let selectedPane: HTMLElement | null = null
   let selectedRowKey: string | null = null
   const clear = (): void => {
@@ -9,8 +10,6 @@ export function createWorkbenchPresentation(): { update: (viewIds: readonly stri
       for (const attribute of attributes) element.removeAttribute(attribute)
     }
     marked.clear()
-    for (const heading of menuHeadings.values()) heading.element.remove()
-    menuHeadings.clear()
     selectedPane = null
     selectedRowKey = null
   }
@@ -52,32 +51,7 @@ export function createWorkbenchPresentation(): { update: (viewIds: readonly stri
         if (delta !== 0) trajectory.scrollTop += delta
       }
     }
-    const count = header?.querySelector('[data-slot="conversation.session.header.actions"] button[aria-haspopup="tree"]:not([class*="_switcherTrigger"]):not([data-mobile-workbench="agents"])')
-    mark(count?.parentElement ?? null, 'data-workbench-agent-count')
-    const menus = new Set<Element>()
-    for (const tree of document.querySelectorAll('[role="tree"][class*="_menuBody"]')) {
-      const menu = tree.parentElement
-      if (!menu) continue
-      menus.add(menu)
-      mark(menu, 'data-workbench-agent-menu')
-      if (!menuHeadings.has(menu)) {
-        const element = document.createElement('div')
-        element.setAttribute('data-workbench-agent-heading', '')
-        const name = document.createElement('h2')
-        const mode = document.createElement('p')
-        element.append(name, mode)
-        menu.prepend(element)
-        menuHeadings.set(menu, { element, name, mode })
-      }
-      const heading = menuHeadings.get(menu)!
-      const name = header?.querySelector('[data-workbench-title-info]')?.textContent ?? ''
-      const mode = header?.querySelector('[data-workbench-mode]')?.textContent ?? ''
-      if (heading.name.textContent !== name) heading.name.textContent = name
-      if (heading.mode.textContent !== mode) heading.mode.textContent = mode
-    }
-    for (const [menu, heading] of menuHeadings) {
-      if (!menus.has(menu)) { heading.element.remove(); menuHeadings.delete(menu) }
-    }
+    mark(header?.querySelector(HOST_AGENT_TRIGGER)?.closest('[data-subagent-action]') ?? null, 'data-workbench-agent-count')
     for (const [element, attributes] of marked) {
       for (const attribute of attributes) {
         if (!next.get(element)?.has(attribute)) element.removeAttribute(attribute)
