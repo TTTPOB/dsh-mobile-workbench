@@ -20,7 +20,7 @@ export default defineConfig({
     },
     {
       name: 'mobile-375',
-      testMatch: 'navigation.spec.ts',
+      testMatch: ['navigation.spec.ts', 'quote-position.spec.ts'],
       use: { viewport: { width: 375, height: 751 }, deviceScaleFactor: 3.25, isMobile: true, hasTouch: true, colorScheme: 'dark' },
     },
     {
